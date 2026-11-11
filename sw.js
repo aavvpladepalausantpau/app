@@ -1,5 +1,5 @@
 // Service worker mínim: permet instal·lar l'app i guarda només la carcassa (no les dades).
-const CACHE = "avsantpau-v2";
+const CACHE = "avsantpau-v3";
 const FITXERS = ["/", "/index.html", "/manifest.webmanifest", "/icona-192.png", "/icona-512.png", "/apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
