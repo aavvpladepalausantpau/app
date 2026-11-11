@@ -93,6 +93,10 @@ nav button svg{width:24px;height:24px}nav button.on{color:var(--pri);font-weight
 .tline{margin-top:18px;border-left:2px solid var(--line);margin-left:6px}
 .tl-i{position:relative;padding:0 0 22px 22px}.tl-i::before{content:"";position:absolute;left:-7px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--pri)}
 .tl-h{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:20px;line-height:1.2}.tl-t{color:var(--mut)}
+textarea.fi{width:100%;margin-top:6px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--ink);font:16px Figtree,sans-serif;resize:vertical}
+.mini{display:flex;flex-wrap:wrap;gap:0 16px;margin-top:2px}.mini .link{font-size:14px;padding:6px 0}.mini .link.m{color:var(--mut)}
+.conf{margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--bg);font-size:14px}.conf .bs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.btn.sm{min-height:40px;padding:8px 14px;font-size:14px}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
 </style>
 </head>
@@ -212,7 +216,7 @@ function header(){
 function navHTML(){
   const t = tab();
   const items = [['inici','Inici'],['activitats','Activitats'],['cursos','Cursos'],['soci', esSoci() ? 'El meu carnet' : S.user ? 'El meu perfil' : 'Fes-te soci']];
-  if (S.junta) items.push(['junta','Junta']);
+  if (S.junta) items.push(['junta', S.ag && S.ag.pendents ? `Junta · ${S.ag.pendents}` : 'Junta']);
   return items.map(([k,l]) => `<button class="${t===k?'on':''}" data-go="${k}" aria-current="${t===k?'page':'false'}">${IC[k]}${l}</button>`).join('');
 }
 function actCard(a){
@@ -225,18 +229,183 @@ function meves(){
 }
 
 /* ---------- Vistes ---------- */
-const AV_GEN = [
-  {t:'Talls d’aigua dimarts 2 de desembre', s:'De 9 a 13 h als carrers del sector nord.'}
-];
-const REUNIONS = [
-  {d:28, m:'nov.', t:'Assemblea general', s:'19 h, centre cívic. Oberta a tots els veïns.'},
-  {d:3, m:'des.', t:'Reunió de junta', s:'20 h, local de l’associació.'},
-  {d:11, m:'des.', t:'Trobada amb l’Ajuntament', s:'18:30 h, sobre la reforma de la plaça.'}
-];
+/* ---------- Avisos i properes reunions (dades del motor: pestanyes Avisos i Agenda + Google Calendar) ---------- */
+const AG_MAX_INICI = 5;
+const MESOS = ['gen.','febr.','març','abr.','maig','juny','jul.','ag.','set.','oct.','nov.','des.'];
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const horaTxt = d => d.getMinutes() ? `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')} h` : `${d.getHours()} h`;
+const dataTxt = d => d.toLocaleDateString('ca-ES', {day:'numeric', month:'long', year:'numeric'});
+const curt = (s, n) => s && s.length > n ? s.slice(0, n).replace(/\s+\S*$/, '') + '…' : (s || '');
+const clauEv = e => e.id + '|' + e.dia;
+const MSG_J = {SESSIO_CADUCADA:'La sessió ha caducat. Torna a entrar amb el teu DNI.', NO_JUNTA:'Aquesta acció és només per a la junta.', DADES:'Revisa les dades i torna-ho a provar.', NO_TROBAT:'Aquest element ja no existeix. Torna a carregar la pantalla.'};
+const msgJ = r => MSG_J[r.codi] || MSG[r.codi] || MSG.SERVEI;
+// Caducitat d'un avís: n setmanes o mesos des de la data de publicació, fins al final d'aquell dia
+function sumaDurada(base, n, u){
+  const d = new Date(base);
+  if (u === 'mesos'){ const dia = d.getDate(); d.setMonth(d.getMonth() + n); if (d.getDate() < dia) d.setDate(0); }
+  else d.setDate(d.getDate() + 7 * n);
+  d.setHours(23, 59, 59, 0);
+  return d;
+}
+// Les activitats del Gestor entraran aquí directament (sense aprovació) quan el Gestor estigui connectat.
+// De moment les activitats de l'app són d'exemple i ja surten a «Agenda d'activitats».
+function activitatsAgenda(){ return []; }
+function properes(){
+  if (!S.ag) return [];
+  const ara = Date.now();
+  return S.ag.events.filter(e => e.fi > ara).concat(activitatsAgenda()).sort((a, b) => a.ini - b.ini);
+}
+function carregaAgenda(){
+  if (S.agCarr) return;
+  S.agCarr = true;
+  motor('agenda', {token:token()}).then(r => {
+    S.agCarr = false;
+    if (r.ok){ S.ag = r; S.agErr = false; try { localStorage.setItem('avv-agenda', JSON.stringify(r)); } catch(e){} }
+    else if (!S.ag) S.agErr = true;
+    const s = S.sub;
+    if ((!s && ['inici','junta'].includes(tab())) || (s && s.v === 'agendaTota')) render();
+    else $('#nav').innerHTML = navHTML();
+  });
+}
+function filaAvis(a){
+  const tag = a.dst ? '<span class="tag r" style="flex:none;margin-top:2px">Important</span>' : '<span class="tag o" style="flex:none;margin-top:2px">Avís</span>';
+  const per = S.junta && a.dest !== 'Tots' ? `<p class="muted" style="font-size:13px;margin-top:2px">Només ${a.dest === 'Socis' ? 'per als socis' : 'per a la junta'}</p>` : '';
+  return `<div class="row" style="justify-content:flex-start;gap:12px;align-items:flex-start">${tag}<div style="min-width:0"><b>${esc(a.t)}</b>${a.s ? `<p class="muted" style="white-space:pre-line">${esc(a.s)}</p>` : ''}${per}</div></div>`;
+}
+function filaEvent(e){
+  const [, m, d] = e.dia.split('-').map(Number);
+  const multi = e.tot && e.diaFi && sumaDies(e.dia, 1) !== e.diaFi;
+  const quan = e.tot ? (multi ? 'Fins al ' + diaCurt(sumaDies(e.diaFi, -1)) : 'Tot el dia') : horaTxt(new Date(e.ini));
+  const det = [quan, e.lloc].filter(Boolean).join(' · ');
+  const k = clauEv(e);
+  let h = `<div class="row" style="display:block"><div style="display:flex;gap:14px;align-items:flex-start"><div class="date" style="width:46px"><div class="d" style="font-size:22px">${d}</div><div class="m">${MESOS[m-1]}</div></div><div style="min-width:0;flex:1"><b>${esc(e.t)}</b><p class="muted">${esc(det)}</p>${e.desc ? `<p class="muted" style="font-size:13px;white-space:pre-line;margin-top:2px">${esc(curt(e.desc, 180))}</p>` : ''}`;
+  h += `<div class="mini"><button class="link" data-a="afegeixCal" data-ev="${esc(k)}" aria-expanded="${S.agObre === k}">Afegeix al calendari</button>${S.junta && !e.act ? `<button class="link m" data-a="amagaQ" data-ev="${esc(k)}">Amaga</button>` : ''}</div>`;
+  if (S.agObre === k) h += `<div class="conf">Tria on el vols guardar:<div class="bs"><a class="chip" href="${esc(googleCal(e))}" target="_blank" rel="noopener" style="text-decoration:none">Google Calendar</a><button class="chip" data-a="ics" data-ev="${esc(k)}">iPhone, Outlook i altres</button></div><p style="font-size:12px;margin-top:6px;color:var(--mut)">Es guarda una còpia: si després canvia l’hora o el lloc, aquí sortirà actualitzat però al teu calendari no.</p></div>`;
+  if (S.agAmaga === k){
+    const dades = `data-a="decideix" data-id="${esc(e.id)}" data-t="${esc(e.t)}" data-estat="Amagat"`;
+    h += e.rec
+      ? `<div class="conf">Aquest esdeveniment es repeteix. Què vols amagar? Al calendari de Google no es toca res.<div class="bs"><button class="btn sm ghost" ${dades} data-dia="${e.dia}">Només el ${diaCurt(e.dia)}</button><button class="btn sm ghost" ${dades}>Tota la sèrie</button><button class="link" data-a="amagaNo">Cancel·la</button></div></div>`
+      : `<div class="conf">L’amaguem de l’app? Al calendari de Google no es toca res.<div class="bs"><button class="btn sm ghost" ${dades}>Amaga’l</button><button class="link" data-a="amagaNo">Cancel·la</button></div></div>`;
+  }
+  return h + '</div></div></div>';
+}
+function sumaDies(dia, n){ const [y, m, d] = dia.split('-').map(Number); const x = new Date(y, m - 1, d + n); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; }
+function diaCurt(dia){ const [, m, d] = dia.split('-').map(Number); return `${d} ${MESOS[m-1]}`; }
 function agendaAvisos(){
-  const av = AV_GEN.map(a => `<div class="row" style="justify-content:flex-start;gap:12px;align-items:flex-start"><span class="tag o" style="margin-top:2px">Avís</span><div><b>${a.t}</b><p class="muted">${a.s}</p></div></div>`).join('');
-  const re = REUNIONS.map(r => `<div class="row" style="justify-content:flex-start;gap:14px"><div class="date" style="width:46px"><div class="d" style="font-size:22px">${r.d}</div><div class="m">${r.m}</div></div><div><b>${r.t}</b><p class="muted">${r.s}</p></div></div>`).join('');
-  return `<div class="sec" style="margin-top:8px">Avisos i properes reunions</div><div class="card">${av}${re}</div>`;
+  const sec = '<div class="sec" style="margin-top:8px">Avisos i properes reunions</div>';
+  if (!S.ag) return sec + `<div class="card"><p class="muted">${S.agErr ? 'Ara mateix no s’han pogut carregar els avisos. Torna-ho a provar d’aquí a una estona.' : 'Carregant els avisos…'}</p></div>`;
+  const ara = Date.now();
+  const av = S.ag.avisos.filter(a => a.cad > ara).sort((a, b) => (b.dst - a.dst) || (b.pub - a.pub));
+  const evs = properes();
+  let h = '';
+  if (S.junta && S.ag.pendents) h += `<button class="card act" data-s="pendents" style="background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink);margin-bottom:10px"><span style="font-size:22px" aria-hidden="true">📅</span><div><div class="n">${S.ag.pendents === 1 ? 'Tens 1 esdeveniment' : `Tens ${S.ag.pendents} esdeveniments`} del calendari per revisar</div><div class="s" style="color:var(--ocre-ink)">No surten a l’app fins que algú de la junta els publica</div></div><span style="margin-left:auto;font-size:22px">›</span></button>`;
+  let cos = av.map(filaAvis).join('') + evs.slice(0, AG_MAX_INICI).map(filaEvent).join('');
+  if (!cos) cos = '<p class="muted">Ara mateix no hi ha avisos ni reunions previstes.</p>';
+  h += `<div class="card">${cos}</div>`;
+  if (evs.length > AG_MAX_INICI) h += `<button class="link" data-s="agendaTota">Veure’n més (${evs.length - AG_MAX_INICI})</button>`;
+  return sec + h;
+}
+function vAgendaTota(){
+  const evs = properes();
+  return `<h2>Properes reunions</h2><p class="muted" style="margin-top:4px">Tot el que hi ha previst els pròxims tres mesos.</p><div class="card" style="margin-top:14px">${evs.length ? evs.map(filaEvent).join('') : '<p class="muted">No hi ha res previst.</p>'}</div>`;
+}
+// Afegir al calendari del veí
+const utc = ms => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+const peuCal = 'AVV Pla de Palau – Sant Pau · app.avsantpau.cat';
+function googleCal(e){
+  const dates = e.tot ? `${e.dia.replace(/-/g,'')}/${e.diaFi.replace(/-/g,'')}` : `${utc(e.ini)}/${utc(e.fi)}`;
+  const p = new URLSearchParams({action:'TEMPLATE', text:e.t, dates, details:[e.desc, peuCal].filter(Boolean).join('\n\n'), location:e.lloc || ''});
+  return 'https://calendar.google.com/calendar/render?' + p.toString();
+}
+function baixaIcs(e){
+  const t = s => String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  const L = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//AVV Pla de Palau Sant Pau//App//CA','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',
+    'UID:' + e.id.replace(/@.*/, '').replace(/[^\w-]/g, '') + '-' + e.dia + '@avsantpau.cat', 'DTSTAMP:' + utc(Date.now())];
+  if (e.tot) L.push('DTSTART;VALUE=DATE:' + e.dia.replace(/-/g,''), 'DTEND;VALUE=DATE:' + e.diaFi.replace(/-/g,''));
+  else L.push('DTSTART:' + utc(e.ini), 'DTEND:' + utc(e.fi));
+  L.push('SUMMARY:' + t(e.t));
+  if (e.lloc) L.push('LOCATION:' + t(e.lloc));
+  L.push('DESCRIPTION:' + t([e.desc, peuCal].filter(Boolean).join('\n\n')), 'END:VEVENT', 'END:VCALENDAR');
+  const txt = L.join('\r\n');
+  if (esIOS()){ location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(txt); return; }
+  const url = URL.createObjectURL(new Blob([txt], {type:'text/calendar;charset=utf-8'}));
+  const a = document.createElement('a'); a.href = url; a.download = (e.t.replace(/[^\wÀ-ÿ -]/g, '').trim() || 'reunio') + '.ics';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+/* ---------- Junta: avisos ---------- */
+function carregaAvisosJ(){
+  if (S.avJCarr) return;
+  S.avJCarr = true;
+  motor('juntaAvisos', {token:token()}).then(r => {
+    S.avJCarr = false;
+    if (r.ok) S.avJ = r.avisos; else S.avJErr = r.codi || 'SERVEI';
+    if (S.sub && S.sub.v === 'avisosJ') render();
+  });
+}
+function vAvisosJ(){
+  let h = `<h2>Avisos</h2><p class="muted" style="margin-top:4px">Surten a la pantalla d’inici fins que caduquen. Després queden guardats al full com a històric.</p><button class="btn full" style="margin-top:14px" data-a="nouAvis">Escriure un avís nou</button><div class="sec">Avisos publicats</div>`;
+  if (S.avJErr) return h + `<div class="card"><p class="muted">${esc(msgJ({codi:S.avJErr}))}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaJ">Tornar-ho a provar</button></div>`;
+  if (!S.avJ){ carregaAvisosJ(); return h + '<div class="card"><p class="muted">Carregant…</p></div>'; }
+  if (!S.avJ.length) return h + '<div class="card"><p class="muted">Ara mateix no hi ha cap avís publicat.</p></div>';
+  return h + `<div class="card">${S.avJ.map(a => {
+    const per = {Tots:'Tots els veïns', Socis:'Només socis', Junta:'Només la junta'}[a.dest];
+    const conf = S.avEsb === a.id ? `<div class="conf">Segur que vols esborrar aquest avís? Deixarà de sortir a l’app.<div class="bs"><button class="btn sm" data-a="esborraAvis" data-id="${esc(a.id)}" style="background:var(--red);color:var(--bg)">Esborra’l</button><button class="link" data-a="esborraNo">Cancel·la</button></div></div>` : '';
+    return `<div class="row" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><b>${esc(a.t)}</b>${a.dst ? '<span class="tag r" style="flex:none">Important</span>' : ''}</div>${a.s ? `<p class="muted" style="white-space:pre-line">${esc(curt(a.s, 160))}</p>` : ''}<p class="muted" style="font-size:13px;margin-top:4px">${per} · Caduca el ${dataTxt(new Date(a.cad))} · ${esc(a.autor)}</p><div class="mini"><button class="link" data-a="editaAvis" data-id="${esc(a.id)}">Edita</button><button class="link m" data-a="esborraQ" data-id="${esc(a.id)}">Esborra</button></div>${conf}</div>`;
+  }).join('')}</div>`;
+}
+function textCad(){
+  const a = S.avEd || {}, n = +(val('vn') || a.n || 2), u = S.avU || 'setmanes';
+  return `Caducarà el ${dataTxt(sumaDurada(a.pub || Date.now(), n, u))}${a.pub ? ' (es compta des del dia que es va publicar)' : ''}.`;
+}
+function actCad(){ const e = document.getElementById('vcad'); if (e) e.textContent = textCad(); }
+function vAvisForm(){
+  const a = S.avEd || {t:'', s:'', n:2, dest:'Tots', dst:false}, u = S.avU || 'setmanes';
+  return `<h2>${a.id ? 'Editar l’avís' : 'Avís nou'}</h2>
+  <label class="f">Títol<input type="text" id="vt" maxlength="120" value="${esc(a.t)}" placeholder="Tall d’aigua dimarts 2 de desembre"></label><div class="err" id="e-vt"></div>
+  <label class="f">Text <span style="font-weight:400;color:var(--mut)">(opcional)</span><textarea class="fi" id="vs" rows="4" maxlength="1000" placeholder="De 9 a 13 h als carrers del sector nord.">${esc(a.s)}</textarea></label>
+  <div class="sec" style="margin:16px 0 0;color:var(--ink)">Caduca en</div>
+  <div style="display:grid;grid-template-columns:84px 1fr;gap:10px;align-items:start"><select id="vn" aria-label="Quantes">${[1,2,3,4,5,6,7,8].map(i => `<option${i === +a.n ? ' selected' : ''}>${i}</option>`).join('')}</select><div class="seg" id="vu" style="margin-top:6px"><button class="${u === 'setmanes' ? 'on' : ''}" data-un="setmanes">Setmanes</button><button class="${u === 'mesos' ? 'on' : ''}" data-un="mesos">Mesos</button></div></div>
+  <p class="muted" id="vcad" style="margin-top:8px">${textCad()}</p>
+  <label class="f">Per a qui és<select id="vd">${[['Tots','Tots els veïns'],['Socis','Només socis'],['Junta','Només la junta']].map(([k,l]) => `<option value="${k}"${a.dest === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+  <label class="chk"><input type="checkbox" id="vx"${a.dst ? ' checked' : ''}><span><b>Important.</b> Surt el primer i ressaltat.</span></label>
+  <button class="btn full" style="margin-top:20px" data-a="desaAvis">${a.id ? 'Desar els canvis' : 'Publicar l’avís'}</button>`;
+}
+
+/* ---------- Junta: esdeveniments del calendari ---------- */
+function carregaPendents(){
+  if (S.pendCarr) return;
+  S.pendCarr = true;
+  const ref = !!S.pendRef; S.pendRef = false;
+  motor('juntaPendents', {token:token(), refresca:ref}).then(r => {
+    S.pendCarr = false;
+    if (r.ok){ S.pend = r; if (S.ag) S.ag.pendents = r.pendents.length; if (ref) carregaAgenda(); }
+    else S.pendErr = r.codi || 'SERVEI';
+    if (S.sub && S.sub.v === 'pendents') render(); else $('#nav').innerHTML = navHTML();
+  });
+}
+function filaPend(e){
+  const [, m, d] = e.dia.split('-').map(Number);
+  const quan = e.tot ? 'Tot el dia' : horaTxt(new Date(e.ini));
+  const dades = `data-a="decideix" data-id="${esc(e.id)}" data-t="${esc(e.t)}"`;
+  return `<div class="card" style="margin-bottom:10px"><div style="display:flex;gap:14px;align-items:flex-start"><div class="date" style="width:46px"><div class="d" style="font-size:22px">${d}</div><div class="m">${MESOS[m-1]}</div></div><div style="min-width:0;flex:1"><b>${esc(e.t)}</b><p class="muted">${esc([quan, e.lloc].filter(Boolean).join(' · '))}</p>${e.desc ? `<p class="muted" style="font-size:13px;white-space:pre-line;margin-top:2px">${esc(curt(e.desc, 180))}</p>` : ''}${e.rec ? '<p style="margin-top:6px"><span class="tag o">Es repeteix</span> <span class="muted" style="font-size:13px">Es decideix per a tota la sèrie</span></p>' : ''}</div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px"><button class="btn sm ghost" ${dades} data-estat="Descartat">Descartar</button><button class="btn sm" ${dades} data-estat="Publicat">Publicar</button></div></div>`;
+}
+function vPendents(){
+  let h = `<h2>Calendari de l’associació</h2><p class="muted" style="margin-top:4px">El que poseu al calendari de Google no surt a l’app fins que algú de la junta ho publica. Els esdeveniments marcats com a privats no apareixen aquí.</p>`;
+  if (S.pendErr) return h + `<div class="card" style="margin-top:14px"><p class="muted">${esc(msgJ({codi:S.pendErr}))}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaJ">Tornar-ho a provar</button></div>`;
+  if (!S.pend){ carregaPendents(); return h + '<div class="card" style="margin-top:14px"><p class="muted">Llegint el calendari…</p></div>'; }
+  const P = S.pend.pendents, D = S.pend.decidits;
+  h += `<div class="sec">Pendents de publicar (${P.length})</div>`;
+  h += P.length ? P.map(filaPend).join('') : '<div class="card"><p class="muted">No n’hi ha cap de pendent. Tot el que hi ha al calendari ja està revisat.</p></div>';
+  h += `<button class="btn ghost full" style="margin-top:14px" data-a="refrescaCal">Tornar a llegir el calendari ara</button><p class="muted" style="font-size:13px;margin-top:6px">L’app llegeix el calendari cada 30 minuts. Si acabes de crear un esdeveniment i encara no surt, prem aquest botó.</p>`;
+  if (D.length) h += `<div class="sec">Descartats i amagats</div><div class="card">${D.map(x => {
+    const que = x.estat === 'Descartat' ? 'Descartat' : x.dia ? `Amagat només el ${diaCurt(x.dia)}` : 'Amagat';
+    const boto = x.estat === 'Descartat' ? 'Publicar' : 'Tornar a mostrar';
+    const nou = x.dia ? 'Esborra' : 'Publicat';
+    return `<div class="row" style="gap:12px"><div style="min-width:0"><b>${esc(x.t)}</b><p class="muted" style="font-size:13px">${que} · ${esc(x.per)}</p></div><button class="chip" data-a="decideix" data-id="${esc(x.id)}" data-dia="${esc(x.dia || '')}" data-t="${esc(x.t)}" data-estat="${nou}">${boto}</button></div>`;
+  }).join('')}</div>`;
+  return h;
 }
 function vBenvinguda(){
   return `<div style="min-height:calc(100vh - 60px);display:flex;flex-direction:column;justify-content:space-between;gap:32px;padding:20px 0 12px">
@@ -470,7 +639,10 @@ function vCarnet(){
 function vJunta(){
   if (!S.junta) return `<p class="muted" style="margin-top:20px">Aquesta secció només és per a la junta.</p>`;
   const _pinAntic = `<h1 style="margin:6px 0 4px;text-align:center">Accés de la junta</h1><p class="muted" style="text-align:center">Introdueix el PIN. Al prototip és 1234.</p><div class="pin" aria-label="PIN">${[0,1,2,3].map(i => `<span class="${S.pin.length>i?'f':''}"></span>`).join('')}</div><div class="err" id="e-pin" style="text-align:center"></div><div class="pad">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k => k==='' ? '<span></span>' : `<button data-k="${k}" aria-label="${k==='⌫'?'Esborrar':k}">${k}</button>`).join('')}</div>`;
+  const np = S.ag ? S.ag.pendents : 0;
   return `<h1 style="margin:6px 0 14px">Junta</h1><div class="tiles">
+  <button class="tile" data-s="avisosJ"><span class="ic">📢</span><b>Avisos</b></button>
+  <button class="tile" data-s="pendents"><span class="ic">📅</span><span><b>Calendari</b>${np ? `<span class="tag o" style="display:block;width:max-content;margin-top:4px">${np} per revisar</span>` : ''}</span></button>
   <button class="tile" data-s="despesa"><span class="ic">📷</span><b>Apuntar despesa o ingrés</b></button>
   <button class="tile" data-s="inscrits"><span class="ic">📋</span><b>Inscrits per activitat</b></button>
   <button class="tile" data-s="socis"><span class="ic">👥</span><b>Socis i remeses</b></button>
@@ -512,7 +684,7 @@ function render(){
   $('#top').innerHTML = header();
   $('#nav').innerHTML = navHTML();
   const m = $('#main'), s = S.sub;
-  if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vDespAct(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, ident:vIdent, despesa:vDespesa, inscrits:vInscrits, socis:vSocis, informes:vInformes})[s.v]();
+  if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vDespAct(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, ident:vIdent, despesa:vDespesa, inscrits:vInscrits, socis:vSocis, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents})[s.v]();
   else m.innerHTML = ({inici:vInici, activitats:vActivitats, cursos:vCursos, soci:vSoci, junta:vJunta})[t]();
 }
 function err(id, msg){ const e = document.getElementById('e-'+id); if (e) e.textContent = msg || ''; return !msg; }
@@ -536,7 +708,11 @@ document.addEventListener('click', e => {
   if (d.f){ S.filtre = d.f; render(); return; }
   if (d.fc){ S.fc = d.fc; render(); return; }
   if (d.curs){ sub({v:'curs', id:d.curs}); return; }
-  if (d.s){ sub({v:d.s}); return; }
+  if (d.s){
+    if (d.s === 'avisosJ'){ S.avJ = null; S.avJErr = null; S.avEsb = null; }
+    if (d.s === 'pendents'){ S.pend = null; S.pendErr = null; }
+    sub({v:d.s}); return; }
+  if (d.un){ S.avU = d.un; document.querySelectorAll('#vu button').forEach(x => x.classList.toggle('on', x.dataset.un === d.un)); actCad(); return; }
   if (d.sa){ const id = S.sub.id; if (d.sa === 'despAct' && !esSoci()){ S.after = {v:'despAct', id, up:{v:'detall', id}}; S.idPas = false; S.idDni = ''; sub({v:'ident', up:{v:'detall', id}}); return; } sub({v:d.sa, id, up:{v:'detall', id}}); return; }
   if (d.pag){ S.alta.pag = d.pag; keepAlta(); render(); restoreAlta(); return; }
   if (d.mov){ S.mov = d.mov; render(); return; }
@@ -608,12 +784,13 @@ document.addEventListener('click', e => {
         }
         desaToken(r.token); esborraPendent(); S.bloq = 0; S.idPas = false;
         aplicaPerfil(r.perfil, S.idDni.toUpperCase().replace(/[\s.-]/g,''));
+        S.agCarr = false; carregaAgenda();
         toast(`Hola, ${r.perfil.nom}! Ja has entrat.`);
         if (S.after){ const t = S.after; S.after = null; sub(t); }
         else { S.sub = null; const t = S.afterTab || 'inici'; S.afterTab = null; go(t); }
       });
       break; }
-    case 'sortir': motor('tancarSessio', {token:token()}); desaToken(''); S.confS = false; S.entrat = false; S.junta = false; S.rol = 'visitant'; S.soci = null; S.user = null; S.ins = []; toast('Sessió tancada'); go('inici'); break;
+    case 'sortir': motor('tancarSessio', {token:token()}); desaToken(''); S.confS = false; S.entrat = false; S.junta = false; S.rol = 'visitant'; S.soci = null; S.user = null; S.ins = []; oblidaAgenda(); toast('Sessió tancada'); go('inici'); break;
     case 'desaMov': if (req([['di','Escriu l’import', v => +v > 0],['dc','Escriu el concepte']])){ toast(S.mov === 'ing' ? 'Ingrés desat' : 'Despesa desada'); S.sub = null; render(); } break;
     case 'desaAct': {
       let ok = true;
@@ -641,6 +818,44 @@ document.addEventListener('click', e => {
     case 'pdf': toast('Informe preparat'); break;
     case 'nova': toast('Aquí s’obrirà el creador d’activitats'); break;
     case 'sortirJ': S.junta = false; S.pin = ''; go('inici'); break;
+    // Avisos i agenda
+    case 'afegeixCal': S.agObre = S.agObre === d.ev ? null : d.ev; S.agAmaga = null; render(); break;
+    case 'ics': { const ev = properes().find(x => clauEv(x) === d.ev); if (ev) baixaIcs(ev); break; }
+    case 'amagaQ': S.agAmaga = S.agAmaga === d.ev ? null : d.ev; S.agObre = null; render(); break;
+    case 'amagaNo': S.agAmaga = null; render(); break;
+    case 'decideix': {
+      b.disabled = true;
+      motor('juntaDecideix', {token:token(), id:d.id, dia:d.dia || '', estat:d.estat, t:d.t || ''}).then(r => {
+        if (!r.ok){ b.disabled = false; toast(msgJ(r)); return; }
+        toast({Publicat:'Publicat a l’app', Descartat:'Descartat. No sortirà a l’app.', Amagat:'Amagat de l’app', Esborra:'Torna a sortir a l’app'}[d.estat] || 'Fet');
+        S.agAmaga = null; S.pend = null; S.agCarr = false; carregaAgenda(); render();
+      });
+      break; }
+    case 'refrescaCal': S.pend = null; S.pendErr = null; S.pendRef = true; render(); break;
+    case 'reintentaJ': S.avJErr = null; S.pendErr = null; render(); break;
+    case 'nouAvis': S.avEd = null; S.avU = 'setmanes'; sub({v:'avisForm', up:{v:'avisosJ'}}); break;
+    case 'editaAvis': { const a = (S.avJ || []).find(x => x.id === d.id); if (!a) break; S.avEd = Object.assign({}, a); S.avU = a.u; sub({v:'avisForm', up:{v:'avisosJ'}}); break; }
+    case 'desaAvis': {
+      if (!req([['vt','Escriu el títol de l’avís']])) return;
+      const a = S.avEd || {};
+      const dades = {token:token(), id:a.id || '', t:val('vt'), s:val('vs'), n:+val('vn'), u:S.avU || 'setmanes', dest:val('vd'), dst:$('#vx').checked};
+      const txt = b.textContent; b.disabled = true; b.textContent = 'Desant…';
+      motor('desaAvis', dades).then(r => {
+        b.disabled = false; b.textContent = txt;
+        if (!r.ok){ toast(msgJ(r)); return; }
+        toast(a.id ? 'Canvis desats' : 'Avís publicat');
+        S.avJ = null; S.avEd = null; S.agCarr = false; carregaAgenda(); sub({v:'avisosJ'});
+      });
+      break; }
+    case 'esborraQ': S.avEsb = d.id; render(); break;
+    case 'esborraNo': S.avEsb = null; render(); break;
+    case 'esborraAvis': {
+      b.disabled = true;
+      motor('esborraAvis', {token:token(), id:d.id}).then(r => {
+        if (!r.ok){ b.disabled = false; toast(msgJ(r)); return; }
+        toast('Avís esborrat'); S.avEsb = null; S.avJ = null; S.agCarr = false; carregaAgenda(); render();
+      });
+      break; }
   }
 });
 let altaTmp = {};
@@ -658,11 +873,16 @@ function pinKey(k){
 function desa(){ try { const log = !!(S.user || S.soci); if (log) localStorage.setItem('avv-sessio-v2', JSON.stringify({rol:S.rol, soci:S.soci, user:S.user})); else localStorage.removeItem('avv-sessio-v2'); localStorage.removeItem('avv-sessio'); sessionStorage.setItem('avv-convidat', (!log && S.entrat) ? '1' : ''); } catch(e){} }
 function recupera(){ try { const d = JSON.parse(localStorage.getItem('avv-sessio-v2') || 'null'); if (d && (d.user || d.soci)){ Object.assign(S, d); S.entrat = true; } else if (sessionStorage.getItem('avv-convidat') === '1') S.entrat = true; } catch(e){} }
 recupera();
+// Avisos i agenda: es mostra al moment l'última còpia d'aquest mòbil i s'actualitza en segon pla
+function oblidaAgenda(){ S.ag = null; try { localStorage.removeItem('avv-agenda'); } catch(e){} S.agCarr = false; carregaAgenda(); }
+try { const c = JSON.parse(localStorage.getItem('avv-agenda') || 'null'); if (c && c.ok && (token() || c.nivell === 'convidat')) S.ag = c; } catch(e){}
+document.addEventListener('change', e => { if (e.target.id === 'vn') actCad(); });
+carregaAgenda();
 if (!token()){ const pd = llegeixPendent(); if (pd){ S.idDni = pd.dni; S.idPas = true; S.rsT = pd.t + 60000; S.after = pd.after; S.afterTab = pd.afterTab; S.sub = {v:'ident'}; } }
 if (!token() && (S.soci || S.user)){ S.soci = null; S.user = null; S.rol = 'visitant'; S.entrat = false; }
 if (token()) motor('sessio', {token:token()}).then(r => {
   if (r.ok){ aplicaPerfil(r.perfil); if (!r.perfil) toast('No consta com a soci aquest any. Escriu-nos si és un error.'); render(); }
-  else if (r.codi === 'SESSIO_CADUCADA'){ desaToken(''); S.soci = null; S.user = null; S.rol = 'visitant'; S.entrat = false; S.sub = null; render(); toast('La sessió ha caducat. Torna a entrar amb el teu DNI.'); }
+  else if (r.codi === 'SESSIO_CADUCADA'){ desaToken(''); S.soci = null; S.user = null; S.rol = 'visitant'; S.entrat = false; S.sub = null; oblidaAgenda(); render(); toast('La sessió ha caducat. Torna a entrar amb el teu DNI.'); }
 });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 window.addEventListener('hashchange', () => { if (!S.keep) S.sub = null; S.keep = false; render(); window.scrollTo(0,0); });
