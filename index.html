@@ -15,9 +15,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#EEF2EF;--surf:#FFFFFF;--ink:#17211F;--mut:#56635F;--line:#D9E1DC;--pri:#0E5A4B;--pri-ink:#FFFFFF;--pri-soft:#DCEEE7;--pri-soft-ink:#0B4639;--ocre:#C9861E;--ocre-soft:#FBEED6;--ocre-ink:#6F4508;--red:#B23A2A;--red-soft:#F8E1DD;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1514;--surf:#18201E;--ink:#E7EDEB;--mut:#9DABA6;--line:#2B3633;--pri:#55B99F;--pri-ink:#05231C;--pri-soft:#173A31;--pri-soft-ink:#B9E6D8;--ocre:#E6AA4A;--ocre-soft:#3A2B10;--ocre-ink:#F3D49C;--red:#E57364;--red-soft:#3B1C17;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0F1514;--surf:#18201E;--ink:#E7EDEB;--mut:#9DABA6;--line:#2B3633;--pri:#55B99F;--pri-ink:#05231C;--pri-soft:#173A31;--pri-soft-ink:#B9E6D8;--ocre:#E6AA4A;--ocre-soft:#3A2B10;--ocre-ink:#F3D49C;--red:#E57364;--red-soft:#3B1C17;color-scheme:dark}
+:root{--bg:#EEF2EF;--surf:#FFFFFF;--ink:#17211F;--mut:#56635F;--line:#D9E1DC;--pri:#0E5A4B;--pri-ink:#FFFFFF;--pri-soft:#DCEEE7;--pri-soft-ink:#0B4639;--ocre:#C9861E;--ocre-soft:#FBEED6;--ocre-ink:#6F4508;--red:#B23A2A;--red-soft:#F8E1DD;--blu-soft:#E1ECF7;--blu-ink:#1B4C7A;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1514;--surf:#18201E;--ink:#E7EDEB;--mut:#9DABA6;--line:#2B3633;--pri:#55B99F;--pri-ink:#05231C;--pri-soft:#173A31;--pri-soft-ink:#B9E6D8;--ocre:#E6AA4A;--ocre-soft:#3A2B10;--ocre-ink:#F3D49C;--red:#E57364;--red-soft:#3B1C17;--blu-soft:#16283A;--blu-ink:#B7D3EE;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0F1514;--surf:#18201E;--ink:#E7EDEB;--mut:#9DABA6;--line:#2B3633;--pri:#55B99F;--pri-ink:#05231C;--pri-soft:#173A31;--pri-soft-ink:#B9E6D8;--ocre:#E6AA4A;--ocre-soft:#3A2B10;--ocre-ink:#F3D49C;--red:#E57364;--red-soft:#3B1C17;--blu-soft:#16283A;--blu-ink:#B7D3EE;color-scheme:dark}
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
@@ -60,7 +60,7 @@ input[type=text],input[type=email],input[type=tel],input[type=number],select{wid
 .seg small{display:block;font-weight:400;font-size:12px;color:var(--mut)}
 .row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.row:last-child{border-bottom:0}
 .stepper{display:flex;align-items:center;gap:14px}.stepper button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--ink);font-size:20px;cursor:pointer}
-.tag{display:inline-block;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--pri-soft);color:var(--pri-soft-ink)}.tag.o{background:var(--ocre-soft);color:var(--ocre-ink)}.tag.r{background:var(--red-soft);color:var(--red)}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--pri-soft);color:var(--pri-soft-ink)}.tag.o{background:var(--ocre-soft);color:var(--ocre-ink)}.tag.r{background:var(--red-soft);color:var(--red)}.tag.b{background:var(--blu-soft);color:var(--blu-ink)}.tag.g{background:var(--line);color:var(--ink)}
 .carnet{background:var(--pri);color:var(--pri-ink);border-radius:22px;padding:20px;position:relative;overflow:hidden}
 .carnet::after{content:"";position:absolute;right:-60px;top:-60px;width:180px;height:180px;border-radius:50%;border:28px solid rgba(255,255,255,.08)}
 .carnet .nm{font-family:"Bricolage Grotesque",sans-serif;font-size:30px;font-weight:700;line-height:1.05;margin:18px 0 4px}
@@ -109,18 +109,6 @@ textarea.fi{width:100%;margin-top:6px;padding:12px;border-radius:10px;border:1px
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 const QUOTA = 12;
-const EXTRA = {
-  neu:{pc:['#1F4E79','#E6F0FA'], info:[['Sortida','7 h, plaça de l’Assumpció'],['Tornada','Cap a les 19 h'],['Cal portar','Roba d’abric, guants i ulleres de sol'],['Forfet i lloguer','A part, a l’estació'],['Contacte','Jordi, 600 111 222']], agenda:[['7:00','Sortida en autocar'],['9:30','Arribada i esmorzar'],['10:30','Esquí o passeig amb raquetes'],['14:00','Dinar lliure'],['17:00','Tornada cap a Girona']]},
-  taller:{pc:['#A3302A','#FBE6E1'], info:[['Edats','De 4 a 10 anys'],['Material','Inclòs'],['Recollida','Un adult ha de venir a buscar l’infant'],['Contacte','Núria, 600 333 444']], agenda:[['17:00','Benvinguda'],['17:15','Manualitats de Nadal'],['18:30','Berenar'],['19:00','Recollida']]},
-  mercat:{pc:['#9A5F0C','#FFF2DA'], info:[['Mida de la parada','2 × 1 m'],['Cal portar','Taula i cadira'],['No es pot vendre','Menjar ni productes nous'],['Si plou','Es passa al diumenge següent'],['Contacte','Marta, 600 555 666']], agenda:[['8:00','Muntatge de parades'],['9:00','Obertura al públic'],['14:00','Tancament'],['14:30','Recollida i neteja']]},
-  calcots:{pc:['#2F5F10','#ECF5DF'], info:[['Menú','Calçots, carn a la brasa, postres i beguda'],['Opció vegetariana','Sí, cal indicar-ho'],['Cal portar','Pitet i ganes de festa'],['Contacte','Pere, 600 777 888']], agenda:[['12:00','Vermut'],['13:30','Calçots'],['15:00','Carn a la brasa'],['16:30','Postres i música']]}
-};
-const ACTS = [
-  {id:'neu', d:14, m:'des.', nom:'Sortida a la neu', lloc:'La Molina', cat:'Sortides', ps:25, pn:35, u:'plaça', places:50, ocup:38, desc:'Autocar des de la plaça de l’Assumpció a les 7 h. Inclou el viatge i l’esmorzar. Forfet a part.'},
-  {id:'taller', d:20, m:'des.', nom:'Taller de Nadal', lloc:'Centre cívic Pla de Palau', cat:'Infants', ps:5, pn:8, u:'infant', places:20, ocup:17, desc:'Manualitats de Nadal per a infants de 4 a 10 anys. Material inclòs.'},
-  {id:'mercat', d:25, m:'gen.', nom:'Mercat de segona mà', lloc:'Plaça del barri', cat:'Barri', ps:5, pn:10, u:'parada', places:40, ocup:22, desc:'Porta el que ja no facis servir. Cada parada és de 2 × 1 m. Muntatge a partir de les 8 h.'},
-  {id:'calcots', d:15, m:'febr.', nom:'Calçotada popular', lloc:'Parc de Domeny', cat:'Barri', ps:12, pn:18, u:'persona', places:120, ocup:41, desc:'Calçots, carn a la brasa, postres i beguda. Hi haurà opció vegetariana.'}
-];
 const CURSOS = [
   {id:'ioga', nom:'Ioga', cat:'Moviment', dia:'Dilluns i dimecres', h:'9:30 a 10:30', prof:'Clara', ps:60, pn:75, places:16, ocup:16},
   {id:'pilates', nom:'Pilates', cat:'Moviment', dia:'Dimarts i dijous', h:'19:00 a 20:00', prof:'Laura', ps:60, pn:75, places:14, ocup:11},
@@ -139,10 +127,9 @@ const AVISOS = [
   {c:'pintura', d:'2 nov.', t:'Dilluns comencem amb aquarel·la. Porteu pinzells fins.', de:'Toni, professor'}
 ];
 const curs = id => CURSOS.find(c => c.id === id);
-ACTS.forEach(a => Object.assign(a, EXTRA[a.id]));
 // ===== Connexió amb el motor d'accés (Apps Script del full de socis) =====
 const MOTOR = 'https://script.google.com/macros/s/AKfycbxNeEcaHhN8SjH7W2cjmJyPAxlmYY7vP-Ic8kJQ28GtfK09pbjvBpb2hJFMF_JVuxu2/exec';
-const PROVES = true; // versió de proves: activitats, cursos i pagaments encara són d'exemple
+const PROVES = true; // versió de proves: inscripcions, cursos i pagaments encara són d'exemple
 function motor(accio, dades){
   return fetch(MOTOR, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(Object.assign({accio}, dades || {}))})
     .then(r => r.json()).catch(() => ({ok:false, codi:'XARXA'}));
@@ -183,7 +170,16 @@ function botoInstal(estil){
 const S = {rol:'visitant', junta:false, soci:null, ins:[], sub:null, filtre:'Totes', pin:'', alta:{pag:'targeta', fam:[]}};
 const $ = s => document.querySelector(s);
 const eur = n => (Math.round(n*100)/100).toLocaleString('ca-ES',{minimumFractionDigits:n%1?2:0}) + ' €';
-const act = id => ACTS.find(a => a.id === id);
+// Activitats reals del motor (acció «activitats»). Les que ja han passat s'amaguen també aquí,
+// per si el mòbil té una còpia antiga.
+const acts = () => {
+  const l = (S.acts && S.acts.activitats) || [];
+  const avui = new Date(); avui.setHours(0, 0, 0, 0);
+  return l.filter(a => (a.fi || a.ini) >= avui.getTime());
+};
+const act = id => acts().find(a => a.codi === id) || null;
+const ACT_MAX_INICI = 4;
+const PALETA = [['#1F4E79','#E6F0FA'],['#A3302A','#FBE6E1'],['#9A5F0C','#FFF2DA'],['#2F5F10','#ECF5DF']];
 const esSoci = () => S.rol === 'soci';
 const preu = a => esSoci() ? a.ps : a.pn;
 
@@ -219,13 +215,60 @@ function navHTML(){
   if (S.junta) items.push(['junta', S.ag && S.ag.pendents ? `Junta · ${S.ag.pendents}` : 'Junta']);
   return items.map(([k,l]) => `<button class="${t===k?'on':''}" data-go="${k}" aria-current="${t===k?'page':'false'}">${IC[k]}${l}</button>`).join('');
 }
-function actCard(a){
-  const extra = esSoci() ? '<small>preu de soci</small>' : `<small>${eur(a.ps)} socis</small>`;
-  return `<button class="card act" data-det="${a.id}"><div class="date"><div class="d">${a.d}</div><div class="m">${a.m}</div></div><div><div class="n">${a.nom}</div><div class="s">${a.lloc}</div></div><div class="price">${eur(preu(a))}${extra}</div></button>`;
+function preuTxt(a){
+  const v = a.ent.map(e => esSoci() ? e.ps : e.pn), min = Math.min(...v), max = Math.max(...v);
+  if (max === 0) return 'gratuïta';
+  return min === max ? eur(min) : 'des de ' + eur(min);
 }
-function meves(){
-  if (!S.ins.length) return '';
-  return `<div class="sec">Les meves inscripcions</div><div class="card">${S.ins.map(i => `<div class="row"><div><b>${act(i.id).nom}</b><div class="muted">${i.q} × ${act(i.id).u}</div></div><span class="tag">Pagada</span></div>`).join('')}</div>`;
+// Etiqueta d'estat (especificació, apartat 5). L'estat el calcula el motor; el preu, l'app.
+function etiqueta(a){
+  switch (a.estat){
+    case 'LLIURE':   return ['Entrada lliure', ''];
+    case 'ABANS':    return [`Inscripcions a partir del ${diaMes(a.obre)}`, 'g'];
+    case 'TANCADES': return ['Inscripcions tancades', 'g'];
+    case 'COMPLET':  return ['Complet · llista d’espera', 'r'];
+    case 'POQUES':   return [`Últimes places · ${preuTxt(a)}`, 'o'];
+    default:         return [`Cal inscripció · ${preuTxt(a)}`, 'b'];
+  }
+}
+const diaMes = ms => { const d = new Date(ms); return `${d.getDate()} ${MESOS[d.getMonth()]}`; };
+const teHora = d => d.getHours() || d.getMinutes();
+const diaLlarg = d => d.toLocaleDateString('ca-ES', {day:'numeric', month:'long'});
+function dataHora(ms){ const d = new Date(ms); return diaLlarg(d) + (teHora(d) ? ', ' + horaTxt(d) : ''); }
+function quanTxt(a){
+  const d = new Date(a.ini), f = a.fi ? new Date(a.fi) : null;
+  if (f && f.toDateString() !== d.toDateString()) return `Del ${diaLlarg(d)} al ${diaLlarg(f)}`;
+  const dia = d.toLocaleDateString('ca-ES', {weekday:'long', day:'numeric', month:'long'});
+  if (a.horari) return `${dia}, ${a.horari}`;
+  if (!teHora(d)) return dia;
+  if (f && teHora(f)) return `${dia}, de ${horaTxt(d)} a ${horaTxt(f)}`;
+  return `${dia}, a ${d.getHours() === 1 ? 'la' : 'les'} ${horaTxt(d)}`;
+}
+function actCard(a){
+  const d = new Date(a.ini), [t, c] = etiqueta(a);
+  return `<button class="card act" data-det="${esc(a.codi)}"><div class="date"><div class="d">${d.getDate()}</div><div class="m">${MESOS[d.getMonth()]}</div></div><div style="min-width:0"><div class="n">${esc(a.nom)}</div>${a.lloc ? `<div class="s">${esc(a.lloc)}</div>` : ''}<span class="tag ${c}" style="margin-top:6px">${esc(t)}</span></div><span style="margin-left:auto;color:var(--mut);font-size:22px" aria-hidden="true">›</span></button>`;
+}
+function blocActs(l){
+  if (!S.acts) return `<div class="card"><p class="muted">${S.actErr ? 'Ara mateix no s’han pogut carregar les activitats. Torna-ho a provar d’aquí a una estona.' : 'Carregant les activitats…'}</p></div>`;
+  if (!l.length) return '<div class="card"><p class="muted">Ara mateix no hi ha activitats programades.</p></div>';
+  return l.map(actCard).join('');
+}
+// «Les meves inscripcions» torna al pas 3, quan les inscripcions es facin des de l'app.
+function meves(){ return ''; }
+// Llegeix les activitats del motor. Amb refresca = true (només junta) es salta la memòria cau de 5 minuts.
+function carregaActivitats(refresca){
+  if (S.actCarr) return null;
+  S.actCarr = true;
+  const p = refresca ? motor('juntaActivitatsRefresca', {token:token()}) : motor('activitats');
+  return p.then(r => {
+    S.actCarr = false;
+    if (r.ok){ S.acts = r; S.actErr = false; try { localStorage.setItem('avv-activitats', JSON.stringify(r)); } catch(e){} }
+    else if (!S.acts) S.actErr = true;
+    if (refresca) toast(r.ok ? 'Activitats actualitzades' : msgJ(r));
+    const s = S.sub;
+    if (s ? ['detall','info','agenda','inscriure'].includes(s.v) : ['inici','activitats'].includes(tab())) render();
+    return r;
+  });
 }
 
 /* ---------- Vistes ---------- */
@@ -247,8 +290,8 @@ function sumaDurada(base, n, u){
   d.setHours(23, 59, 59, 0);
   return d;
 }
-// Les activitats del Gestor entraran aquí directament (sense aprovació) quan el Gestor estigui connectat.
-// De moment les activitats de l'app són d'exemple i ja surten a «Agenda d'activitats».
+// Decisió de l'11/11/2026: les activitats NO surten a «Avisos i properes reunions»;
+// només a «Agenda d'activitats» (a sota a l'inici) i a la pestanya Activitats.
 function activitatsAgenda(){ return []; }
 function properes(){
   if (!S.ag) return [];
@@ -428,7 +471,7 @@ function vBenvinguda(){
   </div></div>`;
 }
 function vInici(){
-  let h = PROVES ? '<div class="card" style="margin-top:8px;background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink);font-size:14px"><b>Versió de proves.</b> L’entrada amb el DNI ja és real. Les activitats, els cursos i els pagaments encara són d’exemple.</div>' : '';
+  let h = PROVES ? '<div class="card" style="margin-top:8px;background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink);font-size:14px"><b>Versió de proves.</b> L’entrada amb el DNI, els avisos i les activitats ja són reals. Les inscripcions, els cursos i els pagaments encara són d’exemple.</div>' : '';
   h += botoInstal('margin-top:12px');
   h += agendaAvisos();
   let soci = '';
@@ -437,14 +480,18 @@ function vInici(){
   const ix = p => `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
   const ig = '<rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.5"/><path d="M16.5 7.5v.01"/>';
   h += `<div class="sec">La comunitat</div><a class="card act" href="https://chat.whatsapp.com/BkDqzP3cT74Hy7dNrKPrzE" target="_blank" rel="noopener" style="background:var(--pri-soft);border-color:var(--pri);text-decoration:none"><span class="mi" style="background:var(--pri);color:var(--pri-ink)">${ix('<path d="M4 20l1.3-3.9A8 8 0 1 1 8 19.1z"/><path d="M9 10c.5 2 2 3.5 4 4"/>')}</span><div><div class="n" style="color:var(--pri-soft-ink)">Comunitat de WhatsApp</div><div class="s">Uneix-te als avisos del barri</div></div><span style="margin-left:auto;color:var(--pri-soft-ink);font-size:22px">›</span></a><a class="card act" href="https://www.instagram.com/avplapalausantpau" target="_blank" rel="noopener" style="text-decoration:none"><span class="mi">${ix(ig)}</span><div><div class="n">Instagram</div><div class="s">@avplapalausantpau</div></div><span style="margin-left:auto;color:var(--mut);font-size:22px">›</span></a>`;
-  h += `<div class="sec">Agenda d’activitats</div>${ACTS.slice(0,3).map(actCard).join('')}<button class="link" data-go="activitats">Veure totes les activitats</button>`;
+  const la = acts();
+  h += `<div class="sec">Agenda d’activitats</div>${blocActs(la.slice(0, ACT_MAX_INICI))}${la.length > ACT_MAX_INICI ? `<button class="link" data-go="activitats">Veure totes les activitats (${la.length})</button>` : ''}`;
   h += meves();
   return h;
 }
 function vActivitats(){
-  const cats = ['Totes','Sortides','Infants','Barri'];
-  const l = ACTS.filter(a => S.filtre === 'Totes' || a.cat === S.filtre);
-  return `<h1 style="margin:6px 0 14px">Activitats</h1><div class="chips">${cats.map(c => `<button class="chip ${S.filtre===c?'on':''}" data-f="${c}">${c}</button>`).join('')}</div><div style="margin-top:14px">${l.map(actCard).join('')}</div>${meves()}`;
+  const tot = acts();
+  const cats = ['Totes'].concat([...new Set(tot.map(a => a.cat).filter(Boolean))].sort((x, y) => x.localeCompare(y, 'ca')));
+  if (!cats.includes(S.filtre)) S.filtre = 'Totes';
+  const l = tot.filter(a => S.filtre === 'Totes' || a.cat === S.filtre);
+  const chips = cats.length > 1 ? `<div class="chips">${cats.map(c => `<button class="chip ${S.filtre===c?'on':''}" data-f="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : '';
+  return `<h1 style="margin:6px 0 14px">Activitats</h1>${chips}<div style="margin-top:14px">${blocActs(l)}</div>${meves()}`;
 }
 const MI = {
   ins:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>',
@@ -453,21 +500,44 @@ const MI = {
   desp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>'
 };
 function cartell(a){
-  const [c,bg] = a.pc;
-  return `<div class="cartell" style="background:${bg};color:${c}" role="img" aria-label="Cartell de ${a.nom}"><svg class="ct-dec" viewBox="0 0 200 200" aria-hidden="true"><circle cx="150" cy="50" r="70" fill="${c}" opacity=".14"/><circle cx="150" cy="50" r="34" fill="${c}" opacity=".22"/><circle cx="40" cy="150" r="22" fill="${c}" opacity=".12"/></svg><div class="ct-top">AVV Pla de Palau – Sant Pau</div><div class="ct-t">${a.nom}</div><div class="ct-d">${a.d} ${a.m}</div><div class="ct-l">${a.lloc}</div></div><p class="muted" style="font-size:12px;margin-top:6px">Cartell d’exemple. Aquí anirà la imatge que fa la sòcia per a cada activitat.</p>`;
+  let hh = 0; for (const ch of a.codi) hh = (hh * 31 + ch.charCodeAt(0)) >>> 0;
+  const [c,bg] = PALETA[hh % PALETA.length], d = new Date(a.ini);
+  return `<div class="cartell" style="background:${bg};color:${c}" role="img" aria-label="Cartell de ${esc(a.nom)}"><svg class="ct-dec" viewBox="0 0 200 200" aria-hidden="true"><circle cx="150" cy="50" r="70" fill="${c}" opacity=".14"/><circle cx="150" cy="50" r="34" fill="${c}" opacity=".22"/><circle cx="40" cy="150" r="22" fill="${c}" opacity=".12"/></svg><div class="ct-top">AVV Pla de Palau – Sant Pau</div><div class="ct-t">${esc(a.nom)}</div><div class="ct-d">${d.getDate()} ${MESOS[d.getMonth()]}</div><div class="ct-l">${esc(a.lloc)}</div></div><p class="muted" style="font-size:12px;margin-top:6px">Cartell d’exemple. Aquí anirà la imatge que fa la sòcia per a cada activitat.</p>`;
 }
 function vDetall(id){
-  const a = act(id), lliures = a.places - a.ocup;
+  const a = act(id), [et] = etiqueta(a);
   const t = (k, ic, n, s) => `<button class="tile" data-sa="${k}"><span class="mi">${ic}</span><span><b>${n}</b><span class="muted" style="display:block;font-size:13px;line-height:1.3;margin-top:2px">${s}</span></span></button>`;
-  return `${cartell(a)}<div class="tiles" style="margin-top:14px">${t('inscriure', MI.ins, 'Inscripcions', lliures + ' places lliures')}${t('info', MI.info, 'Informació', 'Lloc, preus i què cal portar')}${t('agenda', MI.agenda, 'Agenda del dia', a.agenda.length + ' moments')}${t('despAct', MI.desp, 'Despeses', esSoci() ? 'Tiquets i factures' : 'Només per a socis')}</div>`;
+  let tiles = '';
+  if (a.ins){
+    const lliures = a.lliures != null && ['OBERTES','POQUES'].includes(a.estat) ? `${a.lliures} ${a.lliures === 1 ? 'plaça lliure' : 'places lliures'}` : et;
+    tiles += t('inscriure', MI.ins, 'Inscripcions', esc(lliures));
+  }
+  tiles += t('info', MI.info, 'Informació', a.ins ? 'Lloc, preus i què cal saber' : 'Lloc, horari i què cal saber');
+  if (a.agenda.length) tiles += t('agenda', MI.agenda, 'Agenda del dia', a.agenda.length === 1 ? '1 moment' : a.agenda.length + ' moments');
+  tiles += t('despAct', MI.desp, 'Despeses', esSoci() ? 'Tiquets i factures' : 'Només per a socis');
+  return `${cartell(a)}<div class="tiles" style="margin-top:14px">${tiles}</div>`;
+}
+const filaIA = (k, v) => k
+  ? `<div class="row" style="gap:16px"><span class="muted">${esc(k)}</span><b style="text-align:right">${esc(v)}</b></div>`
+  : `<div class="row"><span>${esc(v)}</span></div>`;
+function preusFiles(a){
+  const f = n => n ? eur(n) : 'gratuït';
+  return a.ent.map(e => {
+    const nom = a.ent.length > 1 ? e.t : 'Preu';
+    return filaIA(nom, e.ps === e.pn ? (e.pn ? eur(e.pn) : 'Gratuït') : `Socis: ${f(e.ps)} · no socis: ${f(e.pn)}`);
+  }).join('');
+}
+function capAct(a){
+  return `<h1 style="margin:6px 0 4px">${esc(a.nom)}</h1><p class="muted">${esc(quanTxt(a))}${a.lloc ? ' · ' + esc(a.lloc) : ''}</p>`;
 }
 function vInfo(id){
   const a = act(id);
-  return `<h1 style="margin:6px 0 4px">${a.nom}</h1><p class="muted">${a.d} ${a.m}, ${a.lloc}</p><p style="margin:14px 0">${a.desc}</p><div class="card">${a.info.map(([k,v]) => `<div class="row" style="gap:16px"><span class="muted">${k}</span><b style="text-align:right">${v}</b></div>`).join('')}<div class="row"><span class="muted">Preu soci</span><b>${eur(a.ps)} / ${a.u}</b></div><div class="row"><span class="muted">Preu no soci</span><b>${eur(a.pn)} / ${a.u}</b></div></div>`;
+  const files = a.info.map(([k, v]) => filaIA(k, v)).join('') + (a.ins ? preusFiles(a) : '');
+  return `${capAct(a)}${a.desc ? `<p style="margin:14px 0;white-space:pre-line">${esc(a.desc)}</p>` : ''}${files ? `<div class="card" style="margin-top:14px">${files}</div>` : ''}`;
 }
 function vAgenda(id){
   const a = act(id);
-  return `<h1 style="margin:6px 0 4px">Agenda del dia</h1><p class="muted">${a.nom}, ${a.d} ${a.m}</p><div class="tline">${a.agenda.map(([h,t]) => `<div class="tl-i"><div class="tl-h">${h}</div><div class="tl-t">${t}</div></div>`).join('')}</div>`;
+  return `<h1 style="margin:6px 0 4px">Agenda del dia</h1><p class="muted">${esc(a.nom)} · ${esc(quanTxt(a))}</p><div class="tline">${a.agenda.map(([h,t]) => `<div class="tl-i"><div class="tl-h">${esc(h)}</div><div class="tl-t">${esc(t)}</div></div>`).join('')}</div>`;
 }
 function vDespAct(id){
   const a = act(id);
@@ -480,14 +550,16 @@ function vDespAct(id){
   <label class="f">Foto del tiquet o factura<input type="file" accept="image/*,application/pdf" style="margin-top:8px;font-size:14px"></label>
   <button class="btn full" style="margin-top:20px" data-a="desaAct">Enviar al tresorer</button>`;
 }
+// Pas 1: només informació. Inscriure's des de l'app arriba al pas 3.
 function vInscriure(id){
-  const a = act(id), lliures = a.places - a.ocup;
-  S.q = S.q || 1;
-  return `<span class="tag o">${a.cat}</span><h1 style="margin:10px 0 6px">${a.nom}</h1><p class="muted">${a.d} ${a.m}, ${a.lloc}</p><p style="margin:16px 0">${a.desc}</p>
-  <div class="card"><div class="row"><span>Preu soci</span><b style="color:${esSoci()?'var(--pri)':'inherit'}">${eur(a.ps)} / ${a.u}</b></div><div class="row"><span>Preu no soci</span><b style="color:${esSoci()?'var(--mut)':'inherit'}">${eur(a.pn)} / ${a.u}</b></div><div class="row"><span>Places lliures</span><b>${lliures}</b></div></div>
-  ${!esSoci() ? `<p class="muted" style="margin-top:10px">Si ets soci, <button class="link" data-a="ident" style="padding:0">identifica’t</button> i pagaràs ${eur(a.ps)}.</p>` : ''}
-  <div class="row" style="margin-top:14px"><span><b>Quantes ${a.u === 'persona' ? 'persones' : a.u === 'parada' ? 'parades' : a.u === 'infant' ? 'places' : 'places'}?</b></span><div class="stepper"><button data-a="menys" aria-label="Menys">−</button><b id="q">${S.q}</b><button data-a="mes" aria-label="Més">+</button></div></div>
-  <button class="btn full" style="margin-top:18px" data-a="ins">Inscriure’m per ${eur(preu(a)*S.q)}</button>`;
+  const a = act(id), [et, c] = etiqueta(a);
+  let files = preusFiles(a);
+  if (a.lliures != null) files += filaIA('Places lliures', `${a.lliures} de ${a.afor}`);
+  if (a.obre) files += filaIA('Obertura de les inscripcions', dataHora(a.obre));
+  if (a.tanca) files += filaIA('Tancament de les inscripcions', dataHora(a.tanca));
+  return `${a.cat ? `<span class="tag g">${esc(a.cat)}</span>` : ''}${capAct(a)}<p style="margin-top:12px"><span class="tag ${c}">${esc(et)}</span></p>
+  <div class="card" style="margin-top:14px">${files}</div>
+  <div class="card" style="margin-top:16px;background:var(--pri-soft);border-color:var(--pri);color:var(--pri-soft-ink)"><b>Aviat et podràs inscriure des de l’app.</b></div>`;
 }
 function vForm(id){
   const a = act(id), s = S.soci || {};
@@ -655,19 +727,23 @@ function vJunta(){
   <button class="tile" data-s="inscrits"><span class="ic">📋</span><b>Inscrits per activitat</b></button>
   <button class="tile" data-s="socis"><span class="ic">👥</span><b>Socis i remeses</b></button>
   <button class="tile" data-s="informes"><span class="ic">📄</span><b>Informes</b></button></div>
-  <button class="btn ghost full" style="margin-top:14px" data-a="nova">Crear una activitat nova</button>`;
+  <button class="btn ghost full" style="margin-top:14px" data-a="nova">Crear una activitat nova</button>
+  <button class="btn ghost full" style="margin-top:10px" data-a="refrescaAct">Tornar a llegir les activitats ara</button><p class="muted" style="font-size:13px;margin-top:6px">L’app llegeix el full d’activitats cada 5 minuts. Si acabes de canviar-hi alguna cosa i encara no surt, prem aquest botó.</p>`;
 }
 function vDespesa(){
   return `<h2>Apuntar un moviment</h2><div class="seg" style="margin-top:12px"><button class="${S.mov!=='ing'?'on':''}" data-mov="desp">Despesa</button><button class="${S.mov==='ing'?'on':''}" data-mov="ing">Ingrés</button></div>
   <label class="f">Import (€)<input type="number" id="di" inputmode="decimal" step="0.01" min="0"></label><div class="err" id="e-di"></div>
   <label class="f">Concepte<input type="text" id="dc" placeholder="Compra de material per al taller"></label><div class="err" id="e-dc"></div>
-  <label class="f">Activitat<select id="da">${ACTS.map(a => `<option>${a.nom}</option>`).join('')}<option>Despeses generals</option></select></label>
+  <label class="f">Activitat<select id="da">${acts().map(a => `<option>${esc(a.nom)}</option>`).join('')}<option>Despeses generals</option></select></label>
   ${S.mov!=='ing' ? `<label class="f">Qui l’ha pagat?<select id="dq"><option>L’associació</option><option>Un membre (cal reemborsar)</option></select></label>` : ''}
   <label class="f">Foto del tiquet o factura<input type="file" accept="image/*,application/pdf" style="margin-top:8px;font-size:14px"></label>
   <button class="btn full" style="margin-top:20px" data-a="desaMov">Desar</button>`;
 }
 function vInscrits(){
-  return `<h2>Inscrits per activitat</h2><div style="margin-top:12px">${ACTS.map(a => { const p = Math.round(a.ocup/a.places*100); return `<div class="card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between"><b>${a.nom}</b><span class="muted">${a.ocup} de ${a.places}</span></div><div class="bar"><i style="width:${p}%"></i></div><div style="display:flex;justify-content:space-between;margin-top:8px;font-size:14px"><span class="muted">Recaptat</span><b>${eur(a.ocup*(a.ps+a.pn)/2)}</b></div></div>`; }).join('')}</div>`;
+  const l = acts().filter(a => a.ins);
+  const fila = a => { const p = a.afor ? Math.min(100, Math.round(a.ocup / a.afor * 100)) : 0;
+    return `<div class="card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;gap:12px"><b>${esc(a.nom)}</b><span class="muted" style="white-space:nowrap">${a.ocup}${a.afor ? ' de ' + a.afor : ''}</span></div>${a.afor ? `<div class="bar"><i style="width:${p}%"></i></div>` : ''}</div>`; };
+  return `<h2>Inscrits per activitat</h2><p class="muted" style="margin-top:4px">Places ocupades: inscripcions confirmades i pendents de pagament.</p><div style="margin-top:12px">${l.length ? l.map(fila).join('') : '<div class="card"><p class="muted">No hi ha cap activitat amb inscripció.</p></div>'}</div>`;
 }
 function vSocis(){
   return `<h2>Socis i remeses</h2><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px"><div class="metric"><div class="v">186</div><div class="l">Socis actius 2026</div></div><div class="metric"><div class="v">12</div><div class="l">Pendents de cobrament</div></div></div>
@@ -689,6 +765,7 @@ function render(){
   nav.style.display = S.entrat ? '' : 'none';
   const t = tab();
   if (t === 'junta' && !S.junta && S.sub) S.sub = null;
+  if (S.sub && ['detall','info','agenda','inscriure','despAct','form'].includes(S.sub.v) && !act(S.sub.id)) S.sub = null;
   $('#top').innerHTML = header();
   $('#nav').innerHTML = navHTML();
   const m = $('#main'), s = S.sub;
@@ -851,6 +928,12 @@ document.addEventListener('click', e => {
         S.agAmaga = null; S.pend = null; S.agCarr = false; carregaAgenda(); render();
       });
       break; }
+    case 'refrescaAct': {
+      const p = carregaActivitats(true);
+      if (!p){ toast('Ja s’estan llegint les activitats. Espera uns segons.'); break; }
+      b.disabled = true; b.textContent = 'Llegint el full…';
+      p.then(() => { if (tab() === 'junta' && !S.sub) render(); });
+      break; }
     case 'refrescaCal': S.pend = null; S.pendErr = null; S.pendRef = true; render(); break;
     case 'reintentaJ': S.avJErr = null; S.pendErr = null; render(); break;
     case 'nouAvis': S.avEd = null; S.avU = 'setmanes'; sub({v:'avisForm', up:{v:'avisosJ'}}); break;
@@ -898,6 +981,9 @@ function oblidaAgenda(){ S.ag = null; try { localStorage.removeItem('avv-agenda'
 try { const c = JSON.parse(localStorage.getItem('avv-agenda') || 'null'); if (c && c.ok && (token() || c.nivell === 'convidat')) S.ag = c; } catch(e){}
 document.addEventListener('change', e => { if (e.target.id === 'vn') actCad(); });
 carregaAgenda();
+try { const c = JSON.parse(localStorage.getItem('avv-activitats') || 'null'); if (c && c.ok) S.acts = c; } catch(e){}
+carregaActivitats();
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S.acts && Date.now() - S.acts.generat > 5 * 60000) carregaActivitats(); });
 if (!token()){ const pd = llegeixPendent(); if (pd){ S.idDni = pd.dni; S.idPas = true; S.rsT = pd.t + 60000; S.after = pd.after; S.afterTab = pd.afterTab; S.sub = {v:'ident'}; } }
 if (!token() && (S.soci || S.user)){ S.soci = null; S.user = null; S.rol = 'visitant'; S.entrat = false; }
 if (token()) motor('sessio', {token:token()}).then(r => {
