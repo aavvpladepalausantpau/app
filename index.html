@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AV Sant Pau</title>
+<meta name="theme-color" content="#0E5A4B">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icona-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AV Sant Pau">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF2EF;--surf:#FFFFFF;--ink:#17211F;--mut:#56635F;--line:#D9E1DC;--pri:#0E5A4B;--pri-ink:#FFFFFF;--pri-soft:#DCEEE7;--pri-soft-ink:#0B4639;--ocre:#C9861E;--ocre-soft:#FBEED6;--ocre-ink:#6F4508;--red:#B23A2A;--red-soft:#F8E1DD;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1514;--surf:#18201E;--ink:#E7EDEB;--mut:#9DABA6;--line:#2B3633;--pri:#55B99F;--pri-ink:#05231C;--pri-soft:#173A31;--pri-soft-ink:#B9E6D8;--ocre:#E6AA4A;--ocre-soft:#3A2B10;--ocre-ink:#F3D49C;--red:#E57364;--red-soft:#3B1C17;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0F1514;--surf:#18201E;--ink:#E7EDEB;--mut:#9DABA6;--line:#2B3633;--pri:#55B99F;--pri-ink:#05231C;--pri-soft:#173A31;--pri-soft-ink:#B9E6D8;--ocre:#E6AA4A;--ocre-soft:#3A2B10;--ocre-ink:#F3D49C;--red:#E57364;--red-soft:#3B1C17;color-scheme:dark}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.app{max-width:440px;margin:0 auto;min-height:100vh;padding-bottom:96px}
+h1,h2,h3,.disp{font-family:"Bricolage Grotesque",Figtree,system-ui,sans-serif;font-weight:700;letter-spacing:-.01em;margin:0}
+h1{font-size:28px;line-height:1.1}h2{font-size:21px;line-height:1.2}h3{font-size:17px}
+p{margin:0}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:14px 18px 10px;display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:12px;background:var(--pri);color:var(--pri-ink);display:grid;place-items:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:15px;flex:none}
+.top .t1{font-weight:600;font-size:15px;line-height:1.2}.top .t2{font-size:13px;color:var(--mut)}
+.back{border:0;background:var(--surf);width:42px;height:42px;border-radius:12px;color:var(--ink);font-size:20px;cursor:pointer;flex:none}
+main{padding:4px 18px 0}
+.sec{margin:22px 0 10px;font-size:14px;font-weight:600;color:var(--mut)}
+.card{background:var(--surf);border-radius:16px;padding:14px;border:1px solid var(--line)}
+.act{display:flex;gap:14px;align-items:center;width:100%;text-align:left;cursor:pointer;margin-bottom:10px;font:inherit;color:inherit}
+.date{width:52px;flex:none;text-align:center;border-right:1px solid var(--line);padding-right:12px}
+.date .d{font-family:"Bricolage Grotesque",sans-serif;font-size:26px;font-weight:700;line-height:1}.date .m{font-size:12px;color:var(--mut)}
+.act .n{font-weight:600}.act .s{font-size:13px;color:var(--mut)}
+.price{margin-left:auto;text-align:right;font-weight:600;white-space:nowrap}.price small{display:block;font-weight:500;font-size:12px;color:var(--pri)}
+.hero{background:var(--ocre-soft);color:var(--ocre-ink);border-radius:18px;padding:18px;margin-top:6px}
+.hero h2{color:var(--ocre-ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:13px 18px;font:600 16px Figtree,system-ui,sans-serif;cursor:pointer;background:var(--pri);color:var(--pri-ink);min-height:48px}
+.btn.full{width:100%}.btn.ghost{background:transparent;color:var(--pri);border:1.5px solid var(--pri)}.btn.ocre{background:var(--ocre);color:#2B1A02}
+.link{background:none;border:0;color:var(--pri);font:600 15px Figtree,sans-serif;padding:8px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--ocre);outline-offset:2px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.chip{border:1px solid var(--line);background:var(--surf);color:var(--ink);border-radius:999px;padding:7px 14px;font:500 14px Figtree,sans-serif;cursor:pointer;white-space:nowrap}
+.chip.on{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
+label.f{display:block;margin:14px 0 0;font-size:14px;font-weight:600}
+input[type=text],input[type=email],input[type=tel],input[type=number],select{width:100%;margin-top:6px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--ink);font:16px Figtree,sans-serif}
+.err{color:var(--red);font-size:13px;margin-top:4px;min-height:0}
+.chk{display:flex;gap:10px;align-items:flex-start;margin-top:16px;font-size:14px}.chk input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--pri)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.seg button{border:1.5px solid var(--line);background:var(--surf);color:var(--ink);border-radius:12px;padding:12px;font:600 15px Figtree,sans-serif;cursor:pointer;text-align:left}
+.seg button.on{border-color:var(--pri);background:var(--pri-soft);color:var(--pri-soft-ink)}
+.seg small{display:block;font-weight:400;font-size:12px;color:var(--mut)}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.row:last-child{border-bottom:0}
+.stepper{display:flex;align-items:center;gap:14px}.stepper button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--ink);font-size:20px;cursor:pointer}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--pri-soft);color:var(--pri-soft-ink)}.tag.o{background:var(--ocre-soft);color:var(--ocre-ink)}.tag.r{background:var(--red-soft);color:var(--red)}
+.carnet{background:var(--pri);color:var(--pri-ink);border-radius:22px;padding:20px;position:relative;overflow:hidden}
+.carnet::after{content:"";position:absolute;right:-60px;top:-60px;width:180px;height:180px;border-radius:50%;border:28px solid rgba(255,255,255,.08)}
+.carnet .nm{font-family:"Bricolage Grotesque",sans-serif;font-size:30px;font-weight:700;line-height:1.05;margin:18px 0 4px}
+.carnet .qr{background:#fff;border-radius:10px;padding:6px;width:96px;height:96px;flex:none;margin-left:10px}
+.carnet .nm{overflow-wrap:anywhere}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--surf);border:1px solid var(--line);border-radius:16px;padding:16px;text-align:left;cursor:pointer;font:inherit;color:inherit;min-height:104px;display:flex;flex-direction:column;justify-content:space-between}
+.tile .ic{font-size:24px}.tile b{font-weight:600}
+.metric{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:12px}.metric .v{font-family:"Bricolage Grotesque",sans-serif;font-size:28px;font-weight:700}.metric .l{font-size:13px;color:var(--mut)}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--pri)}
+.pin{display:flex;gap:12px;justify-content:center;margin:20px 0}.pin span{width:16px;height:16px;border-radius:50%;border:2px solid var(--pri)}.pin span.f{background:var(--pri)}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:280px;margin:0 auto}.pad button{height:58px;border-radius:14px;border:1px solid var(--line);background:var(--surf);color:var(--ink);font:600 22px Figtree,sans-serif;cursor:pointer}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surf);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav .in{max-width:440px;margin:0 auto;display:grid;grid-auto-flow:column;grid-auto-columns:1fr}
+nav button{background:none;border:0;color:var(--mut);font:500 12px Figtree,sans-serif;padding:10px 0 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button svg{width:24px;height:24px}nav button.on{color:var(--pri);font-weight:600}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-size:15px;z-index:20;max-width:90%;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+.sumup{border:1px dashed var(--line);border-radius:16px;padding:16px;background:var(--surf)}
+.ok{width:72px;height:72px;border-radius:50%;background:var(--pri-soft);color:var(--pri);display:grid;place-items:center;margin:30px auto 16px;font-size:36px}
+.muted{color:var(--mut);font-size:14px}
+.demo{font-size:12px;color:var(--mut);text-align:center;margin:26px 0 8px}
+.cartell{position:relative;aspect-ratio:4/5;border-radius:18px;overflow:hidden;padding:24px;display:flex;flex-direction:column;justify-content:flex-end}
+.ct-dec{position:absolute;inset:0;width:100%;height:100%}
+.ct-top{position:absolute;top:22px;left:24px;font-size:13px;font-weight:600}
+.ct-t{position:relative;font-family:"Bricolage Grotesque",sans-serif;font-size:46px;line-height:.95;font-weight:700;letter-spacing:-.02em}
+.ct-d{position:relative;font-family:"Bricolage Grotesque",sans-serif;font-size:24px;font-weight:700;margin-top:14px}
+.ct-l{position:relative;font-size:15px;font-weight:500}
+.mi{width:42px;height:42px;border-radius:12px;background:var(--pri-soft);color:var(--pri);display:grid;place-items:center}.mi svg{width:24px;height:24px}
+.tline{margin-top:18px;border-left:2px solid var(--line);margin-left:6px}
+.tl-i{position:relative;padding:0 0 22px 22px}.tl-i::before{content:"";position:absolute;left:-7px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--pri)}
+.tl-h{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:20px;line-height:1.2}.tl-t{color:var(--mut)}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top" id="top"></header>
+  <main id="main"></main>
+</div>
+<nav><div class="in" id="nav"></div></nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+const QUOTA = 12;
+const EXTRA = {
+  neu:{pc:['#1F4E79','#E6F0FA'], info:[['Sortida','7 h, plaça de l’Assumpció'],['Tornada','Cap a les 19 h'],['Cal portar','Roba d’abric, guants i ulleres de sol'],['Forfet i lloguer','A part, a l’estació'],['Contacte','Jordi, 600 111 222']], agenda:[['7:00','Sortida en autocar'],['9:30','Arribada i esmorzar'],['10:30','Esquí o passeig amb raquetes'],['14:00','Dinar lliure'],['17:00','Tornada cap a Girona']]},
+  taller:{pc:['#A3302A','#FBE6E1'], info:[['Edats','De 4 a 10 anys'],['Material','Inclòs'],['Recollida','Un adult ha de venir a buscar l’infant'],['Contacte','Núria, 600 333 444']], agenda:[['17:00','Benvinguda'],['17:15','Manualitats de Nadal'],['18:30','Berenar'],['19:00','Recollida']]},
+  mercat:{pc:['#9A5F0C','#FFF2DA'], info:[['Mida de la parada','2 × 1 m'],['Cal portar','Taula i cadira'],['No es pot vendre','Menjar ni productes nous'],['Si plou','Es passa al diumenge següent'],['Contacte','Marta, 600 555 666']], agenda:[['8:00','Muntatge de parades'],['9:00','Obertura al públic'],['14:00','Tancament'],['14:30','Recollida i neteja']]},
+  calcots:{pc:['#2F5F10','#ECF5DF'], info:[['Menú','Calçots, carn a la brasa, postres i beguda'],['Opció vegetariana','Sí, cal indicar-ho'],['Cal portar','Pitet i ganes de festa'],['Contacte','Pere, 600 777 888']], agenda:[['12:00','Vermut'],['13:30','Calçots'],['15:00','Carn a la brasa'],['16:30','Postres i música']]}
+};
+const ACTS = [
+  {id:'neu', d:14, m:'des.', nom:'Sortida a la neu', lloc:'La Molina', cat:'Sortides', ps:25, pn:35, u:'plaça', places:50, ocup:38, desc:'Autocar des de la plaça de l’Assumpció a les 7 h. Inclou el viatge i l’esmorzar. Forfet a part.'},
+  {id:'taller', d:20, m:'des.', nom:'Taller de Nadal', lloc:'Centre cívic Pla de Palau', cat:'Infants', ps:5, pn:8, u:'infant', places:20, ocup:17, desc:'Manualitats de Nadal per a infants de 4 a 10 anys. Material inclòs.'},
+  {id:'mercat', d:25, m:'gen.', nom:'Mercat de segona mà', lloc:'Plaça del barri', cat:'Barri', ps:5, pn:10, u:'parada', places:40, ocup:22, desc:'Porta el que ja no facis servir. Cada parada és de 2 × 1 m. Muntatge a partir de les 8 h.'},
+  {id:'calcots', d:15, m:'febr.', nom:'Calçotada popular', lloc:'Parc de Domeny', cat:'Barri', ps:12, pn:18, u:'persona', places:120, ocup:41, desc:'Calçots, carn a la brasa, postres i beguda. Hi haurà opció vegetariana.'}
+];
+const CURSOS = [
+  {id:'ioga', nom:'Ioga', cat:'Moviment', dia:'Dilluns i dimecres', h:'9:30 a 10:30', prof:'Clara', ps:60, pn:75, places:16, ocup:16},
+  {id:'pilates', nom:'Pilates', cat:'Moviment', dia:'Dimarts i dijous', h:'19:00 a 20:00', prof:'Laura', ps:60, pn:75, places:14, ocup:11},
+  {id:'taitxi', nom:'Tai-txi', cat:'Moviment', dia:'Divendres', h:'10:00 a 11:00', prof:'Joan', ps:35, pn:45, places:20, ocup:9},
+  {id:'angles', nom:'Anglès conversa', cat:'Aprendre', dia:'Dimecres', h:'18:00 a 19:30', prof:'Sarah', ps:50, pn:65, places:12, ocup:12},
+  {id:'info', nom:'Informàtica i mòbil', cat:'Aprendre', dia:'Dijous', h:'11:00 a 12:30', prof:'Pere', ps:30, pn:40, places:10, ocup:6},
+  {id:'costura', nom:'Costura', cat:'Creativitat', dia:'Dimarts', h:'17:00 a 19:00', prof:'Rosa', ps:45, pn:60, places:12, ocup:8},
+  {id:'pintura', nom:'Pintura i dibuix', cat:'Creativitat', dia:'Dilluns', h:'17:30 a 19:30', prof:'Toni', ps:45, pn:60, places:12, ocup:10}
+];
+const ORG = {ioga:'Montse', pilates:'Montse', taitxi:'Jordi', angles:'Núria', info:'Pere', costura:'Rosa', pintura:'Anna'};
+CURSOS.forEach(c => c.org = ORG[c.id]);
+const AVISOS = [
+  {c:'ioga', d:'5 nov.', t:'Dilluns 8 de desembre no hi ha classe perquè és festiu.', de:'Montse, organitzadora'},
+  {c:'costura', d:'4 nov.', t:'Per a la propera classe porteu una peça de roba per arreglar.', de:'Rosa, professora'},
+  {c:'angles', d:'3 nov.', t:'La classe d’aquesta setmana es fa a la sala 2.', de:'Sarah, professora'},
+  {c:'pintura', d:'2 nov.', t:'Dilluns comencem amb aquarel·la. Porteu pinzells fins.', de:'Toni, professor'}
+];
+const curs = id => CURSOS.find(c => c.id === id);
+ACTS.forEach(a => Object.assign(a, EXTRA[a.id]));
+// ===== Connexió amb el motor d'accés (Apps Script del full de socis) =====
+const MOTOR = 'https://script.google.com/macros/s/AKfycbz7VuXF5XEfaOdJBRAQnbq6vU1RUWi2p4FsVaG1E7vy2NYq-nq-aLV966t-TZeraG2y/exec';
+const PROVES = true; // versió de proves: activitats, cursos i pagaments encara són d'exemple
+function motor(accio, dades){
+  return fetch(MOTOR, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(Object.assign({accio}, dades || {}))})
+    .then(r => r.json()).catch(() => ({ok:false, codi:'XARXA'}));
+}
+function token(){ try { return localStorage.getItem('avv-token') || ''; } catch(e){ return S._tk || ''; } }
+function desaToken(t){ try { if (t) localStorage.setItem('avv-token', t); else localStorage.removeItem('avv-token'); } catch(e){ S._tk = t; } }
+const MSG = {XARXA:'No hi ha connexió. Torna-ho a provar.', SERVEI:'Ara mateix el servei no respon. Torna-ho a provar d’aquí a una estona.', BLOQUEJAT:'Has fet massa intents. Torna-ho a provar d’aquí a 15 minuts.', DNI_FORMAT:'Aquest DNI o NIE no és correcte. Revisa els números i la lletra.', CADUCAT:'Aquest codi ha caducat. Demana’n un de nou.', ESGOTAT:'Has esgotat els intents d’aquest codi. Demana’n un de nou.', FORMAT:'El codi té 6 xifres. Copia’l tal com surt al correu.'};
+function aplicaPerfil(p, dni){
+  if (!p){ S.soci = null; S.rol = 'visitant'; S.user = null; return; }
+  const nom = [p.nom, p.cognoms].filter(Boolean).join(' ');
+  S.soci = {nom, dni: dni || (S.soci && S.soci.dni) || '', email:p.email || '', tel:'', num:p.num, estat: p.quota === 'pagada' ? 'pagada' : 'pendent'};
+  S.rol = 'soci';
+  S.user = {nom, cursos:[], escriu:{}, junta: /junta|tresor|presid|secret/i.test(p.rol || '')};
+  if (p.privacitat) marcaPriv();
+}
+const S = {rol:'visitant', junta:false, soci:null, ins:[], sub:null, filtre:'Totes', pin:'', alta:{pag:'targeta', fam:[]}};
+const $ = s => document.querySelector(s);
+const eur = n => (Math.round(n*100)/100).toLocaleString('ca-ES',{minimumFractionDigits:n%1?2:0}) + ' €';
+const act = id => ACTS.find(a => a.id === id);
+const esSoci = () => S.rol === 'soci';
+const preu = a => esSoci() ? a.ps : a.pn;
+
+const IC = {
+  inici:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/></svg>',
+  activitats:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>',
+  soci:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4M15 10h3M15 13h3"/></svg>',
+  cursos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 015.5 4H11v16H5.5A1.5 1.5 0 014 18.5z"/><path d="M20 5.5A1.5 1.5 0 0018.5 4H13v16h5.5a1.5 1.5 0 001.5-1.5z"/></svg>',
+  junta:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>'
+};
+
+function tab(){ const h = location.hash.slice(1); return ['inici','activitats','cursos','soci','junta'].includes(h) ? h : 'inici'; }
+function go(t, sub){ S.sub = sub || null; if (location.hash.slice(1) !== t){ S.keep = true; location.hash = t; } else render(); window.scrollTo(0,0); }
+function sub(s){ S.sub = s; render(); window.scrollTo(0,0); }
+function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 2600); }
+
+function header(){
+  const back = S.sub ? '<button class="back" data-a="back" aria-label="Tornar">‹</button>' : '<div class="logo" aria-hidden="true">PP</div>';
+  const rols = [];
+  if (S.user && S.user.junta) rols.push('Junta');
+  if (S.user) Object.values(S.user.escriu || {}).forEach(r => { if (!rols.includes(r)) rols.push(r); });
+  if (esSoci()) rols.push('Soci'); else if (S.user && S.user.cursos && S.user.cursos.length) rols.push('Inscrit');
+  if (!rols.length) rols.push('Convidat');
+  const tags = rols.map(r => `<span class="tag ${r === 'Junta' ? 'o' : ''}" style="${r === 'Convidat' ? 'background:var(--line);color:var(--ink)' : ''}">${r}</span>`).join('');
+  const nomU = S.user ? S.user.nom : S.soci ? S.soci.nom : '';
+  const t1 = nomU ? `Hola, ${nomU.split(' ')[0]}` : 'Pla de Palau – Sant Pau';
+  const num = esSoci() ? `<span>Núm. ${S.soci.num}</span>` : '';
+  return `${back}<div style="min-width:0"><div class="t1">${t1}</div><div class="t2" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:3px">${tags}${num}</div></div>`;
+}
+function navHTML(){
+  const t = tab();
+  const items = [['inici','Inici'],['activitats','Activitats'],['cursos','Cursos'],['soci', esSoci() ? 'El meu carnet' : S.user ? 'El meu perfil' : 'Fes-te soci']];
+  if (S.junta) items.push(['junta','Junta']);
+  return items.map(([k,l]) => `<button class="${t===k?'on':''}" data-go="${k}" aria-current="${t===k?'page':'false'}">${IC[k]}${l}</button>`).join('');
+}
+function actCard(a){
+  const extra = esSoci() ? '<small>preu de soci</small>' : `<small>${eur(a.ps)} socis</small>`;
+  return `<button class="card act" data-det="${a.id}"><div class="date"><div class="d">${a.d}</div><div class="m">${a.m}</div></div><div><div class="n">${a.nom}</div><div class="s">${a.lloc}</div></div><div class="price">${eur(preu(a))}${extra}</div></button>`;
+}
+function meves(){
+  if (!S.ins.length) return '';
+  return `<div class="sec">Les meves inscripcions</div><div class="card">${S.ins.map(i => `<div class="row"><div><b>${act(i.id).nom}</b><div class="muted">${i.q} × ${act(i.id).u}</div></div><span class="tag">Pagada</span></div>`).join('')}</div>`;
+}
+
+/* ---------- Vistes ---------- */
+const AV_GEN = [
+  {t:'Talls d’aigua dimarts 2 de desembre', s:'De 9 a 13 h als carrers del sector nord.'}
+];
+const REUNIONS = [
+  {d:28, m:'nov.', t:'Assemblea general', s:'19 h, centre cívic. Oberta a tots els veïns.'},
+  {d:3, m:'des.', t:'Reunió de junta', s:'20 h, local de l’associació.'},
+  {d:11, m:'des.', t:'Trobada amb l’Ajuntament', s:'18:30 h, sobre la reforma de la plaça.'}
+];
+function agendaAvisos(){
+  const av = AV_GEN.map(a => `<div class="row" style="justify-content:flex-start;gap:12px;align-items:flex-start"><span class="tag o" style="margin-top:2px">Avís</span><div><b>${a.t}</b><p class="muted">${a.s}</p></div></div>`).join('');
+  const re = REUNIONS.map(r => `<div class="row" style="justify-content:flex-start;gap:14px"><div class="date" style="width:46px"><div class="d" style="font-size:22px">${r.d}</div><div class="m">${r.m}</div></div><div><b>${r.t}</b><p class="muted">${r.s}</p></div></div>`).join('');
+  return `<div class="sec" style="margin-top:8px">Avisos i properes reunions</div><div class="card">${av}${re}</div>`;
+}
+function vBenvinguda(){
+  return `<div style="min-height:calc(100vh - 60px);display:flex;flex-direction:column;justify-content:space-between;gap:32px;padding:20px 0 12px">
+  <div><div class="logo" style="width:68px;height:68px;border-radius:20px;font-size:24px" aria-hidden="true">PP</div>
+  <h1 style="font-size:38px;margin-top:24px">Et donem la benvinguda al barri</h1>
+  <p style="margin-top:12px;color:var(--mut);font-size:17px">Associació de Veïns Pla de Palau – Sant Pau. Avisos, activitats, cursos i tot el que passa al barri, en una sola app.</p>${PROVES ? '<p class="tag o" style="margin-top:14px;display:inline-block">Versió de proves</p>' : ''}</div>
+  <div style="display:grid;gap:12px">
+  <button class="btn full" data-a="entraLogin" style="flex-direction:column;gap:0;padding:14px"><span>Iniciar sessió</span><span style="font-weight:400;font-size:13px;opacity:.85">Soc del barri i ja estic registrat</span></button>
+  <button class="btn ocre full" data-a="entraAlta" style="flex-direction:column;gap:0;padding:14px"><span>Fer-me’n soci</span><span style="font-weight:400;font-size:13px">Alta a l’associació en dos minuts</span></button>
+  <button class="btn ghost full" data-a="convidat">Entrar sense registrar-me</button>
+  </div></div>`;
+}
+function vInici(){
+  let h = PROVES ? '<div class="card" style="margin-top:8px;background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink);font-size:14px"><b>Versió de proves.</b> L’entrada amb el DNI ja és real. Les activitats, els cursos i els pagaments encara són d’exemple.</div>' : '';
+  h += agendaAvisos();
+  let soci = '';
+  if (esSoci()) soci += `<button class="card act" data-go="soci" style="margin-top:22px"><span class="mi">${IC.soci}</span><div><div class="n">El meu carnet</div><div class="s">Soci núm. ${S.soci.num}</div></div><span style="margin-left:auto;color:var(--mut);font-size:22px">›</span></button>`;
+  if (!esSoci()) soci += `<div class="hero" style="margin-top:22px"><h2>Fes-te soci del barri</h2><p style="margin:8px 0 14px">Per ${eur(QUOTA)} l’any tens preu reduït a totes les activitats i ajudes a tirar endavant l’associació.</p><button class="btn ocre" data-go="soci">Vull fer-me soci</button> <button class="link" data-a="ident" style="color:var(--ocre-ink);margin-left:8px">Ja sóc soci</button></div>`;
+  const ix = p => `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  const ig = '<rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.5"/><path d="M16.5 7.5v.01"/>';
+  h += `<div class="sec">La comunitat</div><a class="card act" href="https://chat.whatsapp.com/BkDqzP3cT74Hy7dNrKPrzE" target="_blank" rel="noopener" style="background:var(--pri-soft);border-color:var(--pri);text-decoration:none"><span class="mi" style="background:var(--pri);color:var(--pri-ink)">${ix('<path d="M4 20l1.3-3.9A8 8 0 1 1 8 19.1z"/><path d="M9 10c.5 2 2 3.5 4 4"/>')}</span><div><div class="n" style="color:var(--pri-soft-ink)">Comunitat de WhatsApp</div><div class="s">Uneix-te als avisos del barri</div></div><span style="margin-left:auto;color:var(--pri-soft-ink);font-size:22px">›</span></a><a class="card act" href="https://www.instagram.com/avplapalausantpau" target="_blank" rel="noopener" style="text-decoration:none"><span class="mi">${ix(ig)}</span><div><div class="n">Instagram</div><div class="s">@avplapalausantpau</div></div><span style="margin-left:auto;color:var(--mut);font-size:22px">›</span></a>`;
+  h += `<div class="sec">Agenda d’activitats</div>${ACTS.slice(0,3).map(actCard).join('')}<button class="link" data-go="activitats">Veure totes les activitats</button>`;
+  h += meves();
+  return h;
+}
+function vActivitats(){
+  const cats = ['Totes','Sortides','Infants','Barri'];
+  const l = ACTS.filter(a => S.filtre === 'Totes' || a.cat === S.filtre);
+  return `<h1 style="margin:6px 0 14px">Activitats</h1><div class="chips">${cats.map(c => `<button class="chip ${S.filtre===c?'on':''}" data-f="${c}">${c}</button>`).join('')}</div><div style="margin-top:14px">${l.map(actCard).join('')}</div>${meves()}`;
+}
+const MI = {
+  ins:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>',
+  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
+  agenda:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  desp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>'
+};
+function cartell(a){
+  const [c,bg] = a.pc;
+  return `<div class="cartell" style="background:${bg};color:${c}" role="img" aria-label="Cartell de ${a.nom}"><svg class="ct-dec" viewBox="0 0 200 200" aria-hidden="true"><circle cx="150" cy="50" r="70" fill="${c}" opacity=".14"/><circle cx="150" cy="50" r="34" fill="${c}" opacity=".22"/><circle cx="40" cy="150" r="22" fill="${c}" opacity=".12"/></svg><div class="ct-top">AVV Pla de Palau – Sant Pau</div><div class="ct-t">${a.nom}</div><div class="ct-d">${a.d} ${a.m}</div><div class="ct-l">${a.lloc}</div></div><p class="muted" style="font-size:12px;margin-top:6px">Cartell d’exemple. Aquí anirà la imatge que fa la sòcia per a cada activitat.</p>`;
+}
+function vDetall(id){
+  const a = act(id), lliures = a.places - a.ocup;
+  const t = (k, ic, n, s) => `<button class="tile" data-sa="${k}"><span class="mi">${ic}</span><span><b>${n}</b><span class="muted" style="display:block;font-size:13px;line-height:1.3;margin-top:2px">${s}</span></span></button>`;
+  return `${cartell(a)}<div class="tiles" style="margin-top:14px">${t('inscriure', MI.ins, 'Inscripcions', lliures + ' places lliures')}${t('info', MI.info, 'Informació', 'Lloc, preus i què cal portar')}${t('agenda', MI.agenda, 'Agenda del dia', a.agenda.length + ' moments')}${t('despAct', MI.desp, 'Despeses', esSoci() ? 'Tiquets i factures' : 'Només per a socis')}</div>`;
+}
+function vInfo(id){
+  const a = act(id);
+  return `<h1 style="margin:6px 0 4px">${a.nom}</h1><p class="muted">${a.d} ${a.m}, ${a.lloc}</p><p style="margin:14px 0">${a.desc}</p><div class="card">${a.info.map(([k,v]) => `<div class="row" style="gap:16px"><span class="muted">${k}</span><b style="text-align:right">${v}</b></div>`).join('')}<div class="row"><span class="muted">Preu soci</span><b>${eur(a.ps)} / ${a.u}</b></div><div class="row"><span class="muted">Preu no soci</span><b>${eur(a.pn)} / ${a.u}</b></div></div>`;
+}
+function vAgenda(id){
+  const a = act(id);
+  return `<h1 style="margin:6px 0 4px">Agenda del dia</h1><p class="muted">${a.nom}, ${a.d} ${a.m}</p><div class="tline">${a.agenda.map(([h,t]) => `<div class="tl-i"><div class="tl-h">${h}</div><div class="tl-t">${t}</div></div>`).join('')}</div>`;
+}
+function vDespAct(id){
+  const a = act(id);
+  const qui = `<div class="card" style="margin-top:12px"><div class="row"><span>Apuntada per</span><b>${S.soci.nom}</b></div></div>`;
+  return `<h2>Apuntar un moviment</h2><p class="muted" style="margin-top:4px">${a.nom}</p>${qui}
+  <div class="seg" style="margin-top:14px"><button class="${S.mov!=='ing'?'on':''}" data-mov="desp">Despesa</button><button class="${S.mov==='ing'?'on':''}" data-mov="ing">Ingrés</button></div>
+  <label class="f">Import (€)<input type="number" id="di" inputmode="decimal" step="0.01" min="0"></label><div class="err" id="e-di"></div>
+  <label class="f">Concepte<input type="text" id="dc" placeholder="Bosses i cinta per a les parades"></label><div class="err" id="e-dc"></div>
+  ${S.mov!=='ing' ? `<label class="f">Qui l’ha pagat?<select id="dq"><option>Jo, cal que me’l tornin</option><option>L’associació</option></select></label>` : ''}
+  <label class="f">Foto del tiquet o factura<input type="file" accept="image/*,application/pdf" style="margin-top:8px;font-size:14px"></label>
+  <button class="btn full" style="margin-top:20px" data-a="desaAct">Enviar al tresorer</button>`;
+}
+function vInscriure(id){
+  const a = act(id), lliures = a.places - a.ocup;
+  S.q = S.q || 1;
+  return `<span class="tag o">${a.cat}</span><h1 style="margin:10px 0 6px">${a.nom}</h1><p class="muted">${a.d} ${a.m}, ${a.lloc}</p><p style="margin:16px 0">${a.desc}</p>
+  <div class="card"><div class="row"><span>Preu soci</span><b style="color:${esSoci()?'var(--pri)':'inherit'}">${eur(a.ps)} / ${a.u}</b></div><div class="row"><span>Preu no soci</span><b style="color:${esSoci()?'var(--mut)':'inherit'}">${eur(a.pn)} / ${a.u}</b></div><div class="row"><span>Places lliures</span><b>${lliures}</b></div></div>
+  ${!esSoci() ? `<p class="muted" style="margin-top:10px">Si ets soci, <button class="link" data-a="ident" style="padding:0">identifica’t</button> i pagaràs ${eur(a.ps)}.</p>` : ''}
+  <div class="row" style="margin-top:14px"><span><b>Quantes ${a.u === 'persona' ? 'persones' : a.u === 'parada' ? 'parades' : a.u === 'infant' ? 'places' : 'places'}?</b></span><div class="stepper"><button data-a="menys" aria-label="Menys">−</button><b id="q">${S.q}</b><button data-a="mes" aria-label="Més">+</button></div></div>
+  <button class="btn full" style="margin-top:18px" data-a="ins">Inscriure’m per ${eur(preu(a)*S.q)}</button>`;
+}
+function vForm(id){
+  const a = act(id), s = S.soci || {};
+  const extra = id === 'mercat' ? `<label class="f">Què vendràs?<select id="fx"><option value="">Tria una opció</option><option>Roba i complements</option><option>Llibres i joguines</option><option>Casa i decoració</option><option>Una mica de tot</option></select></label><div class="err" id="e-fx"></div>` : '';
+  return `<h2>Les teves dades</h2><p class="muted" style="margin-top:4px">${a.nom}, ${S.q} × ${a.u}</p>
+  <label class="f">Nom i cognoms<input type="text" id="fn" value="${s.nom||''}" autocomplete="name"></label><div class="err" id="e-fn"></div>
+  <label class="f">Correu electrònic<input type="email" id="fe" value="${s.email||''}" autocomplete="email"></label><div class="err" id="e-fe"></div>
+  <label class="f">Telèfon<input type="tel" id="ft" value="${s.tel||''}" autocomplete="tel"></label><div class="err" id="e-ft"></div>
+  ${extra}
+  <button class="btn full" style="margin-top:20px" data-a="pagarIns">Continuar al pagament</button>`;
+}
+function vPagament(){
+  const p = S.pag;
+  return `<h2>Pagament</h2><p class="muted" style="margin-top:4px">${p.concepte}</p>
+  <div class="sumup" style="margin-top:16px"><div class="row"><span>Import</span><b>${eur(p.import)}</b></div>
+  <label class="f">Número de targeta<input type="text" value="4242 4242 4242 4242" inputmode="numeric"></label>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="f">Caducitat<input type="text" value="12/28"></label><label class="f">CVC<input type="text" value="123"></label></div>
+  <p class="muted" style="margin-top:12px">Pantalla simulada. A l’app real s’obrirà el pagament segur de SumUp.</p></div>
+  <button class="btn full" style="margin-top:18px" data-a="pagar" id="bpag">Pagar ${eur(p.import)}</button>`;
+}
+function vOk(){
+  const o = S.okMsg;
+  return `<div style="text-align:center"><div class="ok" aria-hidden="true">✓</div><h1>${o.t}</h1><p class="muted" style="margin:10px 0 24px">${o.s}</p><button class="btn full" data-go="${o.go}">${o.b}</button></div>`;
+}
+
+function avis(a){
+  return `<div class="row" style="display:block"><div style="display:flex;justify-content:space-between;gap:8px"><span class="tag">${curs(a.c).nom}</span><span class="muted" style="font-size:13px">${a.d}</span></div><p style="margin-top:6px">${a.t}</p><p class="muted" style="font-size:13px;margin-top:2px">${a.de}</p></div>`;
+}
+const U = () => S.user || {cursos:[], escriu:{}};
+const rolCurs = id => U().escriu[id] || (U().cursos.includes(id) ? 'Inscrit' : '');
+function cursCard(c){
+  const r = rolCurs(c.id), ple = c.ocup >= c.places;
+  const est = r ? `<span class="tag">${r}</span>` : ple ? '<span class="tag o">Complet</span>' : `<span class="tag">${c.places - c.ocup} places</span>`;
+  return `<button class="card act" data-curs="${c.id}"><div style="min-width:0"><div class="n">${c.nom}</div><div class="s">${c.dia}, ${c.h}</div><div style="margin-top:6px">${est}</div></div><div class="price">${eur(esSoci()?c.ps:c.pn)}<small>per trimestre</small></div></button>`;
+}
+function vCursos(){
+  const cats = ['Tots','Moviment','Aprendre','Creativitat'], f = S.fc || 'Tots';
+  const l = CURSOS.filter(c => f === 'Tots' || c.cat === f), meus = CURSOS.filter(c => rolCurs(c.id));
+  let h = `<h1 style="margin:6px 0 2px">Cursos 2026-27</h1><p class="muted">Centre cívic Pla de Palau</p>`;
+  if (meus.length) h += `<div class="sec">Els meus cursos</div>${meus.map(c => { const a = AVISOS.find(x => x.c === c.id); return `<button class="card act" data-curs="${c.id}" style="display:block"><div style="display:flex;justify-content:space-between;gap:8px"><span class="n">${c.nom}</span><span class="tag">${rolCurs(c.id)}</span></div><p class="s" style="margin-top:6px">${a ? a.d + ': ' + a.t : 'Encara no hi ha missatges.'}</p></button>`; }).join('')}`;
+  else if (!S.user) h += `<div class="card" style="margin-top:16px"><p>Si estàs inscrit a un curs, entra amb el teu DNI per veure’n els missatges.</p><button class="btn ghost full" style="margin-top:12px" data-a="identC">Identificar-me</button></div>`;
+  h += `<div class="sec">Tots els cursos</div><div class="chips">${cats.map(c => `<button class="chip ${f===c?'on':''}" data-fc="${c}">${c}</button>`).join('')}</div><div style="margin-top:14px">${l.map(cursCard).join('')}</div>`;
+  return h;
+}
+function vCurs(id){
+  const c = curs(id), r = rolCurs(id), ple = c.ocup >= c.places, av = AVISOS.filter(a => a.c === id), on = (S.avs||[]).includes(id);
+  let h = `<span class="tag o">${c.cat}</span><h1 style="margin:10px 0 14px">${c.nom}</h1>
+  <div class="card"><div class="row"><span class="muted">Horari</span><b style="text-align:right">${c.dia}<br>${c.h}</b></div><div class="row"><span class="muted">Professor/a</span><b>${c.prof}</b></div><div class="row"><span class="muted">Organitzador/a</span><b>${c.org}</b></div><div class="row"><span class="muted">Preu soci</span><b>${eur(c.ps)} / trimestre</b></div><div class="row"><span class="muted">Preu no soci</span><b>${eur(c.pn)} / trimestre</b></div><div class="row"><span class="muted">Places</span><b>${ple ? 'Complet' : (c.places - c.ocup) + ' lliures de ' + c.places}</b></div></div>`;
+  if (!r) return h + `<div class="card" style="margin-top:14px"><b>Com m’hi inscric?</b><p class="muted" style="margin-top:4px">Les inscripcions es fan a part. Contacta amb ${c.org}, que organitza el curs.</p></div><p class="muted" style="margin-top:14px">Els missatges del curs només els veuen les persones inscrites.${S.user ? '' : ' Si hi estàs inscrit, <button class="link" data-a="identC" style="padding:0">entra amb el teu DNI</button>.'}</p>`;
+  if (r !== 'Inscrit') h += `<div class="sec">Escriure als inscrits</div><div class="card"><textarea id="ct" rows="4" placeholder="Dijous no hi ha classe per la revetlla" aria-label="Missatge" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--ink);font:16px Figtree,sans-serif;resize:vertical"></textarea><div class="err" id="e-ct"></div><button class="btn full" style="margin-top:12px" data-a="enviaCom">Enviar als ${c.ocup} inscrits</button></div>`;
+  h += `<div class="sec">Missatges del curs</div><div class="card">${av.length ? av.map(avis).join('') : '<p class="muted">Encara no hi ha cap missatge.</p>'}</div>`;
+  if (r === 'Inscrit') h += `<button class="btn ghost full" style="margin-top:12px" data-a="avisos">${on ? 'Avisos al mòbil activats' : 'Rebre els avisos al mòbil'}</button>`;
+  return h;
+}
+function vPerfil(){
+  const u = S.user, cs = CURSOS.filter(c => rolCurs(c.id));
+  return `<h1 style="margin:6px 0 4px">${u.nom}</h1><p class="muted">El meu perfil</p>
+  <div class="sec">Els meus cursos</div><div class="card">${cs.length ? cs.map(c => `<div class="row"><span>${c.nom}</span><span class="tag">${rolCurs(c.id)}</span></div>`).join('') : '<p class="muted">No tens cap curs assignat.</p>'}</div>
+  <div class="hero" style="margin-top:22px"><h2>Vols fer-te soci?</h2><p style="margin:8px 0 14px">Per ${eur(QUOTA)} l’any tens preu reduït a totes les activitats i ajudes a tirar endavant l’associació.</p><button class="btn ocre" data-a="alta">Fer-me soci</button></div>
+  <button class="card act" data-s="priv" style="margin-top:12px"><div class="n">Privacitat</div><span style="margin-left:auto;color:var(--mut);font-size:22px">›</span></button>
+  ${sortirHTML()}`;
+}
+function vSoci(){
+  if (esSoci()) return vCarnet();
+  if (S.user) return vPerfil();
+  return `<h1 style="margin:6px 0 10px">Fes-te soci</h1><p>La quota és de <b>${eur(QUOTA)} per persona i any</b>. Amb el carnet tens:</p>
+  <div class="card" style="margin-top:14px"><div class="row"><span>Preu de soci a totes les activitats</span><span class="tag">✓</span></div><div class="row"><span>Veu i vot a l’assemblea</span><span class="tag">✓</span></div><div class="row"><span>Carnet digital al mòbil</span><span class="tag">✓</span></div></div>
+  <button class="btn full" style="margin-top:20px" data-a="alta">Començar l’alta</button>
+  <p style="text-align:center;margin-top:8px"><button class="link" data-a="ident">Ja sóc soci, vull identificar-me</button></p>`;
+}
+function vAlta(){
+  const A = S.alta, n = 1;
+  return `<h2>Alta de soci</h2><p class="muted" style="margin-top:4px">Pas 1 de 2: dades personals. Cada alta és d’una sola persona.</p>
+  <label class="f">Nom i cognoms<input type="text" id="an" autocomplete="name"></label><div class="err" id="e-an"></div>
+  <label class="f">DNI o NIE<input type="text" id="ad" autocapitalize="characters"></label><div class="err" id="e-ad"></div>
+  <label class="f">Adreça<input type="text" id="aa" autocomplete="street-address"></label><div class="err" id="e-aa"></div>
+  <label class="f">Correu electrònic<input type="email" id="ae" autocomplete="email"></label><div class="err" id="e-ae"></div>
+  <label class="f">Telèfon<input type="tel" id="at" autocomplete="tel"></label><div class="err" id="e-at"></div>
+  <div class="sec">Pas 2 de 2: com vols pagar?</div>
+  <div class="seg"><button class="${A.pag==='targeta'?'on':''}" data-pag="targeta">Targeta<small>Ara, amb SumUp</small></button><button class="${A.pag==='domi'?'on':''}" data-pag="domi">Domiciliació<small>Rebut anual al banc</small></button></div>
+  ${A.pag==='domi' ? `<label class="f">IBAN<input type="text" id="ai" placeholder="ES00 0000 0000 0000 0000 0000" autocapitalize="characters"></label><div class="err" id="e-ai"></div><label class="chk"><input type="checkbox" id="am"><span>Autoritzo l’associació a cobrar la quota anual en aquest compte (ordre de domiciliació SEPA).</span></label><div class="err" id="e-am"></div>` : ''}
+  <label class="chk"><input type="checkbox" id="ar"><span>He llegit la <button class="link" data-a="privAlta" style="padding:0;font-size:inherit">informació sobre protecció de dades</button>.</span></label><div class="err" id="e-ar"></div>${S.privAlta ? `<div class="card" style="margin-top:10px;font-size:14px">${privText()}</div>` : ''}
+  <div class="card" style="margin-top:18px"><div class="row"><span>Quota anual 2026</span><b>${eur(QUOTA)}</b></div></div>
+  <button class="btn full" style="margin-top:14px" data-a="ferAlta">${A.pag==='targeta' ? `Pagar ${eur(QUOTA*n)}` : 'Enviar l’alta'}</button>`;
+}
+function resendTxt(){ const s = Math.max(0, Math.ceil(((S.rsT || 0) - Date.now()) / 1000)); return s > 0 ? `No t’ha arribat? Mira el correu brossa. Podràs demanar-ne un altre d’aquí a 0:${String(s).padStart(2,'0')}.` : `No t’ha arribat? Mira el correu brossa. <button class="link" data-a="reenvia" style="padding:0">Reenviar el codi</button>`; }
+let _rs = ''; setInterval(() => { const e = document.getElementById('rs'); if (!e) return; const t = resendTxt(); if (t !== _rs){ _rs = t; e.innerHTML = t; } }, 1000);
+function sortirHTML(){ return S.confS ? `<div class="card" style="margin-top:18px"><p>Vols tancar la sessió? Per tornar a entrar caldrà un codi nou.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px"><button class="btn ghost" data-a="noSortir">Cancel·lar</button><button class="btn" data-a="sortir" style="background:var(--red);color:var(--bg)">Tancar la sessió</button></div></div>` : `<p style="text-align:center;margin-top:16px"><button class="link" data-a="sortirQ">Tancar la sessió en aquest mòbil</button></p>`; }
+function vAjuda(){
+  return `<h2>Necessites ajuda?</h2><p style="margin-top:10px">Si no pots entrar, escriu-nos a <a href="mailto:aavvpladepalausantpau@gmail.com">aavvpladepalausantpau@gmail.com</a> o envia un WhatsApp al <a href="https://wa.me/34699304442" target="_blank" rel="noopener">699 304 442</a>. T’ajudarem a revisar les teves dades.</p><a class="btn full" style="margin-top:18px;text-decoration:none" href="https://wa.me/34699304442" target="_blank" rel="noopener">Enviar un WhatsApp</a><a class="btn ghost full" style="margin-top:10px;text-decoration:none" href="mailto:aavvpladepalausantpau@gmail.com">Enviar un correu</a>`;
+}
+const PRIV_V = 1;
+function privMap(){ try { return JSON.parse(localStorage.getItem('avv-priv') || '{}'); } catch(e){ return S._pm || (S._pm = {}); } }
+function privKey(){ return S.soci ? S.soci.dni : S.user ? S.user.nom : ''; }
+function privVist(){ const r = privMap()[privKey()]; return !!(r && r.v >= PRIV_V); }
+function marcaPriv(){ const m = privMap(); m[privKey()] = {v:PRIV_V, d:new Date().toLocaleDateString('ca-ES')}; try { localStorage.setItem('avv-priv', JSON.stringify(m)); } catch(e){ S._pm = m; } }
+function privText(){
+  return `<p><b>Qui tracta les teves dades.</b> L’Associació de Veïns del Pla de Palau – Sant Pau (NIF G17271933, C. Marquès Caldes de Montbui 37, ent. 4, 17003 Girona). Contacte: aavvpladepalausantpau@gmail.com.</p>
+  <p style="margin-top:10px"><b>Per a què.</b> Gestionar la teva condició de soci (quotes, cobraments i carnet), les inscripcions a activitats i cursos, les comunicacions de l’associació i el teu accés a aquesta app.</p>
+  <p style="margin-top:10px"><b>Per què podem fer-ho.</b> Perquè ets soci o t’has inscrit a una activitat o curs, i per complir les obligacions comptables i fiscals de l’associació.</p>
+  <p style="margin-top:10px"><b>Qui més les veu.</b> No les cedim a ningú, llevat que ho exigeixi la llei. Hi accedeixen, només per prestar-nos el servei, el banc (cobrament de rebuts), SumUp (pagaments amb targeta), Google (on es guarden les dades) i la gestoria (obligacions fiscals). Google pot tractar-les fora de la Unió Europea amb les garanties que exigeix la normativa.</p>
+  <p style="margin-top:10px"><b>Quant de temps.</b> Mentre siguis soci o participis en activitats i, després, el temps que exigeixi la llei.</p>
+  <p style="margin-top:10px"><b>Els teus drets.</b> Pots demanar veure, corregir o esborrar les teves dades, oposar-te al seu ús o limitar-lo, escrivint a aavvpladepalausantpau@gmail.com. Si creus que no les tractem bé, pots reclamar a l’Agència Espanyola de Protecció de Dades (aepd.es).</p>`;
+}
+function vPrivPrimera(){
+  return `<div style="padding:12px 0"><h1>Les teves dades</h1><p class="muted" style="margin-top:8px">Abans de començar, t’expliquem com fem servir les teves dades.</p><div class="card" style="margin-top:16px;font-size:15px">${privText()}</div><button class="btn full" style="margin-top:18px" data-a="privOk">Entesos</button><p class="muted" style="margin-top:10px;font-size:13px;text-align:center">Només t’ho mostrarem aquesta vegada. Ho trobaràs sempre a l’apartat Privacitat, a la icona de la dreta de la barra de baix.</p></div>`;
+}
+function vPriv(){
+  const r = privMap()[privKey()];
+  return `<h2>Privacitat</h2><div class="card" style="margin-top:14px;font-size:15px">${privText()}</div>${r ? `<p class="muted" style="margin-top:10px;font-size:13px">Informació vista el ${r.d} (versió ${r.v}).</p>` : ''}`;
+}
+function vIdent(){
+  const hint = '';
+  const peu = `<p style="text-align:center;margin-top:18px;font-size:15px"><button class="link" data-a="alta">No ets soci? Fes-te’n</button> · <button class="link" data-a="ajuda">Necessites ajuda?</button></p>`;
+  let h = `<h2>Entra amb el teu DNI</h2>${S.after ? '<p style="margin-top:8px">Per apuntar despeses d’una activitat cal entrar amb el teu DNI de soci.</p>' : ''}<p class="muted" style="margin-top:4px">Només cal fer-ho una vegada en aquest mòbil.</p>${hint}`;
+  if (S.bloq && Date.now() < S.bloq) return h + `<div class="card" style="margin-top:16px;border-color:var(--red)"><p>Has fet massa intents. Torna-ho a provar d’aquí a 15 minuts.</p></div>${peu}`;
+  h += `<label class="f">DNI o NIE<input type="text" id="id" value="${S.idDni||''}" autocapitalize="characters"></label><div class="err" id="e-id"></div>`;
+  if (!S.idPas) return h + `<button class="btn full" style="margin-top:18px" data-a="idCodi">Enviar-me el codi al mail</button>${peu}`;
+  const rs = S.envios >= 3 && false ? `<p style="margin-top:12px">Si el codi no t’arriba, potser tenim el teu correu malament. Contacta amb l’administrador: <a href="https://wa.me/34699304442" target="_blank" rel="noopener">699 304 442</a>.</p>` : `<p class="muted" id="rs" style="margin-top:12px">${resendTxt()}</p>`;
+  return h + `<p style="margin-top:14px">Si aquest DNI és d’una persona registrada, rebràs un codi de 6 xifres al correu que té l’associació. Pot trigar un minut.</p><label class="f">Codi de 6 xifres<input type="text" id="ic" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></label><div class="err" id="e-ic"></div><button class="btn full" style="margin-top:18px" data-a="idOk">Entrar</button>${rs}${peu}`;
+}
+function vIdentAntic(){
+  return `<h2>Identifica’t</h2>${S.after ? '<p style="margin-top:8px">Per apuntar despeses d’una activitat cal estar identificat com a soci.</p>' : ''}<p class="muted" style="margin-top:4px">Només cal fer-ho una vegada en aquest mòbil.</p>
+  <p class="muted" style="margin-top:10px;font-size:13px">Al prototip, qualsevol DNI vàlid entra com la Marta (sòcia, inscrita a Ioga i Costura). Amb 11111111H entres com el Toni, professor de Pintura i dibuix, i amb 22222222J com a membre de la junta.</p><label class="f">DNI o NIE<input type="text" id="id" value="${S.idDni||''}" autocapitalize="characters"></label><div class="err" id="e-id"></div>
+  ${S.idPas ? `<p style="margin-top:14px">T’hem enviat un codi de 6 xifres al correu que tens a la fitxa de soci.</p><label class="f">Codi<input type="text" id="ic" inputmode="numeric" maxlength="6" placeholder="Al prototip, qualsevol de 6 xifres"></label><div class="err" id="e-ic"></div><button class="btn full" style="margin-top:18px" data-a="idOk">Entrar</button>` : `<button class="btn full" style="margin-top:18px" data-a="idCodi">Enviar-me el codi</button>`}`;
+}
+function qrSVG(seed){
+  let x = seed*9301+49297, c = '';
+  const r = () => (x = (x*9301+49297) % 233280) / 233280;
+  for (let i=0;i<21;i++) for (let j=0;j<21;j++){
+    const f = (i<7&&j<7)||(i<7&&j>13)||(i>13&&j<7);
+    let on = f ? ((i%14===0||i%14===6||j%14===0||j%14===6||(i%14>1&&i%14<5&&j%14>1&&j%14<5))) : r()>.52;
+    if (f && i>13 && j<7) on = (i===14||i===20||j===0||j===6||(i>15&&i<19&&j>1&&j<5));
+    if (f && j>13 && i<7) on = (i===0||i===6||j===14||j===20||(i>1&&i<5&&j>15&&j<19));
+    if (on) c += `<rect x="${j}" y="${i}" width="1" height="1"/>`;
+  }
+  return `<svg viewBox="0 0 21 21" width="84" height="84" fill="#0E2A24" role="img" aria-label="Codi del carnet">${c}</svg>`;
+}
+function vCarnet(){
+  const s = S.soci, pend = s.estat === 'pendent';
+  return `<div class="carnet"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-size:13px;opacity:.85">AVV Pla de Palau – Sant Pau</div><div class="nm">${s.nom}</div><div style="opacity:.9">Soci núm. ${s.num}</div></div><div class="qr">${qrSVG(s.num)}</div></div><div style="display:flex;justify-content:space-between;margin-top:22px;font-size:14px"><span>Vàlid fins al 31/12/2026</span><span>${s.dni}</span></div></div>
+  <div class="sec">Quota 2026</div><div class="card"><div class="row"><span>Estat</span>${pend ? '<span class="tag o">Pendent de cobrament</span>' : '<span class="tag">Pagada</span>'}</div>${s.pag ? `<div class="row"><span>Forma de pagament</span><b>${s.pag==='domi'?'Domiciliació':'Targeta'}</b></div>` : ''}</div>
+  ${meves()}
+  <div class="sec">Les meves dades</div><div class="card"><div class="row"><span>Correu</span><b style="overflow-wrap:anywhere;text-align:right">${s.email}</b></div>${s.tel ? `<div class="row"><span>Telèfon</span><b>${s.tel}</b></div>` : ''}</div><p class="muted" style="margin-top:8px;font-size:13px">Si alguna dada no és correcta, escriu-nos a aavvpladepalausantpau@gmail.com.</p>
+  <button class="card act" data-s="priv" style="margin-top:12px"><div class="n">Privacitat</div><span style="margin-left:auto;color:var(--mut);font-size:22px">›</span></button>
+  ${sortirHTML()}`;
+}
+
+function vJunta(){
+  if (!S.junta) return `<p class="muted" style="margin-top:20px">Aquesta secció només és per a la junta.</p>`;
+  const _pinAntic = `<h1 style="margin:6px 0 4px;text-align:center">Accés de la junta</h1><p class="muted" style="text-align:center">Introdueix el PIN. Al prototip és 1234.</p><div class="pin" aria-label="PIN">${[0,1,2,3].map(i => `<span class="${S.pin.length>i?'f':''}"></span>`).join('')}</div><div class="err" id="e-pin" style="text-align:center"></div><div class="pad">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k => k==='' ? '<span></span>' : `<button data-k="${k}" aria-label="${k==='⌫'?'Esborrar':k}">${k}</button>`).join('')}</div>`;
+  return `<h1 style="margin:6px 0 14px">Junta</h1><div class="tiles">
+  <button class="tile" data-s="despesa"><span class="ic">📷</span><b>Apuntar despesa o ingrés</b></button>
+  <button class="tile" data-s="inscrits"><span class="ic">📋</span><b>Inscrits per activitat</b></button>
+  <button class="tile" data-s="socis"><span class="ic">👥</span><b>Socis i remeses</b></button>
+  <button class="tile" data-s="informes"><span class="ic">📄</span><b>Informes</b></button></div>
+  <button class="btn ghost full" style="margin-top:14px" data-a="nova">Crear una activitat nova</button>`;
+}
+function vDespesa(){
+  return `<h2>Apuntar un moviment</h2><div class="seg" style="margin-top:12px"><button class="${S.mov!=='ing'?'on':''}" data-mov="desp">Despesa</button><button class="${S.mov==='ing'?'on':''}" data-mov="ing">Ingrés</button></div>
+  <label class="f">Import (€)<input type="number" id="di" inputmode="decimal" step="0.01" min="0"></label><div class="err" id="e-di"></div>
+  <label class="f">Concepte<input type="text" id="dc" placeholder="Compra de material per al taller"></label><div class="err" id="e-dc"></div>
+  <label class="f">Activitat<select id="da">${ACTS.map(a => `<option>${a.nom}</option>`).join('')}<option>Despeses generals</option></select></label>
+  ${S.mov!=='ing' ? `<label class="f">Qui l’ha pagat?<select id="dq"><option>L’associació</option><option>Un membre (cal reemborsar)</option></select></label>` : ''}
+  <label class="f">Foto del tiquet o factura<input type="file" accept="image/*,application/pdf" style="margin-top:8px;font-size:14px"></label>
+  <button class="btn full" style="margin-top:20px" data-a="desaMov">Desar</button>`;
+}
+function vInscrits(){
+  return `<h2>Inscrits per activitat</h2><div style="margin-top:12px">${ACTS.map(a => { const p = Math.round(a.ocup/a.places*100); return `<div class="card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between"><b>${a.nom}</b><span class="muted">${a.ocup} de ${a.places}</span></div><div class="bar"><i style="width:${p}%"></i></div><div style="display:flex;justify-content:space-between;margin-top:8px;font-size:14px"><span class="muted">Recaptat</span><b>${eur(a.ocup*(a.ps+a.pn)/2)}</b></div></div>`; }).join('')}</div>`;
+}
+function vSocis(){
+  return `<h2>Socis i remeses</h2><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px"><div class="metric"><div class="v">186</div><div class="l">Socis actius 2026</div></div><div class="metric"><div class="v">12</div><div class="l">Pendents de cobrament</div></div></div>
+  <div class="sec">Últimes altes</div><div class="card"><div class="row"><span>Marta Puig</span><span class="tag">Targeta</span></div><div class="row"><span>Jordi Casals</span><span class="tag o">Domiciliació</span></div><div class="row"><span>Núria Vila</span><span class="tag r">Rebut retornat</span></div></div>
+  <button class="btn full" style="margin-top:16px" data-a="remesa">Generar remesa de 12 rebuts</button><p class="muted" style="margin-top:8px">Crea el fitxer SEPA per pujar-lo a la banca en línia de l’associació.</p>`;
+}
+function vInformes(){
+  return `<h2>Informes</h2><div class="card" style="margin-top:12px">${['Comptes d’una activitat','Comptes de tot l’any','Llistat de socis','Inscrits d’una activitat'].map(t => `<div class="row"><span>${t}</span><button class="chip" data-a="pdf">PDF</button></div>`).join('')}</div>`;
+}
+
+/* ---------- Render ---------- */
+function render(){
+  S.junta = !!(S.user && S.user.junta);
+  if (S.user || S.soci) S.entrat = true;
+  desa();
+  const nav = document.querySelector('nav');
+  if (!S.entrat && !S.sub){ $('#top').innerHTML = ''; nav.style.display = 'none'; $('#main').innerHTML = vBenvinguda(); return; }
+  if (S.entrat && (S.user || S.soci) && !privVist()){ $('#top').innerHTML = ''; nav.style.display = 'none'; $('#main').innerHTML = vPrivPrimera(); return; }
+  nav.style.display = S.entrat ? '' : 'none';
+  const t = tab();
+  if (t === 'junta' && !S.junta && S.sub) S.sub = null;
+  $('#top').innerHTML = header();
+  $('#nav').innerHTML = navHTML();
+  const m = $('#main'), s = S.sub;
+  if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vDespAct(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, ident:vIdent, despesa:vDespesa, inscrits:vInscrits, socis:vSocis, informes:vInformes})[s.v]();
+  else m.innerHTML = ({inici:vInici, activitats:vActivitats, cursos:vCursos, soci:vSoci, junta:vJunta})[t]();
+}
+function err(id, msg){ const e = document.getElementById('e-'+id); if (e) e.textContent = msg || ''; return !msg; }
+function val(id){ const e = document.getElementById(id); return e ? e.value.trim() : ''; }
+function req(ids){ let ok = true; ids.forEach(([id,msg,test]) => { const v = val(id); const bad = !v || (test && !test(v)); if (!err(id, bad ? msg : '')) ok = false; }); return ok; }
+const isMail = v => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
+const isDni = v => /^[0-9XYZxyz][0-9]{7}[A-Za-z]$/.test(v.replace(/[\s-]/g,''));
+
+document.addEventListener('input', e => { if (e.target.id) err(e.target.id, ''); const f = e.target.dataset.fam; if (f !== undefined) S.alta.fam[f][e.target.dataset.k] = e.target.value; });
+document.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const d = b.dataset;
+  if (d.go){ go(d.go); return; }
+  if (d.det){ S.q = 1; sub({v:'detall', id:d.det}); return; }
+  if (d.f){ S.filtre = d.f; render(); return; }
+  if (d.fc){ S.fc = d.fc; render(); return; }
+  if (d.curs){ sub({v:'curs', id:d.curs}); return; }
+  if (d.s){ sub({v:d.s}); return; }
+  if (d.sa){ const id = S.sub.id; if (d.sa === 'despAct' && !esSoci()){ S.after = {v:'despAct', id, up:{v:'detall', id}}; S.idPas = false; S.idDni = ''; sub({v:'ident', up:{v:'detall', id}}); return; } sub({v:d.sa, id, up:{v:'detall', id}}); return; }
+  if (d.pag){ S.alta.pag = d.pag; keepAlta(); render(); restoreAlta(); return; }
+  if (d.mov){ S.mov = d.mov; render(); return; }
+  if (d.k !== undefined){ pinKey(d.k); return; }
+  switch (d.a){
+    case 'back': {
+      const s = S.sub;
+      if (s && s.up) sub(s.up);
+      else if (s && s.v === 'pagament' && S.pag.back) sub(S.pag.back);
+      else { S.sub = null; render(); }
+      break; }
+    case 'mes': { const a = act(S.sub.id); if (S.q < a.places - a.ocup) S.q++; render(); break; }
+    case 'menys': if (S.q > 1) S.q--; render(); break;
+    case 'ins': sub({v:'form', id:S.sub.id, up:{v:'inscriure', id:S.sub.id}}); break;
+    case 'pagarIns': {
+      const id = S.sub.id, a = act(id);
+      const ok = req([['fn','Escriu el nom i cognoms'],['fe','Escriu un correu vàlid',isMail],['ft','Escriu un telèfon']]) & (id !== 'mercat' || req([['fx','Tria què vendràs']]));
+      if (!ok) return;
+      S.pag = {concepte:`${a.nom}, ${S.q} × ${a.u}`, import:preu(a)*S.q, back:{v:'form', id, up:{v:'inscriure', id}}, fet:() => { S.ins.push({id, q:S.q}); a.ocup += S.q; S.okMsg = {t:'Inscripció feta', s:`T’hem enviat la confirmació per correu. Ens veiem el ${a.d} ${a.m}.`, b:'Tornar a l’inici', go:'inici'}; }};
+      sub({v:'pagament'}); break; }
+    case 'pagar': {
+      b.textContent = 'Processant…'; b.disabled = true;
+      setTimeout(() => { S.pag.fet(); sub({v:'ok'}); }, 900); break; }
+    case 'alta': S.alta = {pag:'targeta', fam:[]}; sub({v:'alta'}); break;
+    case 'afegeix': keepAlta(); S.alta.fam.push({nom:'', dni:''}); render(); restoreAlta(); break;
+    case 'treu': keepAlta(); S.alta.fam.splice(+d.i, 1); render(); restoreAlta(); break;
+    case 'ferAlta': {
+      let ok = req([['an','Escriu el nom i cognoms'],['ad','Escriu un DNI o NIE vàlid',isDni],['aa','Escriu l’adreça'],['ae','Escriu un correu vàlid',isMail],['at','Escriu un telèfon']]);
+      if (S.alta.pag === 'domi'){ if (!req([['ai','Escriu un IBAN vàlid', v => /^ES\d{22}$/i.test(v.replace(/\s/g,''))]])) ok = false; if (!$('#am').checked){ err('am','Cal autoritzar la domiciliació'); ok = false; } }
+      if (!$('#ar').checked){ err('ar','Cal llegir la informació sobre protecció de dades'); ok = false; }
+      if (!ok) return;
+      const n = 1 + S.alta.fam.length;
+      const nou = {nom:val('an'), dni:val('ad').toUpperCase(), email:val('ae'), tel:val('at'), num:215 + Math.floor(Math.random()*20), pag:S.alta.pag}; nou.codi = 'PP' + nou.num + 'K';
+      const fet = () => { nou.estat = S.alta.pag === 'domi' ? 'pendent' : 'pagada'; S.soci = nou; S.rol = 'soci'; marcaPriv(); S.okMsg = {t:'Benvingut a l’associació', s: S.alta.pag === 'domi' ? `Ja ets soci. La quota es cobrarà a la propera remesa.${n>1?' Cada persona tindrà el seu carnet.':''}` : `Ja ets soci i tens el carnet al mòbil.${n>1?' Cada persona tindrà el seu carnet.':''}`, b:'Veure el meu carnet', go:'soci'}; };
+      if (S.alta.pag === 'targeta'){ S.pag = {concepte:`Quota de soci 2026, ${nou.nom}`, import:QUOTA*n, back:{v:'alta'}, fet}; sub({v:'pagament'}); }
+      else { fet(); sub({v:'ok'}); }
+      break; }
+    case 'ident': S.after = null; S.idPas = false; S.idDni = ''; go('soci', {v:'ident'}); break;
+    case 'idCodi': case 'reenvia': {
+      if (d.a === 'idCodi'){ if (!req([['id','Aquest DNI o NIE no és correcte. Revisa els números i la lletra.',isDni]])) break; S.idDni = val('id'); }
+      const txt = b.textContent; b.disabled = true; b.textContent = 'Enviant…';
+      motor('solicitarCodi', {dni:S.idDni}).then(r => {
+        b.disabled = false; b.textContent = txt;
+        if (r.ok){ S.rsT = Date.now() + 60000; S.idPas = true; render(); if (d.a === 'reenvia') toast('Codi reenviat'); return; }
+        if (r.codi === 'BLOQUEJAT'){ S.bloq = Date.now() + 900000; render(); return; }
+        if (d.a === 'reenvia') toast(MSG[r.codi] || MSG.SERVEI); else err('id', MSG[r.codi] || MSG.SERVEI);
+      });
+      break; }
+    case 'ajuda': sub({v:'ajuda', up:S.sub}); break;
+    case 'sortirQ': S.confS = true; render(); break;
+    case 'noSortir': S.confS = false; render(); break;
+    case 'idCodiAntic': if (req([['id','Escriu un DNI o NIE vàlid',isDni]])){ S.idDni = val('id'); S.idPas = true; render(); } break;
+    case 'idOk': {
+      if (!req([['ic','El codi té 6 xifres. Copia’l tal com surt al correu.', v => /^\d{6}$/.test(v)]])) break;
+      b.disabled = true; b.textContent = 'Comprovant…';
+      const disp = (navigator.userAgent.match(/iPhone|iPad|Android[^;)]*|Windows|Mac OS X/) || ['Mòbil'])[0];
+      motor('verificarCodi', {dni:S.idDni, codi:val('ic'), dispositiu:disp}).then(r => {
+        b.disabled = false; b.textContent = 'Entrar';
+        if (!r.ok){
+          if (r.codi === 'INCORRECTE'){ err('ic', `Aquest codi no és correcte. Et queden ${r.intents} ${r.intents === 1 ? 'intent' : 'intents'}.`); return; }
+          if (r.codi === 'BLOQUEJAT'){ S.bloq = Date.now() + 900000; render(); return; }
+          if (r.codi === 'CADUCAT' || r.codi === 'ESGOTAT'){ S.idPas = false; render(); err('id', MSG[r.codi]); return; }
+          err('ic', MSG[r.codi] || MSG.SERVEI); return;
+        }
+        desaToken(r.token); S.bloq = 0; S.idPas = false;
+        aplicaPerfil(r.perfil, S.idDni.toUpperCase().replace(/[\s.-]/g,''));
+        toast(`Hola, ${r.perfil.nom}! Ja has entrat.`);
+        if (S.after){ const t = S.after; S.after = null; sub(t); }
+        else { S.sub = null; const t = S.afterTab || 'inici'; S.afterTab = null; go(t); }
+      });
+      break; }
+    case 'sortir': motor('tancarSessio', {token:token()}); desaToken(''); S.confS = false; S.entrat = false; S.junta = false; S.rol = 'visitant'; S.soci = null; S.user = null; S.ins = []; toast('Sessió tancada'); go('inici'); break;
+    case 'desaMov': if (req([['di','Escriu l’import', v => +v > 0],['dc','Escriu el concepte']])){ toast(S.mov === 'ing' ? 'Ingrés desat' : 'Despesa desada'); S.sub = null; render(); } break;
+    case 'desaAct': {
+      let ok = true;
+      if (!esSoci() && !req([['dk','Aquest codi de soci no existeix. Mira’l al teu carnet.', v => /^PP\d{3}[A-Z]$/i.test(v)]])) ok = false;
+      if (!req([['di','Escriu l’import', v => +v > 0],['dc','Escriu el concepte']])) ok = false;
+      if (!ok) return;
+      const id = S.sub.id; toast((S.mov === 'ing' ? 'Ingrés' : 'Despesa') + ' enviada al tresorer'); sub({v:'detall', id}); break; }
+    case 'insCurs': {
+      const id = S.sub.id, c = curs(id);
+      if (c.ocup >= c.places){ toast('T’hem apuntat a la llista d’espera'); break; }
+      S.pag = {concepte:`${c.nom}, primer trimestre`, import:esSoci()?c.ps:c.pn, back:{v:'curs', id}, fet:() => { c.ocup++; S.insC = (S.insC||[]).concat(id); S.okMsg = {t:'Inscripció feta', s:`Les comunicacions del curs de ${c.nom} et sortiran a la pantalla de Cursos i t’arribaran per correu.`, b:'Tornar als cursos', go:'cursos'}; }};
+      sub({v:'pagament'}); break; }
+    case 'avisos': { const id = S.sub.id; S.avs = S.avs || []; if (S.avs.includes(id)) S.avs = S.avs.filter(x => x !== id); else { S.avs.push(id); toast('Rebràs els avisos d’aquest curs'); } render(); break; }
+    case 'enviaCom': {
+      if (!req([['ct','Escriu el missatge']])) return;
+      const c = curs(S.sub.id); AVISOS.unshift({c:c.id, d:'avui', t:val('ct'), de:S.user.nom.split(' ')[0] + ', ' + rolCurs(c.id).toLowerCase()}); toast(`Missatge enviat als ${c.ocup} inscrits`); render(); break; }
+    case 'identC': S.after = null; S.afterTab = 'cursos'; S.idPas = false; S.idDni = ''; go('cursos', {v:'ident'}); break;
+    case 'xarxa': toast(`Aquí s’obrirà ${d.n}`); break;
+    case 'entraLogin': S.after = null; S.afterTab = 'inici'; S.idPas = false; S.idDni = ''; sub({v:'ident'}); break;
+    case 'entraAlta': S.alta = {pag:'targeta', fam:[]}; sub({v:'alta'}); break;
+    case 'convidat': S.entrat = true; S.sub = null; go('inici'); break;
+    case 'privOk': marcaPriv(); if (token()) motor('privacitatVista', {token:token()}); window.scrollTo(0,0); render(); break;
+    case 'privAlta': keepAlta(); S.privAlta = !S.privAlta; render(); restoreAlta(); break;
+    case 'remesa': toast('Remesa de 12 rebuts preparada'); break;
+    case 'pdf': toast('Informe preparat'); break;
+    case 'nova': toast('Aquí s’obrirà el creador d’activitats'); break;
+    case 'sortirJ': S.junta = false; S.pin = ''; go('inici'); break;
+  }
+});
+let altaTmp = {};
+function keepAlta(){ altaTmp = {}; ['an','ad','aa','ae','at','ai'].forEach(i => altaTmp[i] = val(i)); ['ar','am'].forEach(i => { const e = document.getElementById(i); if (e) altaTmp[i] = e.checked; }); }
+function restoreAlta(){ Object.entries(altaTmp).forEach(([k,v]) => { const e = document.getElementById(k); if (!e) return; if (typeof v === 'boolean') e.checked = v; else e.value = v; }); }
+function pinKey(k){
+  if (k === '⌫') S.pin = S.pin.slice(0,-1);
+  else if (S.pin.length < 4) S.pin += k;
+  render();
+  if (S.pin.length === 4){
+    if (S.pin === '1234'){ S.junta = true; S.pin = ''; toast('Accés de junta activat'); render(); }
+    else { S.pin = ''; render(); err('pin','PIN incorrecte. Torna-ho a provar.'); }
+  }
+}
+function desa(){ try { const log = !!(S.user || S.soci); if (log) localStorage.setItem('avv-sessio-v2', JSON.stringify({rol:S.rol, soci:S.soci, user:S.user})); else localStorage.removeItem('avv-sessio-v2'); localStorage.removeItem('avv-sessio'); sessionStorage.setItem('avv-convidat', (!log && S.entrat) ? '1' : ''); } catch(e){} }
+function recupera(){ try { const d = JSON.parse(localStorage.getItem('avv-sessio-v2') || 'null'); if (d && (d.user || d.soci)){ Object.assign(S, d); S.entrat = true; } else if (sessionStorage.getItem('avv-convidat') === '1') S.entrat = true; } catch(e){} }
+recupera();
+if (!token() && (S.soci || S.user)){ S.soci = null; S.user = null; S.rol = 'visitant'; S.entrat = false; }
+if (token()) motor('sessio', {token:token()}).then(r => {
+  if (r.ok){ aplicaPerfil(r.perfil); if (!r.perfil) toast('No consta com a soci aquest any. Escriu-nos si és un error.'); render(); }
+  else if (r.codi === 'SESSIO_CADUCADA'){ desaToken(''); S.soci = null; S.user = null; S.rol = 'visitant'; S.entrat = false; S.sub = null; render(); toast('La sessió ha caducat. Torna a entrar amb el teu DNI.'); }
+});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+window.addEventListener('hashchange', () => { if (!S.keep) S.sub = null; S.keep = false; render(); window.scrollTo(0,0); });
+render();
+</script>
+</body>
+</html>

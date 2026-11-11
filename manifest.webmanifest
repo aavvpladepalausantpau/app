@@ -1,0 +1,17 @@
+{
+  "name": "AV Pla de Palau – Sant Pau",
+  "short_name": "AV Sant Pau",
+  "description": "Activitats, cursos, inscripcions i socis de l'Associació de Veïns Pla de Palau – Sant Pau",
+  "lang": "ca",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EEF2EF",
+  "theme_color": "#0E5A4B",
+  "icons": [
+    { "src": "icona-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icona-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icona-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
