@@ -152,6 +152,28 @@ function aplicaPerfil(p, dni){
   S.user = {nom, cursos:[], escriu:{}, junta: /junta|tresor|presid|secret/i.test(p.rol || '')};
   if (p.privacitat) marcaPriv();
 }
+// Entrada a mig fer: si l'usuari surt a mirar el correu i el navegador recarrega la pàgina, hi tornem
+const PEND_MIN = 10;
+function desaPendent(){ try { localStorage.setItem('avv-pendent', JSON.stringify({dni:S.idDni, t:Date.now(), after:S.after || null, afterTab:S.afterTab || null})); } catch(e){} }
+function esborraPendent(){ try { localStorage.removeItem('avv-pendent'); } catch(e){} }
+function llegeixPendent(){ try { const p = JSON.parse(localStorage.getItem('avv-pendent') || 'null'); if (p && Date.now() - p.t < PEND_MIN * 60000) return p; esborraPendent(); } catch(e){} return null; }
+// Instal·lar l'app
+let instPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); instPrompt = e; if (typeof render === 'function') render(); });
+window.addEventListener('appinstalled', () => { instPrompt = null; S.instAjuda = false; toast('App instal·lada. La trobaràs a la pantalla d’inici.'); render(); });
+const instalada = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+const esIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function botoInstal(estil){
+  if (instalada()) return '';
+  const ic = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M12 7v7M9 11l3 3 3-3M10 18h4"/></svg>';
+  let ajuda = '';
+  if (S.instAjuda){
+    ajuda = esIOS()
+      ? `<ol style="margin:12px 0 0;padding-left:20px;font-size:14px;line-height:1.6"><li>Toca el botó <b>Compartir</b> <span aria-hidden="true">(el quadrat amb una fletxa cap amunt)</span>.</li><li>Tria <b>Afegir a la pantalla d’inici</b>.</li><li>Toca <b>Afegir</b>.</li></ol><p class="muted" style="font-size:13px;margin-top:6px">Si has obert l’enllaç des del correu o el WhatsApp, primer obre’l a Safari.</p>`
+      : `<ol style="margin:12px 0 0;padding-left:20px;font-size:14px;line-height:1.6"><li>Obre el menú del navegador <span aria-hidden="true">(⋮)</span>.</li><li>Tria <b>Instal·lar l’aplicació</b> o <b>Afegir a la pantalla d’inici</b>.</li></ol><p class="muted" style="font-size:13px;margin-top:6px">Si has obert l’enllaç des del correu o el WhatsApp, primer obre’l a Chrome.</p>`;
+  }
+  return `<div class="card" style="${estil || ''}"><button class="act" data-a="instal" style="border:0;background:none;padding:0;margin:0;display:flex;gap:14px;align-items:center;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit"><span class="mi">${ic}</span><span><span class="n" style="display:block;font-weight:600">Instal·la l’app al mòbil</span><span class="s" style="display:block;font-size:13px;color:var(--mut)">Hi entraràs amb una icona, com qualsevol altra app</span></span><span style="margin-left:auto;color:var(--mut);font-size:22px">›</span></button>${ajuda}</div>`;
+}
 const S = {rol:'visitant', junta:false, soci:null, ins:[], sub:null, filtre:'Totes', pin:'', alta:{pag:'targeta', fam:[]}};
 const $ = s => document.querySelector(s);
 const eur = n => (Math.round(n*100)/100).toLocaleString('ca-ES',{minimumFractionDigits:n%1?2:0}) + ' €';
@@ -223,10 +245,12 @@ function vBenvinguda(){
   <button class="btn full" data-a="entraLogin" style="flex-direction:column;gap:0;padding:14px"><span>Iniciar sessió</span><span style="font-weight:400;font-size:13px;opacity:.85">Soc del barri i ja estic registrat</span></button>
   <button class="btn ocre full" data-a="entraAlta" style="flex-direction:column;gap:0;padding:14px"><span>Fer-me’n soci</span><span style="font-weight:400;font-size:13px">Alta a l’associació en dos minuts</span></button>
   <button class="btn ghost full" data-a="convidat">Entrar sense registrar-me</button>
+  ${botoInstal('margin-top:6px')}
   </div></div>`;
 }
 function vInici(){
   let h = PROVES ? '<div class="card" style="margin-top:8px;background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink);font-size:14px"><b>Versió de proves.</b> L’entrada amb el DNI ja és real. Les activitats, els cursos i els pagaments encara són d’exemple.</div>' : '';
+  h += botoInstal('margin-top:12px');
   h += agendaAvisos();
   let soci = '';
   if (esSoci()) soci += `<button class="card act" data-go="soci" style="margin-top:22px"><span class="mi">${IC.soci}</span><div><div class="n">El meu carnet</div><div class="s">Soci núm. ${S.soci.num}</div></div><span style="margin-left:auto;color:var(--mut);font-size:22px">›</span></button>`;
@@ -370,7 +394,7 @@ function vAlta(){
   <div class="card" style="margin-top:18px"><div class="row"><span>Quota anual 2026</span><b>${eur(QUOTA)}</b></div></div>
   <button class="btn full" style="margin-top:14px" data-a="ferAlta">${A.pag==='targeta' ? `Pagar ${eur(QUOTA*n)}` : 'Enviar l’alta'}</button>`;
 }
-function resendTxt(){ const s = Math.max(0, Math.ceil(((S.rsT || 0) - Date.now()) / 1000)); return s > 0 ? `No t’ha arribat? Mira el correu brossa. Podràs demanar-ne un altre d’aquí a 0:${String(s).padStart(2,'0')}.` : `No t’ha arribat? Mira el correu brossa. <button class="link" data-a="reenvia" style="padding:0">Reenviar el codi</button>`; }
+function resendTxt(){ const s = Math.max(0, Math.ceil(((S.rsT || 0) - Date.now()) / 1000)); return s > 0 ? `No t’ha arribat? Mira el correu brossa. Podràs demanar-ne un altre d’aquí a ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}.` : `No t’ha arribat? Mira el correu brossa. <button class="link" data-a="reenvia" style="padding:0">Reenviar el codi</button>`; }
 let _rs = ''; setInterval(() => { const e = document.getElementById('rs'); if (!e) return; const t = resendTxt(); if (t !== _rs){ _rs = t; e.innerHTML = t; } }, 1000);
 function sortirHTML(){ return S.confS ? `<div class="card" style="margin-top:18px"><p>Vols tancar la sessió? Per tornar a entrar caldrà un codi nou.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px"><button class="btn ghost" data-a="noSortir">Cancel·lar</button><button class="btn" data-a="sortir" style="background:var(--red);color:var(--bg)">Tancar la sessió</button></div></div>` : `<p style="text-align:center;margin-top:16px"><button class="link" data-a="sortirQ">Tancar la sessió en aquest mòbil</button></p>`; }
 function vAjuda(){
@@ -401,6 +425,14 @@ function vIdent(){
   const peu = `<p style="text-align:center;margin-top:18px;font-size:15px"><button class="link" data-a="alta">No ets soci? Fes-te’n</button> · <button class="link" data-a="ajuda">Necessites ajuda?</button></p>`;
   let h = `<h2>Entra amb el teu DNI</h2>${S.after ? '<p style="margin-top:8px">Per apuntar despeses d’una activitat cal entrar amb el teu DNI de soci.</p>' : ''}<p class="muted" style="margin-top:4px">Només cal fer-ho una vegada en aquest mòbil.</p>${hint}`;
   if (S.bloq && Date.now() < S.bloq) return h + `<div class="card" style="margin-top:16px;border-color:var(--red)"><p>Has fet massa intents. Torna-ho a provar d’aquí a 15 minuts.</p></div>${peu}`;
+  if (S.idPas){
+    const rs = `<p class="muted" id="rs" style="margin-top:14px;text-align:center">${resendTxt()}</p>`;
+    return `<h2>Revisa el teu correu</h2><p style="margin-top:8px">Si el DNI <b>${S.idDni.toUpperCase()}</b> és d’una persona registrada, li hem enviat un codi de 6 xifres al correu que té l’associació.</p>
+    <div class="card" style="margin-top:14px;background:var(--pri-soft);border-color:var(--pri);color:var(--pri-soft-ink);font-size:14px">Pots sortir a mirar el correu tranquil·lament: quan tornis, seguiràs en aquesta pantalla. El codi caduca en ${PEND_MIN} minuts.</div>
+    <label class="f">Codi de 6 xifres<input type="text" id="ic" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="······" style="font-size:28px;letter-spacing:10px;text-align:center;font-weight:700"></label><div class="err" id="e-ic"></div>
+    <button class="btn full" style="margin-top:16px" data-a="idOk">Entrar</button>${rs}
+    <p style="text-align:center;margin-top:6px"><button class="link" data-a="canviaDni">Canviar el DNI</button> · <button class="link" data-a="ajuda">Necessites ajuda?</button></p>`;
+  }
   h += `<label class="f">DNI o NIE<input type="text" id="id" value="${S.idDni||''}" autocapitalize="characters"></label><div class="err" id="e-id"></div>`;
   if (!S.idPas) return h + `<button class="btn full" style="margin-top:18px" data-a="idCodi">Enviar-me el codi al mail</button>${peu}`;
   const rs = S.envios >= 3 && false ? `<p style="margin-top:12px">Si el codi no t’arriba, potser tenim el teu correu malament. Contacta amb l’administrador: <a href="https://wa.me/34699304442" target="_blank" rel="noopener">699 304 442</a>.</p>` : `<p class="muted" id="rs" style="margin-top:12px">${resendTxt()}</p>`;
@@ -488,6 +520,12 @@ const isMail = v => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
 const isDni = v => /^[0-9XYZxyz][0-9]{7}[A-Za-z]$/.test(v.replace(/[\s-]/g,''));
 
 document.addEventListener('input', e => { if (e.target.id) err(e.target.id, ''); const f = e.target.dataset.fam; if (f !== undefined) S.alta.fam[f][e.target.dataset.k] = e.target.value; });
+document.addEventListener('input', e => {
+  if (e.target.id !== 'ic') return;
+  const v = e.target.value.replace(/\D/g, '').slice(0, 6);
+  if (v !== e.target.value) e.target.value = v;
+  if (v.length === 6){ const b = document.querySelector('[data-a=idOk]'); if (b && !b.disabled) b.click(); }
+});
 document.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   const d = b.dataset;
@@ -540,11 +578,16 @@ document.addEventListener('click', e => {
       const txt = b.textContent; b.disabled = true; b.textContent = 'Enviant…';
       motor('solicitarCodi', {dni:S.idDni}).then(r => {
         b.disabled = false; b.textContent = txt;
-        if (r.ok){ S.rsT = Date.now() + 60000; S.idPas = true; render(); if (d.a === 'reenvia') toast('Codi reenviat'); return; }
+        if (r.ok){ S.rsT = Date.now() + 60000; S.idPas = true; desaPendent(); render(); setTimeout(() => { const c = document.getElementById('ic'); if (c) c.focus(); }, 50); if (d.a === 'reenvia') toast('Codi reenviat'); return; }
         if (r.codi === 'BLOQUEJAT'){ S.bloq = Date.now() + 900000; render(); return; }
         if (d.a === 'reenvia') toast(MSG[r.codi] || MSG.SERVEI); else err('id', MSG[r.codi] || MSG.SERVEI);
       });
       break; }
+    case 'canviaDni': esborraPendent(); S.idPas = false; render(); break;
+    case 'instal':
+      if (instPrompt){ instPrompt.prompt(); instPrompt.userChoice.then(() => { instPrompt = null; render(); }); }
+      else { S.instAjuda = !S.instAjuda; render(); }
+      break;
     case 'ajuda': sub({v:'ajuda', up:S.sub}); break;
     case 'sortirQ': S.confS = true; render(); break;
     case 'noSortir': S.confS = false; render(); break;
@@ -558,10 +601,10 @@ document.addEventListener('click', e => {
         if (!r.ok){
           if (r.codi === 'INCORRECTE'){ err('ic', `Aquest codi no és correcte. Et queden ${r.intents} ${r.intents === 1 ? 'intent' : 'intents'}.`); return; }
           if (r.codi === 'BLOQUEJAT'){ S.bloq = Date.now() + 900000; render(); return; }
-          if (r.codi === 'CADUCAT' || r.codi === 'ESGOTAT'){ S.idPas = false; render(); err('id', MSG[r.codi]); return; }
+          if (r.codi === 'CADUCAT' || r.codi === 'ESGOTAT'){ esborraPendent(); S.idPas = false; render(); err('id', MSG[r.codi]); return; }
           err('ic', MSG[r.codi] || MSG.SERVEI); return;
         }
-        desaToken(r.token); S.bloq = 0; S.idPas = false;
+        desaToken(r.token); esborraPendent(); S.bloq = 0; S.idPas = false;
         aplicaPerfil(r.perfil, S.idDni.toUpperCase().replace(/[\s.-]/g,''));
         toast(`Hola, ${r.perfil.nom}! Ja has entrat.`);
         if (S.after){ const t = S.after; S.after = null; sub(t); }
@@ -613,6 +656,7 @@ function pinKey(k){
 function desa(){ try { const log = !!(S.user || S.soci); if (log) localStorage.setItem('avv-sessio-v2', JSON.stringify({rol:S.rol, soci:S.soci, user:S.user})); else localStorage.removeItem('avv-sessio-v2'); localStorage.removeItem('avv-sessio'); sessionStorage.setItem('avv-convidat', (!log && S.entrat) ? '1' : ''); } catch(e){} }
 function recupera(){ try { const d = JSON.parse(localStorage.getItem('avv-sessio-v2') || 'null'); if (d && (d.user || d.soci)){ Object.assign(S, d); S.entrat = true; } else if (sessionStorage.getItem('avv-convidat') === '1') S.entrat = true; } catch(e){} }
 recupera();
+if (!token()){ const pd = llegeixPendent(); if (pd){ S.idDni = pd.dni; S.idPas = true; S.rsT = pd.t + 60000; S.after = pd.after; S.afterTab = pd.afterTab; S.sub = {v:'ident'}; } }
 if (!token() && (S.soci || S.user)){ S.soci = null; S.user = null; S.rol = 'visitant'; S.entrat = false; }
 if (token()) motor('sessio', {token:token()}).then(r => {
   if (r.ok){ aplicaPerfil(r.perfil); if (!r.perfil) toast('No consta com a soci aquest any. Escriu-nos si és un error.'); render(); }
