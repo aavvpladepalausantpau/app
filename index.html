@@ -141,7 +141,7 @@ const AVISOS = [
 const curs = id => CURSOS.find(c => c.id === id);
 ACTS.forEach(a => Object.assign(a, EXTRA[a.id]));
 // ===== Connexió amb el motor d'accés (Apps Script del full de socis) =====
-const MOTOR = 'https://script.google.com/macros/s/AKfycbz7VuXF5XEfaOdJBRAQnbq6vU1RUWi2p4FsVaG1E7vy2NYq-nq-aLV966t-TZeraG2y/exec';
+const MOTOR = 'https://script.google.com/macros/s/AKfycbxNeEcaHhN8SjH7W2cjmJyPAxlmYY7vP-Ic8kJQ28GtfK09pbjvBpb2hJFMF_JVuxu2/exec';
 const PROVES = true; // versió de proves: activitats, cursos i pagaments encara són d'exemple
 function motor(accio, dades){
   return fetch(MOTOR, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(Object.assign({accio}, dades || {}))})
