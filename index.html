@@ -263,14 +263,16 @@ function carregaAgenda(){
     if (r.ok){ S.ag = r; S.agErr = false; try { localStorage.setItem('avv-agenda', JSON.stringify(r)); } catch(e){} }
     else if (!S.ag) S.agErr = true;
     const s = S.sub;
-    if ((!s && ['inici','junta'].includes(tab())) || (s && s.v === 'agendaTota')) render();
+    if (S.agEdita && document.getElementById('ed')) $('#nav').innerHTML = navHTML(); // no esborrar el text que s'està escrivint
+    else if ((!s && ['inici','junta'].includes(tab())) || (s && s.v === 'agendaTota')) render();
     else $('#nav').innerHTML = navHTML();
   });
 }
 function filaAvis(a){
-  const tag = a.dst ? '<span class="tag r" style="flex:none;margin-top:2px">Important</span>' : '<span class="tag o" style="flex:none;margin-top:2px">Avís</span>';
+  const tag = a.dst ? '<span class="tag r" style="flex:none">Important</span>' : '<span class="tag o" style="flex:none">Avís</span>';
   const per = S.junta && a.dest !== 'Tots' ? `<p class="muted" style="font-size:13px;margin-top:2px">Només ${a.dest === 'Socis' ? 'per als socis' : 'per a la junta'}</p>` : '';
-  return `<div class="row" style="justify-content:flex-start;gap:12px;align-items:flex-start">${tag}<div style="min-width:0"><b>${esc(a.t)}</b>${a.s ? `<p class="muted" style="white-space:pre-line">${esc(a.s)}</p>` : ''}${per}</div></div>`;
+  const p = new Date(a.pub);
+  return `<div class="row" style="display:block"><div style="display:flex;gap:14px;align-items:flex-start"><div class="date" style="width:46px"><div class="d" style="font-size:22px">${p.getDate()}</div><div class="m">${MESOS[p.getMonth()]}</div></div><div style="min-width:0;flex:1"><div style="display:flex;gap:8px;align-items:flex-start;justify-content:space-between"><b>${esc(a.t)}</b>${tag}</div>${a.s ? `<p class="muted" style="white-space:pre-line">${esc(a.s)}</p>` : ''}${per}</div></div></div>`;
 }
 function filaEvent(e){
   const [, m, d] = e.dia.split('-').map(Number);
@@ -278,8 +280,9 @@ function filaEvent(e){
   const quan = e.tot ? (multi ? 'Fins al ' + diaCurt(sumaDies(e.diaFi, -1)) : 'Tot el dia') : horaTxt(new Date(e.ini));
   const det = [quan, e.lloc].filter(Boolean).join(' · ');
   const k = clauEv(e);
-  let h = `<div class="row" style="display:block"><div style="display:flex;gap:14px;align-items:flex-start"><div class="date" style="width:46px"><div class="d" style="font-size:22px">${d}</div><div class="m">${MESOS[m-1]}</div></div><div style="min-width:0;flex:1"><b>${esc(e.t)}</b><p class="muted">${esc(det)}</p>${e.desc ? `<p class="muted" style="font-size:13px;white-space:pre-line;margin-top:2px">${esc(curt(e.desc, 180))}</p>` : ''}`;
-  h += `<div class="mini"><button class="link" data-a="afegeixCal" data-ev="${esc(k)}" aria-expanded="${S.agObre === k}">Afegeix al calendari</button>${S.junta && !e.act ? `<button class="link m" data-a="amagaQ" data-ev="${esc(k)}">Amaga</button>` : ''}</div>`;
+  let h = `<div class="row" style="display:block"><div style="display:flex;gap:14px;align-items:flex-start"><div class="date" style="width:46px"><div class="d" style="font-size:22px">${d}</div><div class="m">${MESOS[m-1]}</div></div><div style="min-width:0;flex:1"><b>${esc(e.t)}</b><p class="muted">${esc(det)}</p>${e.desc ? `<p class="muted" style="font-size:13px;white-space:pre-line;margin-top:2px">${esc(curt(e.desc, 180))}</p>` : ''}${S.junta && e.editada ? '<p class="muted" style="font-size:12px;margin-top:2px">Text editat a l’app</p>' : ''}`;
+  h += `<div class="mini"><button class="link" data-a="afegeixCal" data-ev="${esc(k)}" aria-expanded="${S.agObre === k}">Afegeix al calendari</button>${S.junta && !e.act ? `<button class="link m" data-a="editaDesc" data-ev="${esc(k)}">Edita el text</button><button class="link m" data-a="amagaQ" data-ev="${esc(k)}">Amaga</button>` : ''}</div>`;
+  if (S.agEdita === k) h += editorDesc(e);
   if (S.agObre === k) h += `<div class="conf">Tria on el vols guardar:<div class="bs"><a class="chip" href="${esc(googleCal(e))}" target="_blank" rel="noopener" style="text-decoration:none">Google Calendar</a><button class="chip" data-a="ics" data-ev="${esc(k)}">iPhone, Outlook i altres</button></div><p style="font-size:12px;margin-top:6px;color:var(--mut)">Es guarda una còpia: si després canvia l’hora o el lloc, aquí sortirà actualitzat però al teu calendari no.</p></div>`;
   if (S.agAmaga === k){
     const dades = `data-a="decideix" data-id="${esc(e.id)}" data-t="${esc(e.t)}" data-estat="Amagat"`;
@@ -288,6 +291,11 @@ function filaEvent(e){
       : `<div class="conf">L’amaguem de l’app? Al calendari de Google no es toca res.<div class="bs"><button class="btn sm ghost" ${dades}>Amaga’l</button><button class="link" data-a="amagaNo">Cancel·la</button></div></div>`;
   }
   return h + '</div></div></div>';
+}
+function editorDesc(e){
+  return `<div class="conf"><label for="ed" style="font-weight:600">Descripció que es veurà a l’app</label><textarea class="fi" id="ed" rows="4" maxlength="1000" placeholder="Explica als veïns de què va, on és, què cal portar...">${esc(e.desc || '')}</textarea>
+  <p style="font-size:12px;margin-top:6px;color:var(--mut)">Només canvia a l’app: al calendari de Google no es toca res.${e.rec ? ' Val per a tots els dies de la sèrie.' : ''}</p>
+  <div class="bs"><button class="btn sm" data-a="desaDesc" data-id="${esc(e.id)}" data-t="${esc(e.t)}">Desa</button>${e.editada ? `<button class="btn sm ghost" data-a="desaDesc" data-id="${esc(e.id)}" data-t="${esc(e.t)}" data-buida="1">Torna al text del calendari</button>` : ''}<button class="link" data-a="editaNo">Cancel·la</button></div></div>`;
 }
 function sumaDies(dia, n){ const [y, m, d] = dia.split('-').map(Number); const x = new Date(y, m - 1, d + n); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; }
 function diaCurt(dia){ const [, m, d] = dia.split('-').map(Number); return `${d} ${MESOS[m-1]}`; }
@@ -388,7 +396,7 @@ function filaPend(e){
   const [, m, d] = e.dia.split('-').map(Number);
   const quan = e.tot ? 'Tot el dia' : horaTxt(new Date(e.ini));
   const dades = `data-a="decideix" data-id="${esc(e.id)}" data-t="${esc(e.t)}"`;
-  return `<div class="card" style="margin-bottom:10px"><div style="display:flex;gap:14px;align-items:flex-start"><div class="date" style="width:46px"><div class="d" style="font-size:22px">${d}</div><div class="m">${MESOS[m-1]}</div></div><div style="min-width:0;flex:1"><b>${esc(e.t)}</b><p class="muted">${esc([quan, e.lloc].filter(Boolean).join(' · '))}</p>${e.desc ? `<p class="muted" style="font-size:13px;white-space:pre-line;margin-top:2px">${esc(curt(e.desc, 180))}</p>` : ''}${e.rec ? '<p style="margin-top:6px"><span class="tag o">Es repeteix</span> <span class="muted" style="font-size:13px">Es decideix per a tota la sèrie</span></p>' : ''}</div></div>
+  return `<div class="card" style="margin-bottom:10px"><div style="display:flex;gap:14px;align-items:flex-start"><div class="date" style="width:46px"><div class="d" style="font-size:22px">${d}</div><div class="m">${MESOS[m-1]}</div></div><div style="min-width:0;flex:1"><b>${esc(e.t)}</b><p class="muted">${esc([quan, e.lloc].filter(Boolean).join(' · '))}</p>${e.desc ? `<p class="muted" style="font-size:13px;white-space:pre-line;margin-top:2px">${esc(curt(e.desc, 180))}</p>` : ''}${e.editada ? '<p class="muted" style="font-size:12px;margin-top:2px">Text editat a l’app</p>' : ''}${e.rec ? '<p style="margin-top:6px"><span class="tag o">Es repeteix</span> <span class="muted" style="font-size:13px">Es decideix per a tota la sèrie</span></p>' : ''}<div class="mini"><button class="link m" data-a="editaDesc" data-ev="${esc(clauEv(e))}">Edita el text</button></div>${S.agEdita === clauEv(e) ? editorDesc(e) : ''}</div></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px"><button class="btn sm ghost" ${dades} data-estat="Descartat">Descartar</button><button class="btn sm" ${dades} data-estat="Publicat">Publicar</button></div></div>`;
 }
 function vPendents(){
@@ -819,10 +827,22 @@ document.addEventListener('click', e => {
     case 'nova': toast('Aquí s’obrirà el creador d’activitats'); break;
     case 'sortirJ': S.junta = false; S.pin = ''; go('inici'); break;
     // Avisos i agenda
-    case 'afegeixCal': S.agObre = S.agObre === d.ev ? null : d.ev; S.agAmaga = null; render(); break;
+    case 'afegeixCal': S.agObre = S.agObre === d.ev ? null : d.ev; S.agAmaga = null; S.agEdita = null; render(); break;
     case 'ics': { const ev = properes().find(x => clauEv(x) === d.ev); if (ev) baixaIcs(ev); break; }
-    case 'amagaQ': S.agAmaga = S.agAmaga === d.ev ? null : d.ev; S.agObre = null; render(); break;
+    case 'amagaQ': S.agAmaga = S.agAmaga === d.ev ? null : d.ev; S.agObre = null; S.agEdita = null; render(); break;
     case 'amagaNo': S.agAmaga = null; render(); break;
+    case 'editaDesc': S.agEdita = S.agEdita === d.ev ? null : d.ev; S.agObre = null; S.agAmaga = null; render(); setTimeout(() => { const t = document.getElementById('ed'); if (t) t.focus(); }, 50); break;
+    case 'editaNo': S.agEdita = null; render(); break;
+    case 'desaDesc': {
+      const desc = d.buida ? '' : val('ed');
+      const txt = b.textContent; b.disabled = true; b.textContent = 'Desant…';
+      motor('juntaDescripcio', {token:token(), id:d.id, desc, t:d.t || ''}).then(r => {
+        b.disabled = false; b.textContent = txt;
+        if (!r.ok){ toast(msgJ(r)); return; }
+        toast(desc ? 'Text desat' : 'Torna a sortir el text del calendari');
+        S.agEdita = null; S.pend = null; S.agCarr = false; carregaAgenda(); render();
+      });
+      break; }
     case 'decideix': {
       b.disabled = true;
       motor('juntaDecideix', {token:token(), id:d.id, dia:d.dia || '', estat:d.estat, t:d.t || ''}).then(r => {
