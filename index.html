@@ -6,7 +6,7 @@
 <title>AV Sant Pau</title>
 <meta name="theme-color" content="#0E5A4B">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icona-192.png">
+<link rel="icon" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -29,6 +29,8 @@ h1{font-size:28px;line-height:1.1}h2{font-size:21px;line-height:1.2}h3{font-size
 p{margin:0}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:14px 18px 10px;display:flex;align-items:center;gap:12px}
 .logo{width:42px;height:42px;border-radius:12px;background:var(--pri);color:var(--pri-ink);display:grid;place-items:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:15px;flex:none}
+.logo-img{width:42px;height:42px;border-radius:12px;background:#fff;border:1px solid var(--line);object-fit:contain;padding:3px;flex:none}
+.logo-full{display:block;width:100%;max-width:300px;height:auto;background:#fff;border-radius:18px;padding:14px 18px}
 .top .t1{font-weight:600;font-size:15px;line-height:1.2}.top .t2{font-size:13px;color:var(--mut)}
 .back{border:0;background:var(--surf);width:42px;height:42px;border-radius:12px;color:var(--ink);font-size:20px;cursor:pointer;flex:none}
 main{padding:4px 18px 0}
@@ -195,7 +197,7 @@ function sub(s){ S.sub = s; render(); window.scrollTo(0,0); }
 function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 2600); }
 
 function header(){
-  const back = S.sub ? '<button class="back" data-a="back" aria-label="Tornar">‹</button>' : '<div class="logo" aria-hidden="true">PP</div>';
+  const back = S.sub ? '<button class="back" data-a="back" aria-label="Tornar">‹</button>' : '<img class="logo-img" src="logo-simbol.png" alt="" aria-hidden="true">';
   const rols = [];
   if (S.user && S.user.junta) rols.push('Junta');
   if (S.user) Object.values(S.user.escriu || {}).forEach(r => { if (!rols.includes(r)) rols.push(r); });
@@ -238,7 +240,7 @@ function agendaAvisos(){
 }
 function vBenvinguda(){
   return `<div style="min-height:calc(100vh - 60px);display:flex;flex-direction:column;justify-content:space-between;gap:32px;padding:20px 0 12px">
-  <div><div class="logo" style="width:68px;height:68px;border-radius:20px;font-size:24px" aria-hidden="true">PP</div>
+  <div><img class="logo-full" src="logo-avv.png" alt="Associació de Veïns Pla de Palau – Sant Pau" width="900" height="508">
   <h1 style="font-size:38px;margin-top:24px">Et donem la benvinguda al barri</h1>
   <p style="margin-top:12px;color:var(--mut);font-size:17px">Associació de Veïns Pla de Palau – Sant Pau. Avisos, activitats, cursos i tot el que passa al barri, en una sola app.</p>${PROVES ? '<p class="tag o" style="margin-top:14px;display:inline-block">Versió de proves</p>' : ''}</div>
   <div style="display:grid;gap:12px">
