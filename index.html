@@ -103,7 +103,7 @@ input[type=date],input[type=time],textarea{width:100%;margin-top:6px;padding:12p
 .qty{display:flex;align-items:center;gap:12px;flex:none}.qty button{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--pri);background:var(--surf);color:var(--pri);font:600 20px Figtree,sans-serif;cursor:pointer}.qty button:disabled{opacity:.35;cursor:default}.qty b{min-width:20px;text-align:center;font-size:18px}
 .qrbox{background:#fff;padding:16px;border-radius:16px;width:max-content;margin:18px auto 8px;min-width:240px;min-height:240px}.qrbox img,.qrbox canvas{display:block}
 .codi{text-align:center;font:700 22px "Bricolage Grotesque",sans-serif;letter-spacing:3px;margin:4px 0}
-.avis-ok{background:var(--pri-soft);border-color:var(--pri);color:var(--pri-soft-ink)}.avis-o{background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink)}
+.avis-ko{background:var(--red-soft);border-color:var(--red);color:var(--ink)}.avis-ok{background:var(--pri-soft);border-color:var(--pri);color:var(--pri-soft-ink)}.avis-o{background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink)}
 .cam{position:relative;margin-top:14px;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:1}.cam video{width:100%;height:100%;object-fit:cover;display:block}.mira{position:absolute;inset:18%;border:3px solid rgba(255,255,255,.85);border-radius:16px}
 .res{margin-top:12px;border-radius:16px;padding:16px;font-size:16px}.res:empty{display:none}.res b{display:block;font-size:22px;margin-bottom:4px}.res.ok{background:var(--pri-soft);color:var(--pri-soft-ink)}.res.ja{background:var(--ocre-soft);color:var(--ocre-ink)}.res.ko{background:var(--red-soft);color:var(--red)}.res.wait{background:var(--line);color:var(--ink)}
 .wz-bar{display:flex;gap:4px;margin:4px 0 10px}.wz-bar i{flex:1;height:5px;border-radius:3px;background:var(--line)}.wz-bar i.on{background:var(--pri)}.wz-bar i.skip{background:transparent;border:1px dashed var(--mut)}
@@ -871,7 +871,7 @@ function vIns(){
   }
   if (['PENDENT_PAGAMENT','LLISTA_ESPERA'].includes(x.estat) && s.v === 'ins'){
     h += S.anullaQ === x.c
-      ? `<div class="card" style="margin-top:16px"><p><b>Vols anul·lar la inscripció?</b> Les places quedaran lliures per a altres persones.</p><div style="display:flex;gap:10px;margin-top:12px"><button class="btn" data-a="anulla">Sí, anul·lar-la</button><button class="btn ghost" data-a="anullaNo">No</button></div></div>`
+      ? `<div class="card avis-ko" style="margin-top:16px"><p><b>Vols anul·lar la inscripció?</b></p><p style="margin-top:6px;font-size:14px">Les places quedaran lliures per a altres persones i no la podràs recuperar tu mateix.</p><div style="display:flex;gap:10px;margin-top:14px"><button class="btn ghost" style="flex:1" data-a="anullaNo">No, mantenir-la</button><button class="btn" style="flex:1;background:var(--red)" data-a="anulla">Sí, anul·lar</button></div></div>`
       : `<button class="link" style="margin-top:14px" data-a="anullaQ">Anul·lar la inscripció</button>`;
   }
   if (act(x.act)) h += `<button class="link" style="margin-top:6px;display:block" data-det="${esc(x.act)}">Veure l’activitat</button>`;
@@ -1008,12 +1008,17 @@ function vArribades(id){
     let bts = '';
     if (f.estat === 'CONFIRMADA') bts += f.arr ? `<button class="chip" data-a="arrMan" data-c="${esc(f.c)}" data-d="0">Desfer</button>` : `<button class="chip on" data-a="arrMan" data-c="${esc(f.c)}" data-d="1">Ha arribat</button>`;
     if (L.junta && ['PENDENT_PAGAMENT','CADUCADA'].includes(f.estat)) bts += `<button class="chip" data-a="pagadaJ" data-c="${esc(f.c)}">Marcar pagada</button>`;
-    if (L.junta && ACTIUS_INS.includes(f.estat)) bts += S.cancQ === f.c
-      ? `<button class="chip" data-a="cancJ" data-c="${esc(f.c)}">Sí, anul·lar</button><button class="chip" data-a="cancNo">No</button>`
-      : `<button class="chip" data-a="cancQ" data-c="${esc(f.c)}">Anul·lar</button>`;
+    if (L.junta) bts += `<button class="chip" data-a="editaInsJ" data-c="${esc(f.c)}">Editar</button>`;
+    if (L.junta && ['CANCEL·LADA','CADUCADA'].includes(f.estat)) bts += `<button class="chip" data-a="reactJ" data-c="${esc(f.c)}">Reactivar</button>`;
+    if (L.junta && ACTIUS_INS.includes(f.estat) && S.cancQ !== f.c) bts += `<button class="chip" data-a="cancQ" data-c="${esc(f.c)}">Anul·lar</button>`;
     const est = f.estat === 'CONFIRMADA' ? (f.arr ? `<span class="tag">Ha arribat${f.hora ? ' ' + esc(f.hora) : ''}</span>` : '') : tagIns(f.estat);
     const extra = L.junta ? [f.email, f.tel].filter(Boolean).map(esc).join(' · ') : '';
-    return `<div class="row arr" data-q="${esc((f.nom + ' ' + f.c).toLowerCase())}" style="align-items:flex-start;gap:10px"><div style="min-width:0"><b>${esc(f.nom)}</b><div class="muted" style="font-size:13px">${esc(f.q)} · ${esc(f.c)}${f.imp ? ' · ' + eur(f.imp) : ''}</div>${f.resp ? `<div class="muted" style="font-size:13px">${esc(f.resp)}</div>` : ''}${extra ? `<div class="muted" style="font-size:13px;overflow-wrap:anywhere">${extra}</div>` : ''}${f.notes && /PAGAT SENSE|retornar/.test(f.notes) ? `<div style="font-size:13px;color:var(--red)">${esc(f.notes)}</div>` : ''}</div><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:none">${est}${bts}</div></div>`;
+    // Confirmació en un requadre a part, lluny del botó «Anul·lar», perquè un doble toc no l'anul·li per error
+    const conf = S.cancQ === f.c ? `<div class="card avis-ko arr" data-q="${esc((f.nom + ' ' + f.c).toLowerCase())}" style="margin:6px 0 12px"><p><b>Vols anul·lar la inscripció de ${esc(f.nom)}?</b></p>
+      <p style="margin-top:6px;font-size:14px">${f.u} ${f.u === 1 ? 'plaça quedarà lliure' : 'places quedaran lliures'}${L.tot.espera ? ' i podran passar a la gent de la llista d’espera' : ''}.${f.pagat && f.imp ? ` Està pagada (${eur(f.imp)}): l’import s’haurà de retornar a mà.` : ''} Si t’equivoques, la podràs reactivar.</p>
+      <div style="display:flex;gap:10px;margin-top:14px"><button class="btn ghost" style="flex:1" data-a="cancNo">No, mantenir-la</button><button class="btn" style="flex:1;background:var(--red)" data-a="cancJ" data-c="${esc(f.c)}">Sí, anul·lar</button></div></div>` : '';
+    return conf ? fila0() + conf : fila0();
+    function fila0(){ return `<div class="row arr" data-q="${esc((f.nom + ' ' + f.c).toLowerCase())}" style="align-items:flex-start;gap:10px"><div style="min-width:0"><b>${esc(f.nom)}</b><div class="muted" style="font-size:13px">${esc(f.q)} · ${esc(f.c)}${f.imp ? ' · ' + eur(f.imp) : ''}</div>${f.resp ? `<div class="muted" style="font-size:13px">${esc(f.resp)}</div>` : ''}${extra ? `<div class="muted" style="font-size:13px;overflow-wrap:anywhere">${extra}</div>` : ''}${f.notes && /PAGAT SENSE|retornar/.test(f.notes) ? `<div style="font-size:13px;color:var(--red)">${esc(f.notes)}</div>` : ''}</div><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:none">${est}${bts}</div></div>`; }
   };
   return `<h2>Control d’arribades</h2><p class="muted" style="margin-top:4px">${esc(L.act.nom)} · ${esc(L.act.quan)}</p>
   ${L.junta && L.pin ? `<div class="card" style="margin-top:12px"><div class="row"><span>PIN per als voluntaris</span><b style="font-size:20px;letter-spacing:3px">${esc(L.pin)}</b></div></div>` : ''}
@@ -1023,6 +1028,34 @@ function vArribades(id){
   <label class="f" style="margin-top:18px">Cerca per nom o codi<input type="text" id="cerca" autocomplete="off" placeholder="Marta, W8SWSY…"></label>
   <div class="card" style="margin-top:10px">${files.length ? files.map(fila).join('') : '<p class="muted">Encara no hi ha cap inscripció.</p>'}</div>
   <button class="link" style="margin-top:10px" data-a="arrRefresca">Actualitzar la llista</button>`;
+}
+function vEditaIns(){
+  const s = S.sub, L = (S.arr || {})[s.id];
+  if (!L){ carregaArr(s.id); return '<p class="muted" style="margin-top:20px">Carregant la inscripció…</p>'; }
+  const f = L.files.find(x => x.c === s.c);
+  if (!f) return '<p class="muted" style="margin-top:20px">Aquesta inscripció ja no existeix.</p>';
+  const rm = f.rm || {};
+  const preg = (L.act.preg || []).map(q => {
+    const val = rm[q.id] || '', id = 'eq-' + q.id;
+    let ctl;
+    if (q.tipus === 'desplegable' || q.tipus === 'sí/no'){
+      const ops = q.tipus === 'sí/no' ? ['Sí','No'] : q.opcions;
+      ctl = `<select id="${id}"><option value="">Sense resposta</option>${ops.map(o => `<option${o === val ? ' selected' : ''}>${esc(o)}</option>`).join('')}${val && !ops.includes(val) ? `<option selected>${esc(val)}</option>` : ''}</select>`;
+    } else ctl = `<input type="${q.tipus === 'número' ? 'number' : 'text'}" id="${id}" value="${esc(val)}">`;
+    return `<label class="f">${esc(q.text)}${ctl}</label>`;
+  }).join('');
+  const correu = {CONFIRMADA:'amb el QR', PENDENT_PAGAMENT:'amb l’enllaç de pagament', LLISTA_ESPERA:'de la llista d’espera'}[f.estat];
+  return `<h2>Editar la inscripció</h2><p class="muted" style="margin-top:4px">${esc(L.act.nom)}</p>
+  <div class="card" style="margin-top:12px">${filaIA('Codi', f.c)}${filaIA('Places', f.q)}${filaIA('Import', f.imp ? eur(f.imp) : 'Gratuïta')}<div class="row"><span class="muted">Estat</span>${tagIns(f.estat)}</div></div>
+  <p class="muted" style="margin-top:8px;font-size:13px">Les places i l’import no es poden canviar. Si cal, anul·la-la i fes-ne una de nova.</p>
+  <label class="f">Nom i cognoms<input type="text" id="en" value="${esc(f.nom)}"></label><div class="err" id="e-en"></div>
+  <label class="f">Correu electrònic<input type="email" id="ee" value="${esc(f.email)}"></label><div class="err" id="e-ee"></div>
+  <label class="f">Telèfon<input type="tel" id="et" value="${esc(f.tel)}"></label>
+  ${preg ? `<div class="sec">Respostes</div>${preg}` : ''}
+  <label class="f">Notes de la junta<textarea id="enotes" rows="3" placeholder="Només les veu la junta">${esc(f.notes)}</textarea></label>
+  <div class="err" id="e-eins"></div>
+  <button class="btn full" style="margin-top:18px" data-a="desaInsJ">Desar els canvis</button>
+  ${correu ? `<button class="btn ghost full" style="margin-top:10px" data-a="reenviaJ">Tornar a enviar el correu ${correu}</button>` : ''}`;
 }
 function vEscaner(id){
   const a = act(id);
@@ -1287,12 +1320,12 @@ function render(){
   nav.style.display = S.entrat ? '' : 'none';
   const t = tab();
   if (t === 'junta' && !S.junta && S.sub) S.sub = null;
-  if (S.sub && ['detall','info','agenda','inscriure','despAct','form','arribades','escaner'].includes(S.sub.v) && !act(S.sub.id)) S.sub = null;
+  if (S.sub && ['detall','info','agenda','inscriure','despAct','form','arribades','escaner','editaIns'].includes(S.sub.v) && !act(S.sub.id)) S.sub = null;
   if (S.sub && S.sub.v === 'nova' && !S.wz) S.sub = null;
   $('#top').innerHTML = header();
   $('#nav').innerHTML = navHTML();
   const m = $('#main'), s = S.sub;
-  if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vDespAct(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, ident:vIdent, despesa:vDespesa, inscrits:vInscrits, socis:vSocis, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), escaner:()=>vEscaner(s.id), nova:vNova})[s.v]();
+  if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vDespAct(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, ident:vIdent, despesa:vDespesa, inscrits:vInscrits, socis:vSocis, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), escaner:()=>vEscaner(s.id), editaIns:vEditaIns, nova:vNova})[s.v]();
   else m.innerHTML = ({inici:vInici, activitats:vActivitats, cursos:vCursos, soci:vSoci, junta:vJunta})[t]();
   if (s && (s.v === 'ins' || s.v === 'qr')) setTimeout(pintaQR, 0);
   if (s && s.v === 'escaner') setTimeout(() => iniciaCamera(s.id), 0);
@@ -1463,6 +1496,28 @@ document.addEventListener('click', e => {
       motor('juntaMarcaPagada', {token:token(), c:d.c}).then(r => { if (!r.ok){ b.disabled = false; toast(r.msg || msgJ(r)); return; } toast('Marcada com a pagada. Li hem enviat el QR.'); delete S.arr[id]; carregaActivitats(); render(); });
       break; }
     case 'cancQ': S.cancQ = d.c; render(); break;
+    case 'editaInsJ': S.cancQ = null; sub({v:'editaIns', id:S.sub.id, c:d.c, up:S.sub}); break;
+    case 'desaInsJ': {
+      if (!req([['en','Escriu el nom i cognoms'],['ee','El correu no és vàlid',isMail]])) break;
+      const s = S.sub, L = S.arr[s.id], resp = {};
+      (L.act.preg || []).forEach(q => { resp[q.id] = val('eq-' + q.id); });
+      b.disabled = true; b.textContent = 'Desant…';
+      motor('juntaEditaIns', {token:token(), c:s.c, nom:val('en'), email:val('ee'), tel:val('et'), resp, notes:val('enotes')}).then(r => {
+        b.disabled = false; b.textContent = 'Desar els canvis';
+        if (!r.ok){ err('eins', r.msg || msgJ(r)); return; }
+        toast('Inscripció desada'); delete S.arr[s.id]; sub(s.up);
+      });
+      break; }
+    case 'reenviaJ': { const s = S.sub; b.disabled = true;
+      motor('juntaReenviaIns', {token:token(), c:s.c}).then(r => { b.disabled = false; toast(r.ok ? 'Correu enviat' : (r.msg || msgJ(r))); });
+      break; }
+    case 'reactJ': { const id = S.sub.id; b.disabled = true;
+      motor('juntaReactivaIns', {token:token(), c:d.c}).then(r => {
+        if (!r.ok){ b.disabled = false; toast(r.msg || msgJ(r)); return; }
+        toast(r.estat === 'CONFIRMADA' ? 'Reactivada: torna a estar confirmada' : 'Reactivada: li hem enviat l’enllaç de pagament (24 hores)');
+        delete S.arr[id]; carregaActivitats(); render();
+      });
+      break; }
     case 'cancNo': S.cancQ = null; render(); break;
     case 'cancJ': { const id = S.sub.id; b.disabled = true;
       motor('juntaCancellaIns', {token:token(), c:d.c}).then(r => { S.cancQ = null; if (!r.ok){ b.disabled = false; toast(r.msg || msgJ(r)); return; } toast('Inscripció anul·lada'); delete S.arr[id]; carregaActivitats(); render(); });
