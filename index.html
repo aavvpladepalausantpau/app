@@ -789,15 +789,17 @@ function carregaScript(url){
 }
 
 /* --- Inscripcions desades en aquest mòbil i «Les meves inscripcions» --- */
-function insDesats(){ try { return JSON.parse(localStorage.getItem('avv-ins') || '[]'); } catch(e){ return []; } }
+function insDesats(){ try { return JSON.parse(localStorage.getItem('avv-ins') || '[]').filter(x => x && x.c); } catch(e){ return []; } }
 function desaInsCodi(c, s){ const l = insDesats().filter(x => x.c !== c); l.unshift({c, s}); try { localStorage.setItem('avv-ins', JSON.stringify(l.slice(0, 40))); } catch(e){} }
 function carregaMeves(){
   const codis = insDesats();
   if (!token() && !codis.length){ S.meves = []; return; }
   if (S.mevesCarr) return;
   S.mevesCarr = true;
+  const qui = token();
   motor('mevesInscripcions', {token:token(), codis}).then(r => {
     S.mevesCarr = false;
+    if (qui !== token()){ carregaMeves(); return; }   // ha canviat qui fa servir l'app mentre es carregava
     if (r.ok){ S.meves = r.ins; try { localStorage.setItem('avv-meves', JSON.stringify(r.ins)); } catch(e){} }
     else if (!S.meves) S.meves = [];
     const s = S.sub;
@@ -1431,13 +1433,13 @@ document.addEventListener('click', e => {
         }
         desaToken(r.token); esborraPendent(); S.bloq = 0; S.idPas = false;
         aplicaPerfil(r.perfil, S.idDni.toUpperCase().replace(/[\s.-]/g,''));
-        S.agCarr = false; carregaAgenda(); S.actCarr = false; carregaActivitats(); carregaMeves();
+        S.agCarr = false; carregaAgenda(); S.actCarr = false; carregaActivitats(); S.fi = null; S.insV = {}; S.mevesCarr = false; carregaMeves();
         toast(`Hola, ${r.perfil.nom}! Ja has entrat.`);
         if (S.after){ const t = S.after; S.after = null; sub(t); }
         else { S.sub = null; const t = S.afterTab || 'inici'; S.afterTab = null; go(t); }
       });
       break; }
-    case 'sortir': motor('tancarSessio', {token:token()}); desaToken(''); S.confS = false; S.entrat = false; S.junta = false; S.rol = 'visitant'; S.soci = null; S.user = null; S.ins = []; S.meves = []; S.wz = null; try { localStorage.removeItem('avv-meves'); localStorage.removeItem('avv-activitats'); } catch(e){} S.acts = null; S.actCarr = false; carregaActivitats(); oblidaAgenda(); toast('Sessió tancada'); go('inici'); break;
+    case 'sortir': motor('tancarSessio', {token:token()}); desaToken(''); S.confS = false; S.entrat = false; S.junta = false; S.rol = 'visitant'; S.soci = null; S.user = null; S.ins = []; S.meves = []; S.wz = null; S.fi = null; S.insV = {}; S.anullaQ = null; try { localStorage.removeItem('avv-meves'); localStorage.removeItem('avv-ins'); localStorage.removeItem('avv-activitats'); } catch(e){} S.acts = null; S.actCarr = false; carregaActivitats(); S.mevesCarr = false; carregaMeves(); oblidaAgenda(); toast('Sessió tancada'); go('inici'); break;
     case 'desaMov': if (req([['di','Escriu l’import', v => +v > 0],['dc','Escriu el concepte']])){ toast(S.mov === 'ing' ? 'Ingrés desat' : 'Despesa desada'); S.sub = null; render(); } break;
     case 'desaAct': {
       let ok = true;
