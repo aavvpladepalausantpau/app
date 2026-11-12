@@ -105,7 +105,8 @@ input[type=date],input[type=time],textarea{width:100%;margin-top:6px;padding:12p
 .codi{text-align:center;font:700 22px "Bricolage Grotesque",sans-serif;letter-spacing:3px;margin:4px 0}
 .avis-ko{background:var(--red-soft);border-color:var(--red);color:var(--ink)}.avis-ok{background:var(--pri-soft);border-color:var(--pri);color:var(--pri-soft-ink)}.avis-o{background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink)}
 .cam{position:relative;margin-top:14px;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:1}.cam video{width:100%;height:100%;object-fit:cover;display:block}.mira{position:absolute;inset:18%;border:3px solid rgba(255,255,255,.85);border-radius:16px}
-.res{margin-top:12px;border-radius:16px;padding:16px;font-size:16px}.res:empty{display:none}.res b{display:block;font-size:22px;margin-bottom:4px}.res.ok{background:var(--pri-soft);color:var(--pri-soft-ink)}.res.ja{background:var(--ocre-soft);color:var(--ocre-ink)}.res.ko{background:var(--red-soft);color:var(--red)}.res.wait{background:var(--line);color:var(--ink)}
+.res{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px;font-size:17px;gap:4px}.res:empty{display:none}.res b{display:block;font-size:24px;margin-bottom:6px}.res .btn{margin-top:14px;min-width:70%}.res .link{color:inherit}.res.r-ok{background:#E3F4EC;color:#0B4639}.res.r-ja{background:#FBEED6;color:#6F4508}.res.r-ko{background:#F8E1DD;color:#8E2A1E}.res.r-wait{background:rgba(0,0,0,.55);color:#fff}.res.r-ok .btn{background:#0E5A4B;color:#fff}.res.r-ja .btn{background:#6F4508;color:#fff}.res.r-ko .btn{background:#B23A2A;color:#fff}
+.arr-est{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--line);color:var(--ink);white-space:nowrap}.arr-est.si{background:var(--pri-soft);color:var(--pri-soft-ink)}
 .wz-bar{display:flex;gap:4px;margin:4px 0 10px}.wz-bar i{flex:1;height:5px;border-radius:3px;background:var(--line)}.wz-bar i.on{background:var(--pri)}.wz-bar i.skip{background:transparent;border:1px dashed var(--mut)}
 .wz-nav{display:flex;justify-content:space-between;gap:10px;margin-top:20px}.wz-nav .btn{flex:1}
 .wz-ent{margin-top:10px}.wz-par{margin-top:8px}.wz-ag{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;margin-top:8px}
@@ -206,7 +207,7 @@ const IC = {
   junta:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>'
 };
 
-function tab(){ const h = location.hash.slice(1); if (/^(ins|v)\./.test(h)) return 'activitats'; return ['inici','activitats','cursos','soci','junta'].includes(h) ? h : 'inici'; }
+function tab(){ const h = location.hash.slice(1); if (/^(ins|v)\./.test(h)) return 'activitats'; if (/^arr\./.test(h)) return S.arrTab || 'activitats'; return ['inici','activitats','cursos','soci','junta'].includes(h) ? h : 'inici'; }
 function go(t, sub){ S.sub = sub || null; if (location.hash.slice(1) !== t){ S.keep = true; location.hash = t; } else render(); window.scrollTo(0,0); }
 function sub(s){ S.sub = s; render(); window.scrollTo(0,0); }
 function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 2600); }
@@ -808,6 +809,13 @@ function meves(){
 
 /* --- Enllaços que arriben per correu, des de SumUp o des d'un QR escanejat amb la càmera --- */
 function rutaHash(){
+  const ma = location.href.match(/#arr\.([a-z0-9-]+)(?:\.(\d{4}))?/);
+  if (ma){
+    if (ma[2]){ S.pins = S.pins || {}; S.pins[ma[1]] = ma[2]; desaPins(); }
+    history.replaceState(null, '', location.pathname + '#arr.' + ma[1]);   // el PIN no es queda a la barra d'adreces
+    S.arr = {}; S.sub = {v:'arribades', id:ma[1]};
+    return true;
+  }
   const m = location.href.match(/#(v|ins|pagar|pagat)\.([A-Z0-9]{6})\.([0-9a-f]{20})/);
   if (!m) return false;
   const [, t, c, s] = m;
@@ -993,76 +1001,48 @@ function carregaArr(id){
     S.arr = S.arr || {}; S.arr[id] = r; render();
   });
 }
+function obreArribades(id, up){
+  S.arrTab = tab(); S.arr = {}; S.pinErr = '';
+  sub({v:'arribades', id, up});
+  history.replaceState(null, '', location.pathname + '#arr.' + id);
+}
+function enllacVoluntaris(L){ return location.origin + location.pathname + '#arr.' + L.act.codi + '.' + L.pin; }
 function vArribades(id){
-  const a = act(id);
-  if (!esJ() && !(S.pins || {})[id]) return `<h2>Control d’arribades</h2><p class="muted" style="margin-top:4px">${esc(a.nom)}</p>
+  const a = act(id), nomAct = a ? a.nom : '';
+  if (!esJ() && !(S.pins || {})[id]) return `<h2>Control d’arribades</h2>${nomAct ? `<p class="muted" style="margin-top:4px">${esc(nomAct)}</p>` : ''}
     <p style="margin-top:14px">Escriu el PIN de voluntaris d’aquesta activitat. Te’l dona la junta.</p>
     <label class="f">PIN<input type="tel" id="pa" inputmode="numeric" maxlength="4" autocomplete="off"></label><div class="err" id="e-pa">${esc(S.pinErr || '')}</div>
     <button class="btn full" style="margin-top:16px" data-a="pinAct">Entrar</button>`;
   const L = (S.arr || {})[id];
-  if (!L){ carregaArr(id); return `<p class="muted" style="margin-top:20px">${S.arrErr ? esc(S.arrErr) : 'Carregant les inscripcions…'}</p>`; }
+  if (!L){ carregaArr(id); return `<h2>Control d’arribades</h2><p class="muted" style="margin-top:20px">${S.arrErr ? esc(S.arrErr) : 'Carregant les inscripcions…'}</p>`; }
   const p = L.tot.conf ? Math.min(100, Math.round(L.tot.arr / L.tot.conf * 100)) : 0;
-  const ordre = f => f.estat === 'CONFIRMADA' ? (f.arr ? 1 : 0) : 2;
-  const files = L.files.filter(f => L.junta || f.estat === 'CONFIRMADA').slice().sort((x, y) => ordre(x) - ordre(y) || x.nom.localeCompare(y.nom, 'ca'));
-  const fila = f => {
-    let bts = '';
-    if (f.estat === 'CONFIRMADA') bts += f.arr ? `<button class="chip" data-a="arrMan" data-c="${esc(f.c)}" data-d="0">Desfer</button>` : `<button class="chip on" data-a="arrMan" data-c="${esc(f.c)}" data-d="1">Ha arribat</button>`;
-    if (L.junta && ['PENDENT_PAGAMENT','CADUCADA'].includes(f.estat)) bts += `<button class="chip" data-a="pagadaJ" data-c="${esc(f.c)}">Marcar pagada</button>`;
-    if (L.junta) bts += `<button class="chip" data-a="editaInsJ" data-c="${esc(f.c)}">Editar</button>`;
-    if (L.junta && ['CANCEL·LADA','CADUCADA'].includes(f.estat)) bts += `<button class="chip" data-a="reactJ" data-c="${esc(f.c)}">Reactivar</button>`;
-    if (L.junta && ACTIUS_INS.includes(f.estat) && S.cancQ !== f.c) bts += `<button class="chip" data-a="cancQ" data-c="${esc(f.c)}">Anul·lar</button>`;
-    const est = f.estat === 'CONFIRMADA' ? (f.arr ? `<span class="tag">Ha arribat${f.hora ? ' ' + esc(f.hora) : ''}</span>` : '') : tagIns(f.estat);
-    const extra = L.junta ? [f.email, f.tel].filter(Boolean).map(esc).join(' · ') : '';
-    // Confirmació en un requadre a part, lluny del botó «Anul·lar», perquè un doble toc no l'anul·li per error
-    const conf = S.cancQ === f.c ? `<div class="card avis-ko arr" data-q="${esc((f.nom + ' ' + f.c).toLowerCase())}" style="margin:6px 0 12px"><p><b>Vols anul·lar la inscripció de ${esc(f.nom)}?</b></p>
-      <p style="margin-top:6px;font-size:14px">${f.u} ${f.u === 1 ? 'plaça quedarà lliure' : 'places quedaran lliures'}${L.tot.espera ? ' i podran passar a la gent de la llista d’espera' : ''}.${f.pagat && f.imp ? ` Està pagada (${eur(f.imp)}): l’import s’haurà de retornar a mà.` : ''} Si t’equivoques, la podràs reactivar.</p>
-      <div style="display:flex;gap:10px;margin-top:14px"><button class="btn ghost" style="flex:1" data-a="cancNo">No, mantenir-la</button><button class="btn" style="flex:1;background:var(--red)" data-a="cancJ" data-c="${esc(f.c)}">Sí, anul·lar</button></div></div>` : '';
-    return conf ? fila0() + conf : fila0();
-    function fila0(){ return `<div class="row arr" data-q="${esc((f.nom + ' ' + f.c).toLowerCase())}" style="align-items:flex-start;gap:10px"><div style="min-width:0"><b>${esc(f.nom)}</b><div class="muted" style="font-size:13px">${esc(f.q)} · ${esc(f.c)}${f.imp ? ' · ' + eur(f.imp) : ''}</div>${f.resp ? `<div class="muted" style="font-size:13px">${esc(f.resp)}</div>` : ''}${extra ? `<div class="muted" style="font-size:13px;overflow-wrap:anywhere">${extra}</div>` : ''}${f.notes && /PAGAT SENSE|retornar/.test(f.notes) ? `<div style="font-size:13px;color:var(--red)">${esc(f.notes)}</div>` : ''}</div><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:none">${est}${bts}</div></div>`; }
-  };
+  const files = L.files.filter(f => f.estat === 'CONFIRMADA').sort((x, y) => (x.arr - y.arr) || x.nom.localeCompare(y.nom, 'ca'));
+  const fila = f => `<div class="row arr" data-q="${esc((f.nom + ' ' + f.c).toLowerCase())}" style="align-items:flex-start;gap:10px">
+    <div style="min-width:0"><b>${esc(f.nom)}</b><div class="muted" style="font-size:13px">${esc(f.q)} · ${esc(f.c)}</div>${f.resp ? `<div class="muted" style="font-size:13px">${esc(f.resp)}</div>` : ''}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex:none">
+      <span class="arr-est${f.arr ? ' si' : ''}">${f.arr ? 'Arribat' + (f.hora ? ' ' + esc(f.hora) : '') : 'Pendent'}</span>
+      ${f.arr ? `<button class="chip" data-a="arrMan" data-c="${esc(f.c)}" data-d="0">Desfer l’arribada</button>` : `<button class="chip on" data-a="arrMan" data-c="${esc(f.c)}" data-d="1">Registrar arribada</button>`}
+    </div></div>`;
+  const altres = L.junta ? L.files.filter(f => f.estat !== 'CONFIRMADA') : [];
+  const resumAltres = altres.length ? `<p class="muted" style="margin-top:8px;font-size:13px">No surten a la llista (no confirmades): ${['PENDENT_PAGAMENT','LLISTA_ESPERA','CADUCADA','CANCEL·LADA'].map(e => { const n = altres.filter(f => f.estat === e).length; return n ? n + ' ' + ESTAT_INS[e][0].toLowerCase() : ''; }).filter(Boolean).join(' · ')}. Es gestionen des del full de socis, menú App AVV › Inscripcions.</p>` : '';
+  const voluntaris = L.junta && L.pin ? `<div class="card" style="margin-top:12px"><div class="row"><span>PIN per als voluntaris</span><b style="font-size:20px;letter-spacing:3px">${esc(L.pin)}</b></div>
+    <button class="btn full" style="margin-top:10px" data-a="compartArr">Compartir l’enllaç amb voluntaris</button>
+    <p class="muted" style="margin-top:8px;font-size:13px">L’enllaç ja porta el PIN: qui el tingui podrà registrar arribades d’aquesta activitat, sense entrar amb el DNI.</p>
+    ${S.pinNouQ ? `<div class="card avis-ko" style="margin-top:10px"><p><b>Canviar el PIN?</b> Els enllaços que ja has enviat deixaran de funcionar.</p><div style="display:flex;gap:10px;margin-top:12px"><button class="btn ghost" style="flex:1" data-a="pinNouNo">No</button><button class="btn" style="flex:1;background:var(--red)" data-a="pinNou">Sí, canviar-lo</button></div></div>`
+      : `<button class="link" data-a="pinNouQ">Canviar el PIN</button>`}</div>` : '';
   return `<h2>Control d’arribades</h2><p class="muted" style="margin-top:4px">${esc(L.act.nom)} · ${esc(L.act.quan)}</p>
-  ${L.junta && L.pin ? `<div class="card" style="margin-top:12px"><div class="row"><span>PIN per als voluntaris</span><b style="font-size:20px;letter-spacing:3px">${esc(L.pin)}</b></div></div>` : ''}
-  <div class="card" style="margin-top:12px"><div class="row"><span>Han arribat</span><b>${L.tot.arr} de ${L.tot.conf} places</b></div><div class="bar"><i style="width:${p}%"></i></div>
-  ${L.junta && (L.tot.pend || L.tot.espera) ? `<p class="muted" style="margin-top:8px;font-size:13px">${L.tot.pend ? L.tot.pend + ' places pendents de pagament' : ''}${L.tot.pend && L.tot.espera ? ' · ' : ''}${L.tot.espera ? L.tot.espera + ' a la llista d’espera' : ''}</p>` : ''}</div>
+  ${voluntaris}
+  <div class="card" style="margin-top:12px"><div class="row"><span>Han arribat</span><b>${L.tot.arr} ${/^1(\D|$)/.test(String(L.tot.conf)) || L.tot.conf === 11 ? 'd’' : 'de '}${L.tot.conf} ${L.tot.conf === 1 ? 'plaça' : 'places'}</b></div><div class="bar"><i style="width:${p}%"></i></div>${resumAltres}</div>
   <button class="btn full" style="margin-top:14px" data-a="escaneja">Escanejar QR</button>
-  <label class="f" style="margin-top:18px">Cerca per nom o codi<input type="text" id="cerca" autocomplete="off" placeholder="Marta, W8SWSY…"></label>
-  <div class="card" style="margin-top:10px">${files.length ? files.map(fila).join('') : '<p class="muted">Encara no hi ha cap inscripció.</p>'}</div>
+  <label class="f" style="margin-top:18px">Cerca per nom o codi<input type="text" id="cerca" autocomplete="off" placeholder="Nom o codi de la inscripció"></label>
+  <div class="card" style="margin-top:10px">${files.length ? files.map(fila).join('') : '<p class="muted">Encara no hi ha cap inscripció confirmada.</p>'}</div>
   <button class="link" style="margin-top:10px" data-a="arrRefresca">Actualitzar la llista</button>`;
-}
-function vEditaIns(){
-  const s = S.sub, L = (S.arr || {})[s.id];
-  if (!L){ carregaArr(s.id); return '<p class="muted" style="margin-top:20px">Carregant la inscripció…</p>'; }
-  const f = L.files.find(x => x.c === s.c);
-  if (!f) return '<p class="muted" style="margin-top:20px">Aquesta inscripció ja no existeix.</p>';
-  const rm = f.rm || {};
-  const preg = (L.act.preg || []).map(q => {
-    const val = rm[q.id] || '', id = 'eq-' + q.id;
-    let ctl;
-    if (q.tipus === 'desplegable' || q.tipus === 'sí/no'){
-      const ops = q.tipus === 'sí/no' ? ['Sí','No'] : q.opcions;
-      ctl = `<select id="${id}"><option value="">Sense resposta</option>${ops.map(o => `<option${o === val ? ' selected' : ''}>${esc(o)}</option>`).join('')}${val && !ops.includes(val) ? `<option selected>${esc(val)}</option>` : ''}</select>`;
-    } else ctl = `<input type="${q.tipus === 'número' ? 'number' : 'text'}" id="${id}" value="${esc(val)}">`;
-    return `<label class="f">${esc(q.text)}${ctl}</label>`;
-  }).join('');
-  const correu = {CONFIRMADA:'amb el QR', PENDENT_PAGAMENT:'amb l’enllaç de pagament', LLISTA_ESPERA:'de la llista d’espera'}[f.estat];
-  return `<h2>Editar la inscripció</h2><p class="muted" style="margin-top:4px">${esc(L.act.nom)}</p>
-  <div class="card" style="margin-top:12px">${filaIA('Codi', f.c)}${filaIA('Places', f.q)}${filaIA('Import', f.imp ? eur(f.imp) : 'Gratuïta')}<div class="row"><span class="muted">Estat</span>${tagIns(f.estat)}</div></div>
-  <p class="muted" style="margin-top:8px;font-size:13px">Les places i l’import no es poden canviar. Si cal, anul·la-la i fes-ne una de nova.</p>
-  <label class="f">Nom i cognoms<input type="text" id="en" value="${esc(f.nom)}"></label><div class="err" id="e-en"></div>
-  <label class="f">Correu electrònic<input type="email" id="ee" value="${esc(f.email)}"></label><div class="err" id="e-ee"></div>
-  <label class="f">Telèfon<input type="tel" id="et" value="${esc(f.tel)}"></label>
-  ${preg ? `<div class="sec">Respostes</div>${preg}` : ''}
-  <label class="f">Notes de la junta<textarea id="enotes" rows="3" placeholder="Només les veu la junta">${esc(f.notes)}</textarea></label>
-  <div class="err" id="e-eins"></div>
-  <button class="btn full" style="margin-top:18px" data-a="desaInsJ">Desar els canvis</button>
-  ${correu ? `<button class="btn ghost full" style="margin-top:10px" data-a="reenviaJ">Tornar a enviar el correu ${correu}</button>` : ''}`;
 }
 function vEscaner(id){
   const a = act(id);
   return `<h2>Escanejar QR</h2><p class="muted" style="margin-top:4px">${esc(a.nom)}</p>
-  <div class="cam"><video id="cam" playsinline muted></video><div class="mira" aria-hidden="true"></div></div>
-  <div id="res" class="res" aria-live="assertive"></div>
-  <p class="muted" id="camEst" style="margin-top:10px">Apunta la càmera al QR de l’entrada. Cada lectura queda registrada.</p>`;
+  <div class="cam"><video id="cam" playsinline muted></video><div class="mira" aria-hidden="true"></div><div id="res" class="res" aria-live="assertive"></div></div>
+  <p class="muted" id="camEst" style="margin-top:10px">Apunta la càmera al QR. Després de cada lectura, revisa el resultat i prem «Entesos, continuar».</p>`;
 }
 let CAM = null;
 function aturaCamera(){
@@ -1083,11 +1063,14 @@ async function iniciaCamera(id){
     v.srcObject = CAM.stream; await v.play();
     let det = null;
     if ('BarcodeDetector' in window){ try { det = new BarcodeDetector({formats:['qr_code']}); } catch(e){} }
-    if (!det) await carregaScript(LIB_JSQR);
+    if (!det){
+      try { await carregaScript(LIB_JSQR); }
+      catch(e){ est('No s’ha pogut carregar el lector de QR. Comprova la connexió i torna a entrar, o fes servir la cerca per nom.'); aturaCamera(); return; }
+    }
     const cv = document.createElement('canvas'), cx = cv.getContext('2d', {willReadFrequently:true});
     const bucle = async () => {
       if (!CAM || !CAM.on) return;
-      if (!CAM.ocupat && v.readyState >= 2){
+      if (!CAM.ocupat && !CAM.pausa && v.readyState >= 2){
         let txt = '';
         try {
           if (det){ const r = await det.detect(v); if (r[0]) txt = r[0].rawValue; }
@@ -1105,31 +1088,37 @@ async function iniciaCamera(id){
     };
     bucle();
   } catch(e){
+    aturaCamera();
     est('No es pot fer servir la càmera. Dona permís a la càmera al navegador, o torna enrere i fes servir la cerca per nom.');
   }
 }
 function llegitQR(txt){
-  const ara = Date.now();
-  if (CAM.ultim === txt && ara - CAM.t < 4000) return;
-  CAM.ultim = txt; CAM.t = ara;
+  CAM.pausa = true;    // no es llegeix cap altre QR fins que el validador prem «Entesos, continuar»
   const m = String(txt).match(/v\.([A-Z0-9]{6})\.([0-9a-f]{20})/);
-  if (!m){ resultatQR('ko', 'Aquest QR no és d’una inscripció de l’associació.'); return; }
+  if (!m){ resultatQR('ko', 'QR no vàlid', 'Aquest QR no és d’una inscripció de l’associació.'); return; }
   CAM.ocupat = true;
   resultatQR('wait', 'Comprovant…');
   const id = CAM.id;
   motor('registraArribada', {c:m[1], s:m[2], act:id, token:token(), pin:(S.pins || {})[id] || ''}).then(r => {
     if (CAM) CAM.ocupat = false;
     if (S.arr) delete S.arr[id];
-    if (r.ok) resultatQR(r.ja ? 'ja' : 'ok', r.ja ? `Ja havia arribat${r.ins.hora ? ' a les ' + r.ins.hora : ''}` : 'Benvinguts!', r.ins);
-    else resultatQR('ko', r.msg || ({NO_CONFIRMADA:'Inscripció no confirmada' + (r.ins ? ': ' + (ESTAT_INS[r.ins.estat] || [r.ins.estat])[0].toLowerCase() : ''), QR_FALS:'QR fals o alterat', NO_TROBAT:'No s’ha trobat aquesta inscripció', PIN:'El PIN ja no és vàlid'}[r.codi] || msgJ(r)), r.ins);
+    const ins = r.ins, qui = ins ? `${ins.nom} · ${ins.q}` : '';
+    if (r.ok && !r.ja) resultatQR('ok', 'Arribada registrada', qui, ins.c);
+    else if (r.ok) resultatQR('ja', 'Ja havia arribat' + (ins.hora ? ' a les ' + ins.hora : ''), qui);
+    else if (r.codi === 'ALTRA_ACT') resultatQR('ko', 'És d’una altra activitat', r.msg.replace(/^Aquest QR és d['’]una altra activitat: /, '').replace(/\.$/, '') + (qui ? ' · ' + qui : ''));
+    else if (r.codi === 'NO_CONFIRMADA') resultatQR('ko', 'Inscripció no confirmada', (qui ? qui + ' · ' : '') + 'Estat: ' + ((ESTAT_INS[ins && ins.estat] || ['desconegut'])[0]).toLowerCase());
+    else if (r.codi === 'QR_FALS') resultatQR('ko', 'QR fals o alterat', 'Aquest codi no ha estat generat per l’associació.');
+    else if (r.codi === 'NO_TROBAT') resultatQR('ko', 'Inscripció no trobada', 'Potser s’ha esborrat del full.');
+    else resultatQR('ko', 'No s’ha pogut comprovar', r.msg || msgJ(r));
   });
 }
-function resultatQR(tipus, t, ins){
+function resultatQR(tipus, titol, detall, codi){
   const e = document.getElementById('res');
   if (!e) return;
-  e.className = 'res ' + tipus;
-  e.innerHTML = `<b>${esc(t)}</b>${ins ? `<div>${esc(ins.nom)}</div><div>${esc(ins.q)}</div>` : ''}`;
-  if (navigator.vibrate) navigator.vibrate(tipus === 'ok' ? 80 : tipus === 'ko' ? [80, 60, 80] : 30);
+  e.className = 'res r-' + tipus;
+  e.innerHTML = `<b>${tipus === 'ok' ? '✓ ' : tipus === 'ko' ? '✕ ' : ''}${esc(titol)}</b>${detall ? `<div>${esc(detall)}</div>` : ''}`
+    + (tipus === 'wait' ? '' : `<button class="btn" data-a="qrSeg">Entesos, continuar</button>${codi ? `<button class="link" data-a="qrDesf" data-c="${esc(codi)}">Desfer aquesta arribada</button>` : ''}`);
+  if (navigator.vibrate && tipus !== 'wait') navigator.vibrate(tipus === 'ok' ? 120 : tipus === 'ko' ? [120, 80, 120, 80, 120] : [60, 60, 60]);
 }
 
 /* --- Assistent per crear i editar activitats (junta) --- */
@@ -1320,12 +1309,12 @@ function render(){
   nav.style.display = S.entrat ? '' : 'none';
   const t = tab();
   if (t === 'junta' && !S.junta && S.sub) S.sub = null;
-  if (S.sub && ['detall','info','agenda','inscriure','despAct','form','arribades','escaner','editaIns'].includes(S.sub.v) && !act(S.sub.id)) S.sub = null;
+  if (S.sub && ['detall','info','agenda','inscriure','despAct','form'].includes(S.sub.v) && !act(S.sub.id)) S.sub = null;
   if (S.sub && S.sub.v === 'nova' && !S.wz) S.sub = null;
   $('#top').innerHTML = header();
   $('#nav').innerHTML = navHTML();
   const m = $('#main'), s = S.sub;
-  if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vDespAct(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, ident:vIdent, despesa:vDespesa, inscrits:vInscrits, socis:vSocis, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), escaner:()=>vEscaner(s.id), editaIns:vEditaIns, nova:vNova})[s.v]();
+  if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vDespAct(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, ident:vIdent, despesa:vDespesa, inscrits:vInscrits, socis:vSocis, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), escaner:()=>vEscaner(s.id), nova:vNova})[s.v]();
   else m.innerHTML = ({inici:vInici, activitats:vActivitats, cursos:vCursos, soci:vSoci, junta:vJunta})[t]();
   if (s && (s.v === 'ins' || s.v === 'qr')) setTimeout(pintaQR, 0);
   if (s && s.v === 'escaner') setTimeout(() => iniciaCamera(s.id), 0);
@@ -1349,7 +1338,8 @@ document.addEventListener('click', e => {
   if (d.go){ go(d.go); return; }
   if (d.det){ S.q = 1; sub({v:'detall', id:d.det}); return; }
   if (d.ins){ const [c, s2] = d.ins.split('.'); S.insV = {}; S.anullaQ = null; sub({v:'ins', c, s:s2, up:S.sub}); return; }
-  if (d.arr){ S.arr = {}; S.cancQ = null; sub({v:'arribades', id:d.arr, up:{v:'inscrits'}}); return; }
+  if (d.arr){ obreArribades(d.arr, {v:'inscrits'}); return; }
+  if (d.sa === 'arribades'){ obreArribades(S.sub.id, S.sub); return; }
   if (S.wz && S.sub && S.sub.v === 'nova') wzLlegeix();
   if (d.f){ S.filtre = d.f; render(); return; }
   if (d.fc){ S.fc = d.fc; render(); return; }
@@ -1368,6 +1358,7 @@ document.addEventListener('click', e => {
       const s = S.sub;
       if (s && s.v === 'nova') wzDesa();
       if (/^#(ins|v)\./.test(location.hash)) history.replaceState(null, '', location.pathname + '#activitats');
+      if (/^#arr\./.test(location.hash) && !(s && s.v === 'escaner')) history.replaceState(null, '', location.pathname + '#' + (S.arrTab || 'activitats'));
       if (s && s.up) sub(s.up);
       else if (s && s.v === 'pagament' && S.pag.back) sub(S.pag.back);
       else { S.sub = null; render(); }
@@ -1484,43 +1475,31 @@ document.addEventListener('click', e => {
       });
       break; }
     case 'pinAct': { const id = S.sub.id, pa = val('pa'); if (!/^\d{4}$/.test(pa)){ err('pa', 'El PIN té 4 xifres.'); break; } S.pins = S.pins || {}; S.pins[id] = pa; desaPins(); S.pinErr = ''; S.arr = {}; render(); break; }
+    case 'compartArr': {
+      const L = S.arr[S.sub.id], url = enllacVoluntaris(L);
+      const text = `Control d’arribades de «${L.act.nom}». Obre aquest enllaç al mòbil i fes servir «Escanejar QR»:`;
+      if (navigator.share) navigator.share({title:'Control d’arribades', text, url}).catch(() => {});
+      else window.open('https://wa.me/?text=' + encodeURIComponent(text + ' ' + url), '_blank');
+      break; }
+    case 'pinNouQ': S.pinNouQ = true; render(); break;
+    case 'pinNouNo': S.pinNouQ = false; render(); break;
+    case 'pinNou': { const id = S.sub.id; b.disabled = true;
+      motor('juntaNouPin', {token:token(), act:id}).then(r => { S.pinNouQ = false; if (!r.ok){ b.disabled = false; toast(msgJ(r)); return; } toast('PIN canviat: ' + r.pin); delete S.arr[id]; render(); });
+      break; }
     case 'escaneja': sub({v:'escaner', id:S.sub.id, up:S.sub}); break;
+    case 'qrSeg': { const e = document.getElementById('res'); if (e){ e.className = 'res'; e.innerHTML = ''; } if (CAM){ CAM.pausa = false; } break; }
+    case 'qrDesf': { const id = S.sub.id; b.disabled = true;
+      motor('desferArribada', {c:d.c, act:id, token:token(), pin:(S.pins || {})[id] || ''}).then(r => {
+        if (S.arr) delete S.arr[id];
+        if (r.ok) resultatQR('ja', 'Arribada desfeta', r.ins ? `${r.ins.nom} · ${r.ins.q}` : ''); else { b.disabled = false; toast(r.msg || msgJ(r)); }
+      });
+      break; }
     case 'arrRefresca': if (S.arr) delete S.arr[S.sub.id]; render(); break;
     case 'arrMan': { const id = S.sub.id; b.disabled = true;
       motor(d.d === '1' ? 'registraArribada' : 'desferArribada', {c:d.c, act:id, token:token(), pin:(S.pins || {})[id] || ''}).then(r => {
         if (!r.ok){ b.disabled = false; toast(r.msg || msgJ(r)); return; }
         toast(d.d === '1' ? (r.ja ? 'Ja havia arribat' : 'Arribada registrada') : 'Arribada desfeta'); delete S.arr[id]; render();
       });
-      break; }
-    case 'pagadaJ': { const id = S.sub.id; b.disabled = true;
-      motor('juntaMarcaPagada', {token:token(), c:d.c}).then(r => { if (!r.ok){ b.disabled = false; toast(r.msg || msgJ(r)); return; } toast('Marcada com a pagada. Li hem enviat el QR.'); delete S.arr[id]; carregaActivitats(); render(); });
-      break; }
-    case 'cancQ': S.cancQ = d.c; render(); break;
-    case 'editaInsJ': S.cancQ = null; sub({v:'editaIns', id:S.sub.id, c:d.c, up:S.sub}); break;
-    case 'desaInsJ': {
-      if (!req([['en','Escriu el nom i cognoms'],['ee','El correu no és vàlid',isMail]])) break;
-      const s = S.sub, L = S.arr[s.id], resp = {};
-      (L.act.preg || []).forEach(q => { resp[q.id] = val('eq-' + q.id); });
-      b.disabled = true; b.textContent = 'Desant…';
-      motor('juntaEditaIns', {token:token(), c:s.c, nom:val('en'), email:val('ee'), tel:val('et'), resp, notes:val('enotes')}).then(r => {
-        b.disabled = false; b.textContent = 'Desar els canvis';
-        if (!r.ok){ err('eins', r.msg || msgJ(r)); return; }
-        toast('Inscripció desada'); delete S.arr[s.id]; sub(s.up);
-      });
-      break; }
-    case 'reenviaJ': { const s = S.sub; b.disabled = true;
-      motor('juntaReenviaIns', {token:token(), c:s.c}).then(r => { b.disabled = false; toast(r.ok ? 'Correu enviat' : (r.msg || msgJ(r))); });
-      break; }
-    case 'reactJ': { const id = S.sub.id; b.disabled = true;
-      motor('juntaReactivaIns', {token:token(), c:d.c}).then(r => {
-        if (!r.ok){ b.disabled = false; toast(r.msg || msgJ(r)); return; }
-        toast(r.estat === 'CONFIRMADA' ? 'Reactivada: torna a estar confirmada' : 'Reactivada: li hem enviat l’enllaç de pagament (24 hores)');
-        delete S.arr[id]; carregaActivitats(); render();
-      });
-      break; }
-    case 'cancNo': S.cancQ = null; render(); break;
-    case 'cancJ': { const id = S.sub.id; b.disabled = true;
-      motor('juntaCancellaIns', {token:token(), c:d.c}).then(r => { S.cancQ = null; if (!r.ok){ b.disabled = false; toast(r.msg || msgJ(r)); return; } toast('Inscripció anul·lada'); delete S.arr[id]; carregaActivitats(); render(); });
       break; }
     // Assistent per crear i editar activitats
     case 'editaAct': { const id = S.sub.id; b.disabled = true;
