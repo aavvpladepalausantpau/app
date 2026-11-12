@@ -207,7 +207,7 @@ const IC = {
   junta:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>'
 };
 
-function tab(){ const h = location.hash.slice(1); if (/^(ins|v)\./.test(h)) return 'activitats'; if (/^arr\./.test(h)) return S.arrTab || 'activitats'; return ['inici','activitats','cursos','soci','junta'].includes(h) ? h : 'inici'; }
+function tab(){ const h = location.hash.slice(1); if (/^(ins|v|act)\./.test(h)) return 'activitats'; if (/^arr\./.test(h)) return S.arrTab || 'activitats'; return ['inici','activitats','cursos','soci','junta'].includes(h) ? h : 'inici'; }
 function go(t, sub){ S.sub = sub || null; if (location.hash.slice(1) !== t){ S.keep = true; location.hash = t; } else render(); window.scrollTo(0,0); }
 function sub(s){ S.sub = s; render(); window.scrollTo(0,0); }
 function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 2600); }
@@ -284,6 +284,7 @@ function carregaActivitats(refresca, silenci){
     if (refresca && !silenci) toast(r.ok ? 'Activitats actualitzades' : msgJ(r));
     const s = S.sub;
     if (s ? ['detall','info','agenda','inscriure'].includes(s.v) : ['inici','activitats','junta'].includes(tab())) render();
+    else if (S.esperaAct) render();
     return r;
   });
 }
@@ -543,7 +544,8 @@ function vDetall(id){
     tiles += t('', MI.edit, 'Editar l’activitat', a.amagada ? 'Esborrany: no es veu a l’app' : 'Dades, preus i visibilitat', 'data-a="editaAct"');
     if (a.ins) tiles += t('arribades', MI.qr, 'Inscrits i arribades', a.ocup ? `${a.ocup} ${a.ocup === 1 ? 'plaça ocupada' : 'places ocupades'}` : 'Encara cap inscripció');
   }
-  return `${a.amagada ? '<p style="margin-bottom:10px"><span class="tag g">Esborrany: només el veu la junta</span></p>' : ''}${cartell(a)}<div class="tiles" style="margin-top:14px">${tiles}</div>${a.ins && !esJ() ? '<button class="link" style="margin-top:14px" data-sa="arribades">Ets voluntari/ària? Control d’arribades</button>' : ''}`;
+  const comparteix = a.amagada ? '<p class="muted" style="margin-top:14px;font-size:13px">És un esborrany: publica-la abans de compartir-la.</p>' : '<button class="btn ghost full" style="margin-top:14px" data-a="compartAct">Compartir l’activitat</button>';
+  return `${a.amagada ? '<p style="margin-bottom:10px"><span class="tag g">Esborrany: només el veu la junta</span></p>' : ''}${cartell(a)}<div class="tiles" style="margin-top:14px">${tiles}</div>${comparteix}${a.ins && !esJ() ? '<button class="link" style="margin-top:14px" data-sa="arribades">Ets voluntari/ària? Control d’arribades</button>' : ''}`;
 }
 const filaIA = (k, v) => k
   ? `<div class="row" style="gap:16px"><span class="muted">${esc(k)}</span><b style="text-align:right">${esc(v)}</b></div>`
@@ -809,6 +811,8 @@ function meves(){
 
 /* --- Enllaços que arriben per correu, des de SumUp o des d'un QR escanejat amb la càmera --- */
 function rutaHash(){
+  const mc = location.href.match(/#act\.([a-z0-9-]+)/);
+  if (mc){ S.sub = {v:'detall', id:mc[1], enllac:true}; return true; }
   const ma = location.href.match(/#arr\.([a-z0-9-]+)(?:\.(\d{4}))?/);
   if (ma){
     if (ma[2]){ S.pins = S.pins || {}; S.pins[ma[1]] = ma[2]; desaPins(); }
@@ -1309,12 +1313,16 @@ function render(){
   nav.style.display = S.entrat ? '' : 'none';
   const t = tab();
   if (t === 'junta' && !S.junta && S.sub) S.sub = null;
-  if (S.sub && ['detall','info','agenda','inscriure','despAct','form'].includes(S.sub.v) && !act(S.sub.id)) S.sub = null;
+  if (S.sub && ['detall','info','agenda','inscriure','despAct','form'].includes(S.sub.v) && !act(S.sub.id)){
+    if (S.sub.enllac && !S.acts){ S.esperaAct = true; }                       // obert per enllaç: esperem la llista
+    else { if (S.sub.enllac){ toast('Aquesta activitat ja no està disponible.'); history.replaceState(null, '', location.pathname + '#activitats'); } S.sub = null; }
+  } else S.esperaAct = false;
   if (S.sub && S.sub.v === 'nova' && !S.wz) S.sub = null;
   $('#top').innerHTML = header();
   $('#nav').innerHTML = navHTML();
   const m = $('#main'), s = S.sub;
-  if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vDespAct(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, ident:vIdent, despesa:vDespesa, inscrits:vInscrits, socis:vSocis, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), escaner:()=>vEscaner(s.id), nova:vNova})[s.v]();
+  if (S.esperaAct) m.innerHTML = `<p class="muted" style="margin-top:24px">${S.actErr ? 'Ara mateix no s’han pogut carregar les activitats. Torna-ho a provar d’aquí a una estona.' : 'Carregant l’activitat…'}</p>`;
+  else if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vDespAct(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, ident:vIdent, despesa:vDespesa, inscrits:vInscrits, socis:vSocis, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), escaner:()=>vEscaner(s.id), nova:vNova})[s.v]();
   else m.innerHTML = ({inici:vInici, activitats:vActivitats, cursos:vCursos, soci:vSoci, junta:vJunta})[t]();
   if (s && (s.v === 'ins' || s.v === 'qr')) setTimeout(pintaQR, 0);
   if (s && s.v === 'escaner') setTimeout(() => iniciaCamera(s.id), 0);
@@ -1357,7 +1365,7 @@ document.addEventListener('click', e => {
     case 'back': {
       const s = S.sub;
       if (s && s.v === 'nova') wzDesa();
-      if (/^#(ins|v)\./.test(location.hash)) history.replaceState(null, '', location.pathname + '#activitats');
+      if (/^#(ins|v|act)\./.test(location.hash)) history.replaceState(null, '', location.pathname + '#activitats');
       if (/^#arr\./.test(location.hash) && !(s && s.v === 'escaner')) history.replaceState(null, '', location.pathname + '#' + (S.arrTab || 'activitats'));
       if (s && s.up) sub(s.up);
       else if (s && s.v === 'pagament' && S.pag.back) sub(S.pag.back);
@@ -1475,6 +1483,15 @@ document.addEventListener('click', e => {
       });
       break; }
     case 'pinAct': { const id = S.sub.id, pa = val('pa'); if (!/^\d{4}$/.test(pa)){ err('pa', 'El PIN té 4 xifres.'); break; } S.pins = S.pins || {}; S.pins[id] = pa; desaPins(); S.pinErr = ''; S.arr = {}; render(); break; }
+    case 'compartAct': {
+      const a = act(S.sub.id); if (!a) break;
+      const url = location.origin + location.pathname + '#act.' + a.codi;
+      const [et] = etiqueta(Object.assign({}, a, {codi:''}));
+      const text = `${a.nom} · ${quanTxt(a)}${a.lloc ? ' · ' + a.lloc : ''}. ${a.ins ? et + '. Inscripcions a l’app de l’AVV Pla de Palau – Sant Pau:' : 'Entrada lliure. Tota la informació a l’app de l’AVV Pla de Palau – Sant Pau:'}`;
+      if (navigator.share) navigator.share({title:a.nom, text, url}).catch(() => {});
+      else if (navigator.clipboard){ navigator.clipboard.writeText(text + ' ' + url).then(() => toast('Enllaç copiat. Ja el pots enganxar al WhatsApp.'), () => window.open('https://wa.me/?text=' + encodeURIComponent(text + ' ' + url), '_blank')); }
+      else window.open('https://wa.me/?text=' + encodeURIComponent(text + ' ' + url), '_blank');
+      break; }
     case 'compartArr': {
       const L = S.arr[S.sub.id], url = enllacVoluntaris(L);
       const text = `Control d’arribades de «${L.act.nom}». Obre aquest enllaç al mòbil i fes servir «Escanejar QR»:`;
