@@ -98,6 +98,21 @@ textarea.fi{width:100%;margin-top:6px;padding:12px;border-radius:10px;border:1px
 .conf{margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--bg);font-size:14px}.conf .bs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .btn.sm{min-height:40px;padding:8px 14px;font-size:14px}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+input[type=date],input[type=time],textarea{width:100%;margin-top:6px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--ink);font:16px Figtree,sans-serif}textarea{resize:vertical}input[readonly],select:disabled{opacity:.65}
+.g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.qty{display:flex;align-items:center;gap:12px;flex:none}.qty button{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--pri);background:var(--surf);color:var(--pri);font:600 20px Figtree,sans-serif;cursor:pointer}.qty button:disabled{opacity:.35;cursor:default}.qty b{min-width:20px;text-align:center;font-size:18px}
+.qrbox{background:#fff;padding:16px;border-radius:16px;width:max-content;margin:18px auto 8px;min-width:240px;min-height:240px}.qrbox img,.qrbox canvas{display:block}
+.codi{text-align:center;font:700 22px "Bricolage Grotesque",sans-serif;letter-spacing:3px;margin:4px 0}
+.avis-ok{background:var(--pri-soft);border-color:var(--pri);color:var(--pri-soft-ink)}.avis-o{background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink)}
+.cam{position:relative;margin-top:14px;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:1}.cam video{width:100%;height:100%;object-fit:cover;display:block}.mira{position:absolute;inset:18%;border:3px solid rgba(255,255,255,.85);border-radius:16px}
+.res{margin-top:12px;border-radius:16px;padding:16px;font-size:16px}.res:empty{display:none}.res b{display:block;font-size:22px;margin-bottom:4px}.res.ok{background:var(--pri-soft);color:var(--pri-soft-ink)}.res.ja{background:var(--ocre-soft);color:var(--ocre-ink)}.res.ko{background:var(--red-soft);color:var(--red)}.res.wait{background:var(--line);color:var(--ink)}
+.wz-bar{display:flex;gap:4px;margin:4px 0 10px}.wz-bar i{flex:1;height:5px;border-radius:3px;background:var(--line)}.wz-bar i.on{background:var(--pri)}.wz-bar i.skip{background:transparent;border:1px dashed var(--mut)}
+.wz-nav{display:flex;justify-content:space-between;gap:10px;margin-top:20px}.wz-nav .btn{flex:1}
+.wz-ent{margin-top:10px}.wz-par{margin-top:8px}.wz-ag{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;margin-top:8px}
+.wz-img{position:relative;margin-top:8px}.wz-img img{width:100%;max-height:320px;object-fit:contain;border-radius:14px;background:var(--line);display:block}.wz-img .tag{position:absolute;top:8px;left:8px}
+.wz-foto{display:block;margin-top:8px;border:1.5px dashed var(--line);border-radius:14px;padding:16px;text-align:center;color:var(--mut);font-size:14px;cursor:pointer}.wz-foto input{display:block;margin:0 auto 8px;font-size:14px;max-width:100%}
+.opt{display:block;width:100%;text-align:left;margin-top:10px;padding:16px;border-radius:14px;border:1.5px solid var(--line);background:var(--surf);color:var(--ink);font:16px Figtree,sans-serif;cursor:pointer}.opt.on{border:2px solid var(--pri);background:var(--pri-soft);color:var(--pri-soft-ink)}.opt b{display:block;margin-bottom:2px}.opt:disabled{opacity:.5;cursor:default}
+.cartell-img{width:100%;border-radius:18px;display:block;object-fit:cover;max-height:520px;background:var(--line)}
 </style>
 </head>
 <body>
@@ -129,7 +144,7 @@ const AVISOS = [
 const curs = id => CURSOS.find(c => c.id === id);
 // ===== Connexió amb el motor d'accés (Apps Script del full de socis) =====
 const MOTOR = 'https://script.google.com/macros/s/AKfycbxNeEcaHhN8SjH7W2cjmJyPAxlmYY7vP-Ic8kJQ28GtfK09pbjvBpb2hJFMF_JVuxu2/exec';
-const PROVES = true; // versió de proves: inscripcions, cursos i pagaments encara són d'exemple
+const PROVES = true; // versió de proves: cursos i alta de socis dins l'app encara són d'exemple
 function motor(accio, dades){
   return fetch(MOTOR, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(Object.assign({accio}, dades || {}))})
     .then(r => r.json()).catch(() => ({ok:false, codi:'XARXA'}));
@@ -191,7 +206,7 @@ const IC = {
   junta:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>'
 };
 
-function tab(){ const h = location.hash.slice(1); return ['inici','activitats','cursos','soci','junta'].includes(h) ? h : 'inici'; }
+function tab(){ const h = location.hash.slice(1); if (/^(ins|v)\./.test(h)) return 'activitats'; return ['inici','activitats','cursos','soci','junta'].includes(h) ? h : 'inici'; }
 function go(t, sub){ S.sub = sub || null; if (location.hash.slice(1) !== t){ S.keep = true; location.hash = t; } else render(); window.scrollTo(0,0); }
 function sub(s){ S.sub = s; render(); window.scrollTo(0,0); }
 function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 2600); }
@@ -218,10 +233,12 @@ function navHTML(){
 function preuTxt(a){
   const v = a.ent.map(e => esSoci() ? e.ps : e.pn), min = Math.min(...v), max = Math.max(...v);
   if (max === 0) return 'gratuïta';
+  if (min === 0) return 'gratuïta o des de ' + eur(Math.min(...v.filter(x => x > 0)));
   return min === max ? eur(min) : 'des de ' + eur(min);
 }
 // Etiqueta d'estat (especificació, apartat 5). L'estat el calcula el motor; el preu, l'app.
 function etiqueta(a){
+  if (a.ins && a.codi && mevaInsAct(a.codi)) return ['Ja hi estàs inscrit', ''];
   switch (a.estat){
     case 'LLIURE':   return ['Entrada lliure', ''];
     case 'ABANS':    return [`Inscripcions a partir del ${diaMes(a.obre)}`, 'g'];
@@ -246,27 +263,26 @@ function quanTxt(a){
 }
 function actCard(a){
   const d = new Date(a.ini), [t, c] = etiqueta(a);
-  return `<button class="card act" data-det="${esc(a.codi)}"><div class="date"><div class="d">${d.getDate()}</div><div class="m">${MESOS[d.getMonth()]}</div></div><div style="min-width:0"><div class="n">${esc(a.nom)}</div>${a.lloc ? `<div class="s">${esc(a.lloc)}</div>` : ''}<span class="tag ${c}" style="margin-top:6px">${esc(t)}</span></div><span style="margin-left:auto;color:var(--mut);font-size:22px" aria-hidden="true">›</span></button>`;
+  return `<button class="card act" data-det="${esc(a.codi)}"><div class="date"><div class="d">${d.getDate()}</div><div class="m">${MESOS[d.getMonth()]}</div></div><div style="min-width:0"><div class="n">${esc(a.nom)}</div>${a.lloc ? `<div class="s">${esc(a.lloc)}</div>` : ''}<span class="tag ${c}" style="margin-top:6px">${esc(t)}</span>${a.amagada ? '<span class="tag g" style="margin:6px 0 0 6px">Esborrany</span>' : ''}</div><span style="margin-left:auto;color:var(--mut);font-size:22px" aria-hidden="true">›</span></button>`;
 }
 function blocActs(l){
   if (!S.acts) return `<div class="card"><p class="muted">${S.actErr ? 'Ara mateix no s’han pogut carregar les activitats. Torna-ho a provar d’aquí a una estona.' : 'Carregant les activitats…'}</p></div>`;
   if (!l.length) return '<div class="card"><p class="muted">Ara mateix no hi ha activitats programades.</p></div>';
   return l.map(actCard).join('');
 }
-// «Les meves inscripcions» torna al pas 3, quan les inscripcions es facin des de l'app.
-function meves(){ return ''; }
 // Llegeix les activitats del motor. Amb refresca = true (només junta) es salta la memòria cau de 5 minuts.
-function carregaActivitats(refresca){
+function carregaActivitats(refresca, silenci){
   if (S.actCarr) return null;
   S.actCarr = true;
-  const p = refresca ? motor('juntaActivitatsRefresca', {token:token()}) : motor('activitats');
+  const J = esJ() && token();
+  const p = motor(J ? (refresca ? 'juntaActivitatsRefresca' : 'juntaActivitats') : 'activitats', J ? {token:token()} : {});
   return p.then(r => {
     S.actCarr = false;
     if (r.ok){ S.acts = r; S.actErr = false; try { localStorage.setItem('avv-activitats', JSON.stringify(r)); } catch(e){} }
     else if (!S.acts) S.actErr = true;
-    if (refresca) toast(r.ok ? 'Activitats actualitzades' : msgJ(r));
+    if (refresca && !silenci) toast(r.ok ? 'Activitats actualitzades' : msgJ(r));
     const s = S.sub;
-    if (s ? ['detall','info','agenda','inscriure'].includes(s.v) : ['inici','activitats'].includes(tab())) render();
+    if (s ? ['detall','info','agenda','inscriure'].includes(s.v) : ['inici','activitats','junta'].includes(tab())) render();
     return r;
   });
 }
@@ -280,7 +296,7 @@ const horaTxt = d => d.getMinutes() ? `${d.getHours()}:${String(d.getMinutes()).
 const dataTxt = d => d.toLocaleDateString('ca-ES', {day:'numeric', month:'long', year:'numeric'});
 const curt = (s, n) => s && s.length > n ? s.slice(0, n).replace(/\s+\S*$/, '') + '…' : (s || '');
 const clauEv = e => e.id + '|' + e.dia;
-const MSG_J = {SESSIO_CADUCADA:'La sessió ha caducat. Torna a entrar amb el teu DNI.', NO_JUNTA:'Aquesta acció és només per a la junta.', DADES:'Revisa les dades i torna-ho a provar.', NO_TROBAT:'Aquest element ja no existeix. Torna a carregar la pantalla.'};
+const MSG_J = {TANCADA:'Les inscripcions d’aquesta activitat no estan obertes.', QR_FALS:'Aquest codi no és vàlid.', NO_PENDENT:'Aquesta inscripció no té cap pagament pendent.', CADUCADA:'El termini per pagar ha passat.', PIN:'El PIN no és correcte.', ALTRA_ACT:'Aquest QR és d’una altra activitat.', NO_CONFIRMADA:'Aquesta inscripció no està confirmada.', SENSE_SUMUP:'Ara mateix no es pot pagar amb targeta. Escriu a la junta.', JA_INSCRIT:'Ja hi ha una inscripció amb aquest DNI.', SESSIO_CADUCADA:'La sessió ha caducat. Torna a entrar amb el teu DNI.', NO_JUNTA:'Aquesta acció és només per a la junta.', DADES:'Revisa les dades i torna-ho a provar.', NO_TROBAT:'Aquest element ja no existeix. Torna a carregar la pantalla.'};
 const msgJ = r => MSG_J[r.codi] || MSG[r.codi] || MSG.SERVEI;
 // Caducitat d'un avís: n setmanes o mesos des de la data de publicació, fins al final d'aquell dia
 function sumaDurada(base, n, u){
@@ -471,7 +487,7 @@ function vBenvinguda(){
   </div></div>`;
 }
 function vInici(){
-  let h = PROVES ? '<div class="card" style="margin-top:8px;background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink);font-size:14px"><b>Versió de proves.</b> L’entrada amb el DNI, els avisos i les activitats ja són reals. Les inscripcions, els cursos i els pagaments encara són d’exemple.</div>' : '';
+  let h = PROVES ? '<div class="card" style="margin-top:8px;background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink);font-size:14px"><b>Versió de proves.</b> L’entrada amb el DNI, els avisos, les activitats i les inscripcions ja són reals. Els cursos encara són d’exemple.</div>' : '';
   h += botoInstal('margin-top:12px');
   h += agendaAvisos();
   let soci = '';
@@ -491,31 +507,42 @@ function vActivitats(){
   if (!cats.includes(S.filtre)) S.filtre = 'Totes';
   const l = tot.filter(a => S.filtre === 'Totes' || a.cat === S.filtre);
   const chips = cats.length > 1 ? `<div class="chips">${cats.map(c => `<button class="chip ${S.filtre===c?'on':''}" data-f="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : '';
-  return `<h1 style="margin:6px 0 14px">Activitats</h1>${chips}<div style="margin-top:14px">${blocActs(l)}</div>${meves()}`;
+  return `<h1 style="margin:6px 0 14px">Activitats</h1>${meves()}${chips ? `<div style="margin-top:${S.meves && S.meves.length ? 18 : 0}px">${chips}</div>` : ''}<div style="margin-top:14px">${blocActs(l)}</div>`;
 }
 const MI = {
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
+  qr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 14h2M14 18h2M18 18h2v2"/></svg>',
   ins:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>',
   info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
   agenda:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   desp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>'
 };
 function cartell(a){
+  if (!a.cartell) return cartellColors(a);
+  return `<img class="cartell-img" src="${URL_CARTELL(a.cartell)}" alt="Cartell de ${esc(a.nom)}" onerror="this.nextElementSibling.style.display='';this.remove()"><div style="display:none">${cartellColors(a)}</div>`;
+}
+function cartellColors(a){
   let hh = 0; for (const ch of a.codi) hh = (hh * 31 + ch.charCodeAt(0)) >>> 0;
   const [c,bg] = PALETA[hh % PALETA.length], d = new Date(a.ini);
   return `<div class="cartell" style="background:${bg};color:${c}" role="img" aria-label="Cartell de ${esc(a.nom)}"><svg class="ct-dec" viewBox="0 0 200 200" aria-hidden="true"><circle cx="150" cy="50" r="70" fill="${c}" opacity=".14"/><circle cx="150" cy="50" r="34" fill="${c}" opacity=".22"/><circle cx="40" cy="150" r="22" fill="${c}" opacity=".12"/></svg><div class="ct-top">AVV Pla de Palau – Sant Pau</div><div class="ct-t">${esc(a.nom)}</div><div class="ct-d">${d.getDate()} ${MESOS[d.getMonth()]}</div><div class="ct-l">${esc(a.lloc)}</div></div><p class="muted" style="font-size:12px;margin-top:6px">Cartell d’exemple. Aquí anirà la imatge que fa la sòcia per a cada activitat.</p>`;
 }
 function vDetall(id){
   const a = act(id), [et] = etiqueta(a);
-  const t = (k, ic, n, s) => `<button class="tile" data-sa="${k}"><span class="mi">${ic}</span><span><b>${n}</b><span class="muted" style="display:block;font-size:13px;line-height:1.3;margin-top:2px">${s}</span></span></button>`;
+  const t = (k, ic, n, s, attr) => `<button class="tile" ${attr || `data-sa="${k}"`}><span class="mi">${ic}</span><span><b>${n}</b><span class="muted" style="display:block;font-size:13px;line-height:1.3;margin-top:2px">${s}</span></span></button>`;
   let tiles = '';
   if (a.ins){
+    const meva = mevaInsAct(a.codi);
     const lliures = a.lliures != null && ['OBERTES','POQUES'].includes(a.estat) ? `${a.lliures} ${a.lliures === 1 ? 'plaça lliure' : 'places lliures'}` : et;
-    tiles += t('inscriure', MI.ins, 'Inscripcions', esc(lliures));
+    tiles += meva ? t('', MI.ins, 'La meva inscripció', esc(meva.q), `data-ins="${esc(meva.c)}.${esc(meva.s)}"`) : t('inscriure', MI.ins, 'Inscripcions', esc(lliures));
   }
   tiles += t('info', MI.info, 'Informació', a.ins ? 'Lloc, preus i què cal saber' : 'Lloc, horari i què cal saber');
   if (a.agenda.length) tiles += t('agenda', MI.agenda, 'Agenda del dia', a.agenda.length === 1 ? '1 moment' : a.agenda.length + ' moments');
   tiles += t('despAct', MI.desp, 'Despeses', esSoci() ? 'Tiquets i factures' : 'Només per a socis');
-  return `${cartell(a)}<div class="tiles" style="margin-top:14px">${tiles}</div>`;
+  if (esJ()){
+    tiles += t('', MI.edit, 'Editar l’activitat', a.amagada ? 'Esborrany: no es veu a l’app' : 'Dades, preus i visibilitat', 'data-a="editaAct"');
+    if (a.ins) tiles += t('arribades', MI.qr, 'Inscrits i arribades', a.ocup ? `${a.ocup} ${a.ocup === 1 ? 'plaça ocupada' : 'places ocupades'}` : 'Encara cap inscripció');
+  }
+  return `${a.amagada ? '<p style="margin-bottom:10px"><span class="tag g">Esborrany: només el veu la junta</span></p>' : ''}${cartell(a)}<div class="tiles" style="margin-top:14px">${tiles}</div>${a.ins && !esJ() ? '<button class="link" style="margin-top:14px" data-sa="arribades">Ets voluntari/ària? Control d’arribades</button>' : ''}`;
 }
 const filaIA = (k, v) => k
   ? `<div class="row" style="gap:16px"><span class="muted">${esc(k)}</span><b style="text-align:right">${esc(v)}</b></div>`
@@ -549,17 +576,6 @@ function vDespAct(id){
   ${S.mov!=='ing' ? `<label class="f">Qui l’ha pagat?<select id="dq"><option>Jo, cal que me’l tornin</option><option>L’associació</option></select></label>` : ''}
   <label class="f">Foto del tiquet o factura<input type="file" accept="image/*,application/pdf" style="margin-top:8px;font-size:14px"></label>
   <button class="btn full" style="margin-top:20px" data-a="desaAct">Enviar al tresorer</button>`;
-}
-// Pas 1: només informació. Inscriure's des de l'app arriba al pas 3.
-function vInscriure(id){
-  const a = act(id), [et, c] = etiqueta(a);
-  let files = preusFiles(a);
-  if (a.lliures != null) files += filaIA('Places lliures', `${a.lliures} de ${a.afor}`);
-  if (a.obre) files += filaIA('Obertura de les inscripcions', dataHora(a.obre));
-  if (a.tanca) files += filaIA('Tancament de les inscripcions', dataHora(a.tanca));
-  return `${a.cat ? `<span class="tag g">${esc(a.cat)}</span>` : ''}${capAct(a)}<p style="margin-top:12px"><span class="tag ${c}">${esc(et)}</span></p>
-  <div class="card" style="margin-top:14px">${files}</div>
-  <div class="card" style="margin-top:16px;background:var(--pri-soft);border-color:var(--pri);color:var(--pri-soft-ink)"><b>Aviat et podràs inscriure des de l’app.</b></div>`;
 }
 function vForm(id){
   const a = act(id), s = S.soci || {};
@@ -724,7 +740,7 @@ function vJunta(){
   <button class="tile" data-s="avisosJ"><span class="ic">📢</span><b>Avisos</b></button>
   <button class="tile" data-s="pendents"><span class="ic">📅</span><span><b>Calendari</b>${np ? `<span class="tag o" style="display:block;width:max-content;margin-top:4px">${np} per revisar</span>` : ''}</span></button>
   <button class="tile" data-s="despesa"><span class="ic">📷</span><b>Apuntar despesa o ingrés</b></button>
-  <button class="tile" data-s="inscrits"><span class="ic">📋</span><b>Inscrits per activitat</b></button>
+  <button class="tile" data-s="inscrits"><span class="ic">📋</span><b>Inscrits i arribades</b></button>
   <button class="tile" data-s="socis"><span class="ic">👥</span><b>Socis i remeses</b></button>
   <button class="tile" data-s="informes"><span class="ic">📄</span><b>Informes</b></button></div>
   <button class="btn ghost full" style="margin-top:14px" data-a="nova">Crear una activitat nova</button>
@@ -742,8 +758,8 @@ function vDespesa(){
 function vInscrits(){
   const l = acts().filter(a => a.ins);
   const fila = a => { const p = a.afor ? Math.min(100, Math.round(a.ocup / a.afor * 100)) : 0;
-    return `<div class="card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;gap:12px"><b>${esc(a.nom)}</b><span class="muted" style="white-space:nowrap">${a.ocup}${a.afor ? ' de ' + a.afor : ''}</span></div>${a.afor ? `<div class="bar"><i style="width:${p}%"></i></div>` : ''}</div>`; };
-  return `<h2>Inscrits per activitat</h2><p class="muted" style="margin-top:4px">Places ocupades: inscripcions confirmades i pendents de pagament.</p><div style="margin-top:12px">${l.length ? l.map(fila).join('') : '<div class="card"><p class="muted">No hi ha cap activitat amb inscripció.</p></div>'}</div>`;
+    return `<button class="card" data-arr="${esc(a.codi)}" style="display:block;width:100%;text-align:left;margin-bottom:10px;cursor:pointer;font:inherit;color:inherit"><div style="display:flex;justify-content:space-between;gap:12px"><b>${esc(a.nom)}</b><span class="muted" style="white-space:nowrap">${a.ocup}${a.afor ? ' de ' + a.afor : ''}</span></div><div class="muted" style="font-size:13px">${esc(quanTxt(a))}${a.amagada ? ' · esborrany' : ''}</div>${a.afor ? `<div class="bar"><i style="width:${p}%"></i></div>` : ''}</button>`; };
+  return `<h2>Inscrits i arribades</h2><p class="muted" style="margin-top:4px">Places ocupades: confirmades i pendents de pagament. Toca una activitat per veure la llista i registrar arribades.</p><div style="margin-top:12px">${l.length ? l.map(fila).join('') : '<div class="card"><p class="muted">No hi ha cap activitat amb inscripció.</p></div>'}</div>`;
 }
 function vSocis(){
   return `<h2>Socis i remeses</h2><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px"><div class="metric"><div class="v">186</div><div class="l">Socis actius 2026</div></div><div class="metric"><div class="v">12</div><div class="l">Pendents de cobrament</div></div></div>
@@ -754,8 +770,513 @@ function vInformes(){
   return `<h2>Informes</h2><div class="card" style="margin-top:12px">${['Comptes d’una activitat','Comptes de tot l’any','Llistat de socis','Inscrits d’una activitat'].map(t => `<div class="row"><span>${t}</span><button class="chip" data-a="pdf">PDF</button></div>`).join('')}</div>`;
 }
 
+/* ===== Activitats: inscripcions, QR, arribades i creador (passos 2, 3 i 4) ===== */
+const esJ = () => !!(S.user && S.user.junta);
+const URL_CARTELL = id => 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w1200';
+const LIB_QR = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
+const LIB_JSQR = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+const ESTAT_INS = {CONFIRMADA:['Confirmada',''], PENDENT_PAGAMENT:['Falta pagar','o'], LLISTA_ESPERA:['Llista d’espera','b'], CADUCADA:['Caducada','g'], 'CANCEL·LADA':['Anul·lada','g']};
+const tagIns = e => { const [t, c] = ESTAT_INS[e] || [e, 'g']; return `<span class="tag ${c}">${esc(t)}</span>`; };
+const ACTIUS_INS = ['CONFIRMADA','PENDENT_PAGAMENT','LLISTA_ESPERA'];
+const mevaInsAct = codi => (S.meves || []).find(i => i.act === codi && ACTIUS_INS.includes(i.estat)) || null;
+const SCRIPTS = {};
+function carregaScript(url){
+  if (!SCRIPTS[url]) SCRIPTS[url] = new Promise((ok, ko) => { const s = document.createElement('script'); s.src = url; s.onload = ok; s.onerror = () => { delete SCRIPTS[url]; ko(); }; document.head.appendChild(s); });
+  return SCRIPTS[url];
+}
+
+/* --- Inscripcions desades en aquest mòbil i «Les meves inscripcions» --- */
+function insDesats(){ try { return JSON.parse(localStorage.getItem('avv-ins') || '[]'); } catch(e){ return []; } }
+function desaInsCodi(c, s){ const l = insDesats().filter(x => x.c !== c); l.unshift({c, s}); try { localStorage.setItem('avv-ins', JSON.stringify(l.slice(0, 40))); } catch(e){} }
+function carregaMeves(){
+  const codis = insDesats();
+  if (!token() && !codis.length){ S.meves = []; return; }
+  if (S.mevesCarr) return;
+  S.mevesCarr = true;
+  motor('mevesInscripcions', {token:token(), codis}).then(r => {
+    S.mevesCarr = false;
+    if (r.ok){ S.meves = r.ins; try { localStorage.setItem('avv-meves', JSON.stringify(r.ins)); } catch(e){} }
+    else if (!S.meves) S.meves = [];
+    const s = S.sub;
+    if (s ? ['detall','inscriure'].includes(s.v) : ['activitats','soci'].includes(tab())) render();
+  });
+}
+function meves(){
+  if (!S.meves || !S.meves.length) return '';
+  return `<div class="sec">Les meves inscripcions</div>${S.meves.map(i => `<button class="card act" data-ins="${esc(i.c)}.${esc(i.s)}" style="margin-bottom:10px"><div style="min-width:0"><div class="n">${esc(i.actNom)}</div><div class="s">${esc(i.q)}</div><div style="margin-top:6px">${tagIns(i.estat)}</div></div><span style="margin-left:auto;color:var(--mut);font-size:22px" aria-hidden="true">›</span></button>`).join('')}`;
+}
+
+/* --- Enllaços que arriben per correu, des de SumUp o des d'un QR escanejat amb la càmera --- */
+function rutaHash(){
+  const m = location.href.match(/#(v|ins|pagar|pagat)\.([A-Z0-9]{6})\.([0-9a-f]{20})/);
+  if (!m) return false;
+  const [, t, c, s] = m;
+  // L'adreça queda com #ins.CODI.SIG (o #v.…): recarregar torna a obrir la inscripció, però mai no torna a pagar sol
+  history.replaceState(null, '', location.pathname + '#' + (t === 'v' ? 'v' : 'ins') + '.' + c + '.' + s);
+  if (t !== 'v') desaInsCodi(c, s);
+  S.insV = {};
+  S.sub = {v: t === 'v' ? 'qr' : 'ins', c, s, comprova: t === 'pagat', paga: t === 'pagar'};
+  return true;
+}
+
+/* --- Una inscripció: estat, QR, pagament i anul·lació --- */
+function carregaIns(){
+  const s = S.sub;
+  if (!s || S.insCarr === s.c) return;
+  S.insCarr = s.c; S.insErr = '';
+  motor('estatInscripcio', {c:s.c, s:s.s, comprova:!!s.comprova}).then(r => {
+    S.insCarr = null;
+    if (!r.ok){ S.insErr = r.codi === 'QR_FALS' ? 'Aquest codi no és vàlid.' : r.codi === 'NO_TROBAT' ? 'No hem trobat aquesta inscripció.' : msgJ(r); if (S.sub === s) render(); return; }
+    S.insV = S.insV || {}; S.insV[s.c] = r.ins;
+    if (s.comprova && r.ins.estat === 'CONFIRMADA'){ toast('Pagament rebut. Ja tens el QR.'); carregaMeves(); carregaActivitats(); }
+    if (s.paga && r.ins.estat === 'PENDENT_PAGAMENT'){ s.paga = false; pagaIns(s.c, s.s); }
+    if (S.sub === s) render();
+  });
+}
+function pagaIns(c, s, b){
+  if (b){ b.disabled = true; b.textContent = 'Obrint el pagament…'; }
+  motor('pagarInscripcio', {c, s}).then(r => {
+    if (r.ok && r.url){ location.href = r.url; return; }
+    if (b) b.disabled = false;
+    if (r.ok && r.pagat) toast('Aquesta inscripció ja està pagada.');
+    else toast(r.codi === 'CADUCADA' ? 'El termini per pagar ha passat i la plaça s’ha alliberat.' : r.codi === 'NO_PENDENT' ? 'Aquesta inscripció no té cap pagament pendent.' : msgJ(r));
+    if (S.insV) delete S.insV[c];
+    render();
+  });
+}
+function vIns(){
+  const s = S.sub, x = (S.insV || {})[s.c];
+  if (!x){ carregaIns(); return `<p class="muted" style="margin-top:20px">${S.insErr ? esc(S.insErr) : 'Carregant la inscripció…'}</p>`; }
+  const org = esJ() || !!(S.pins || {})[x.act];
+  const imp = x.import ? eur(x.import) + (x.nSoci ? ` · ${x.nSoci} a preu de soci` : '') : 'Gratuïta';
+  let h = `<h1 style="margin:6px 0 4px">${esc(x.actNom)}</h1><p class="muted">${esc(x.quan)}${x.lloc ? ' · ' + esc(x.lloc) : ''}</p>
+  <div class="card" style="margin-top:14px">${filaIA('Nom', x.nom)}${filaIA('Places', x.q)}${filaIA('Import', imp)}<div class="row"><span class="muted">Estat</span>${tagIns(x.estat)}</div></div>`;
+  if (x.estat === 'CONFIRMADA'){
+    h += `<div class="qrbox" id="qrbox" data-t="${esc(x.qr)}" role="img" aria-label="Codi QR de la inscripció ${esc(x.c)}"></div><p class="codi">${esc(x.c)}</p>
+    <p class="muted" style="text-align:center">Ensenya aquest QR a l’entrada. Un sol QR serveix per a tot el grup.</p>`;
+    if (x.arr) h += `<div class="card avis-ok" style="margin-top:12px"><b>Arribada registrada</b>${x.hora ? ' a les ' + esc(x.hora) : ''}.</div>`;
+    if (org) h += x.arr ? `<button class="btn ghost full" style="margin-top:14px" data-a="arrQR" data-d="0">Desfer l’arribada</button>` : `<button class="btn full" style="margin-top:14px" data-a="arrQR" data-d="1">Registrar l’arribada</button>`;
+  } else if (x.estat === 'PENDENT_PAGAMENT'){
+    h += `<div class="card avis-o" style="margin-top:14px"><b>Falta pagar ${eur(x.import)}.</b> Tens temps fins ${x.caduca ? 'al ' + esc(dataHora(x.caduca)) : 'd’aquí a ' + x.hores + ' hores'}. Passat aquest temps, l’enllaç de pagament caduca i la plaça s’allibera.</div>
+    ${s.comprova ? '<p class="muted" style="margin-top:10px">Encara no consta el pagament. Si acabes de pagar, pot trigar uns minuts: rebràs el QR per correu tan aviat com es confirmi.</p>' : ''}
+    <button class="btn full" style="margin-top:14px" data-a="pagaIns">Pagar ${eur(x.import)}</button>
+    <p class="muted" style="margin-top:8px;font-size:13px">El pagament es fa a la pàgina segura de SumUp. Després tornaràs aquí.</p>`;
+  } else if (x.estat === 'LLISTA_ESPERA'){
+    h += `<div class="card" style="margin-top:14px">Ets a la <b>llista d’espera</b>. Si s’allibera una plaça, t’escriurem per correu${x.import ? ' i tindràs ' + x.hores + ' hores per pagar' : ''}.</div>`;
+  } else if (x.estat === 'CADUCADA'){
+    h += `<div class="card" style="margin-top:14px">No vam rebre el pagament a temps i la plaça es va alliberar. Si encara hi ha places, et pots tornar a inscriure.</div>`;
+  } else {
+    h += `<div class="card" style="margin-top:14px">Aquesta inscripció està anul·lada.</div>`;
+  }
+  if (['PENDENT_PAGAMENT','LLISTA_ESPERA'].includes(x.estat) && s.v === 'ins'){
+    h += S.anullaQ === x.c
+      ? `<div class="card" style="margin-top:16px"><p><b>Vols anul·lar la inscripció?</b> Les places quedaran lliures per a altres persones.</p><div style="display:flex;gap:10px;margin-top:12px"><button class="btn" data-a="anulla">Sí, anul·lar-la</button><button class="btn ghost" data-a="anullaNo">No</button></div></div>`
+      : `<button class="link" style="margin-top:14px" data-a="anullaQ">Anul·lar la inscripció</button>`;
+  }
+  if (act(x.act)) h += `<button class="link" style="margin-top:6px;display:block" data-det="${esc(x.act)}">Veure l’activitat</button>`;
+  return h;
+}
+function pintaQR(){
+  const b = document.getElementById('qrbox');
+  if (!b || b.dataset.fet) return;
+  b.dataset.fet = '1';
+  const t = b.dataset.t;
+  const img = () => { b.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=8&data=${encodeURIComponent(t)}" alt="" width="240" height="240">`; };
+  carregaScript(LIB_QR).then(() => {
+    if (!window.QRCode) return img();
+    b.innerHTML = '';
+    new QRCode(b, {text:t, width:240, height:240, colorDark:'#000000', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M});
+  }).catch(img);
+}
+
+/* --- Formulari d'inscripció --- */
+function vInscriure(id){
+  const a = act(id), [et, c] = etiqueta(a);
+  let files = preusFiles(a);
+  if (a.lliures != null) files += filaIA('Places lliures', `${a.lliures} de ${a.afor}`);
+  if (a.obre) files += filaIA('Obertura de les inscripcions', dataHora(a.obre));
+  if (a.tanca) files += filaIA('Tancament de les inscripcions', dataHora(a.tanca));
+  const cap = `${a.cat ? `<span class="tag g">${esc(a.cat)}</span>` : ''}${capAct(a)}<p style="margin-top:12px"><span class="tag ${c}">${esc(et)}</span></p>`;
+  const meva = mevaInsAct(a.codi);
+  if (meva) return cap + `<div class="card avis-ok" style="margin-top:14px">Ja hi estàs inscrit: ${esc(meva.q)}.</div><button class="btn full" style="margin-top:14px" data-ins="${esc(meva.c)}.${esc(meva.s)}">Veure la meva inscripció</button>`;
+  if (!['OBERTES','POQUES','COMPLET'].includes(a.estat)) return cap + `<div class="card" style="margin-top:14px">${files}</div>`;
+  return cap + `<div class="card" style="margin-top:14px">${files}</div>` + formIns(a);
+}
+function estimaImport(a, F){
+  const tot = F.q.reduce((s, x) => s + x, 0);
+  const extra = Object.keys(F.v).filter(k => /^sx\d+$/.test(k) && +k.slice(2) < tot - 1 && isDni(F.v[k] || '')).length;
+  const nSoci = a.mode === 'GRUP' ? (esSoci() ? tot : 0) : a.mode === 'PER' ? Math.min(tot, (esSoci() ? 1 : 0) + extra) : 0;
+  const u = [];
+  a.ent.forEach((e, i) => { for (let k = 0; k < F.q[i]; k++) u.push(e); });
+  u.sort((x, y) => (y.pn - y.ps) - (x.pn - x.ps));
+  return Math.round(u.reduce((s, e, k) => s + (k < nSoci ? e.ps : e.pn), 0) * 100) / 100;
+}
+function formIns(a){
+  if (!S.fi || S.fi.codi !== a.codi) S.fi = {codi:a.codi, q:a.ent.map((e, i) => a.ent.length === 1 && i === 0 ? 1 : 0), v:{}};
+  const F = S.fi, tot = F.q.reduce((s, x) => s + x, 0), ple = a.estat === 'COMPLET';
+  const v = k => esc(F.v[k] != null ? F.v[k] : '');
+  const preuE = e => e.ps !== e.pn ? (esSoci() ? `${eur(e.ps)} · preu de soci` : `${e.pn ? eur(e.pn) : 'gratuït'} · socis ${e.ps ? eur(e.ps) : 'gratuït'}`) : (e.pn ? eur(e.pn) : 'gratuït');
+  const qs = a.ent.map((e, i) => `<div class="row"><div style="min-width:0"><b>${esc(e.t)}</b><div class="muted" style="font-size:13px">${esc(preuE(e))}</div></div><div class="qty"><button data-a="fq" data-i="${i}" data-d="-1" aria-label="Treure una entrada ${esc(e.t)}"${F.q[i] ? '' : ' disabled'}>−</button><b aria-live="polite">${F.q[i]}</b><button data-a="fq" data-i="${i}" data-d="1" aria-label="Afegir una entrada ${esc(e.t)}"${tot >= a.max ? ' disabled' : ''}>+</button></div></div>`).join('');
+  const s = S.soci || {}, amb = esSoci() && token();
+  let dades = amb
+    ? `<div class="card" style="margin-top:10px"><div class="row"><span>T’inscrius amb el teu DNI</span><b>···${esc(String(s.dni || '').slice(-4))}</b></div></div>
+       <label class="f">Nom i cognoms<input type="text" id="fn" data-fi="fn" value="${F.v.fn != null ? v('fn') : esc(s.nom)}" autocomplete="name"></label><div class="err" id="e-fn"></div>
+       <label class="f">Correu electrònic<input type="email" id="fe" data-fi="fe" value="${F.v.fe != null ? v('fe') : esc(s.email)}" autocomplete="email"></label><div class="err" id="e-fe"></div>`
+    : `<label class="f">Nom i cognoms<input type="text" id="fn" data-fi="fn" value="${v('fn')}" autocomplete="name"></label><div class="err" id="e-fn"></div>
+       <label class="f">Correu electrònic<input type="email" id="fe" data-fi="fe" value="${v('fe')}" autocomplete="email"></label><div class="err" id="e-fe"></div>
+       <label class="f">DNI o NIE<input type="text" id="fd" data-fi="fd" value="${v('fd')}" autocomplete="off"></label><div class="err" id="e-fd"></div>
+       ${a.mode !== 'NO' ? '<p class="muted" style="margin-top:6px;font-size:13px">Si ets soci, amb el teu DNI s’aplica el preu de soci.</p>' : ''}`;
+  dades += `<label class="f">Telèfon<input type="tel" id="ft" data-fi="ft" value="${v('ft')}" autocomplete="tel"></label><div class="err" id="e-ft"></div>`;
+  let socis = '';
+  if (a.mode === 'PER' && tot > 1){
+    socis = `<div class="sec">Altres socis del grup</div><p class="muted" style="font-size:13px">Si al grup hi ha altres socis, escriu-ne el DNI per aplicar-los el preu de soci. Si no, deixa-ho en blanc.</p>`
+      + Array.from({length: tot - 1}, (_, k) => `<label class="f">DNI soci ${k + 1}<input type="text" id="sx${k}" data-fi="sx${k}" value="${v('sx' + k)}" autocomplete="off"></label>`).join('');
+  }
+  const preg = a.preg.map(q => {
+    const lab = esc(q.text) + (q.oblig ? '' : ' <span class="muted">(opcional)</span>');
+    let ctl;
+    if (q.tipus === 'desplegable') ctl = `<select id="${q.id}" data-fi="${q.id}"><option value="">Tria una opció</option>${q.opcions.map(o => `<option${F.v[q.id] === o ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+    else if (q.tipus === 'sí/no') ctl = `<select id="${q.id}" data-fi="${q.id}"><option value="">Tria una opció</option>${['Sí','No'].map(o => `<option${F.v[q.id] === o ? ' selected' : ''}>${o}</option>`).join('')}</select>`;
+    else ctl = `<input type="${q.tipus === 'número' ? 'number' : 'text'}" id="${q.id}" data-fi="${q.id}" value="${v(q.id)}">`;
+    return `<label class="f">${lab}${ctl}</label><div class="err" id="e-${q.id}"></div>`;
+  }).join('');
+  const imp = estimaImport(a, F);
+  const nota = a.mode !== 'NO' && !esSoci() && imp > 0 ? ' <span class="muted" style="font-size:13px">(si el DNI és d’un soci, s’aplica el preu de soci)</span>' : '';
+  return `<div class="sec">${ple ? 'Apunta’t a la llista d’espera' : 'Inscripció'}</div>
+  <div class="card">${qs}</div><p class="muted" style="margin-top:6px;font-size:13px">Com a màxim ${a.max} ${a.max === 1 ? 'plaça' : 'places'} per inscripció.</p>
+  <div class="sec">Les teves dades</div>${dades}${socis}
+  ${preg ? `<div class="sec">Unes preguntes</div>${preg}` : ''}
+  <div class="card" style="margin-top:18px"><div class="row"><span>Total</span><b>${imp ? eur(imp) : 'Gratuït'}</b></div>${nota ? `<p style="margin-top:6px">${nota}</p>` : ''}</div>
+  ${imp > 0 && !ple ? `<p class="muted" style="margin-top:10px">Tindràs ${a.hores} hores per pagar. Passat aquest temps, l’enllaç de pagament caduca i la plaça s’allibera.</p>` : ''}
+  <label class="chk"><input type="checkbox" id="fr" data-fi="fr"${F.v.fr ? ' checked' : ''}><span>Accepto que l’associació faci servir aquestes dades només per gestionar aquesta activitat.</span></label><div class="err" id="e-fr"></div>
+  <div class="err" id="e-fins"></div>
+  <button class="btn full" style="margin-top:18px" data-a="fIns">${ple ? 'Apuntar-me a la llista d’espera' : imp > 0 ? 'Inscriure’m i pagar' : 'Inscriure’m'}</button>`;
+}
+function enviaIns(b){
+  const a = act(S.sub.id), F = S.fi;
+  if (!a || !F) return;
+  const tot = F.q.reduce((s, x) => s + x, 0);
+  let ok = true;
+  if (!tot){ err('fins', 'Tria quantes places vols.'); ok = false; }
+  if (!req([['fn','Escriu el nom i cognoms'],['fe','Escriu un correu vàlid: hi rebràs el QR',isMail],['ft','Escriu un telèfon de contacte']])) ok = false;
+  const amb = esSoci() && token();
+  if (!amb && !req([['fd','Aquest DNI o NIE no és correcte',isDni]])) ok = false;
+  a.preg.forEach(q => { if (q.oblig && !String(F.v[q.id] || '').trim()){ err(q.id, 'Respon aquesta pregunta'); ok = false; } });
+  if (!F.v.fr){ err('fr', 'Cal acceptar-ho per poder fer la inscripció'); ok = false; }
+  if (!ok){ const e = document.querySelector('.err:not(:empty)'); if (e) e.scrollIntoView({block:'center'}); return; }
+  const resp = {}; a.preg.forEach(q => { if (F.v[q.id] != null) resp[q.id] = F.v[q.id]; });
+  const socis = Object.keys(F.v).filter(k => /^sx\d+$/.test(k) && +k.slice(2) < tot - 1).map(k => String(F.v[k] || '').trim()).filter(Boolean);
+  const txt = b.textContent; b.disabled = true; b.textContent = 'Enviant…';
+  motor('inscriure', {codi:a.codi, token:token(), nom:val('fn'), email:val('fe'), tel:val('ft'), dni:amb ? '' : val('fd'), n:F.q, socis, resp, rgpd:true}).then(r => {
+    b.disabled = false; b.textContent = txt;
+    if (r.codi === 'JA_INSCRIT' && r.c){ desaInsCodi(r.c, r.s); S.insV = {}; sub({v:'ins', c:r.c, s:r.s, up:{v:'detall', id:a.codi}}); toast('Ja hi estaves inscrit'); return; }
+    if (!r.ok){ err('fins', r.msg || msgJ(r)); return; }
+    desaInsCodi(r.c, r.s); S.fi = null; S.insV = {}; carregaMeves(); carregaActivitats();
+    toast(r.estat === 'CONFIRMADA' ? 'Inscripció confirmada' : r.estat === 'LLISTA_ESPERA' ? 'T’hem apuntat a la llista d’espera' : 'Plaça reservada: falta pagar');
+    sub({v:'ins', c:r.c, s:r.s, paga: r.estat === 'PENDENT_PAGAMENT', up:{v:'detall', id:a.codi}});
+  });
+}
+
+/* --- Control d'arribades (junta o voluntaris amb el PIN) --- */
+function desaPins(){ try { localStorage.setItem('avv-pins', JSON.stringify(S.pins || {})); } catch(e){} }
+function carregaArr(id){
+  if (S.arrCarr === id) return;
+  S.arrCarr = id; S.arrErr = '';
+  motor('llistaInscrits', {act:id, token:token(), pin:(S.pins || {})[id] || ''}).then(r => {
+    S.arrCarr = null;
+    if (!r.ok){
+      if (r.codi === 'PIN' || r.codi === 'BLOQUEJAT'){ delete S.pins[id]; desaPins(); S.pinErr = r.codi === 'PIN' ? 'Aquest PIN no és correcte.' : MSG.BLOQUEJAT; }
+      else S.arrErr = msgJ(r);
+      render(); return;
+    }
+    S.arr = S.arr || {}; S.arr[id] = r; render();
+  });
+}
+function vArribades(id){
+  const a = act(id);
+  if (!esJ() && !(S.pins || {})[id]) return `<h2>Control d’arribades</h2><p class="muted" style="margin-top:4px">${esc(a.nom)}</p>
+    <p style="margin-top:14px">Escriu el PIN de voluntaris d’aquesta activitat. Te’l dona la junta.</p>
+    <label class="f">PIN<input type="tel" id="pa" inputmode="numeric" maxlength="4" autocomplete="off"></label><div class="err" id="e-pa">${esc(S.pinErr || '')}</div>
+    <button class="btn full" style="margin-top:16px" data-a="pinAct">Entrar</button>`;
+  const L = (S.arr || {})[id];
+  if (!L){ carregaArr(id); return `<p class="muted" style="margin-top:20px">${S.arrErr ? esc(S.arrErr) : 'Carregant les inscripcions…'}</p>`; }
+  const p = L.tot.conf ? Math.min(100, Math.round(L.tot.arr / L.tot.conf * 100)) : 0;
+  const ordre = f => f.estat === 'CONFIRMADA' ? (f.arr ? 1 : 0) : 2;
+  const files = L.files.filter(f => L.junta || f.estat === 'CONFIRMADA').slice().sort((x, y) => ordre(x) - ordre(y) || x.nom.localeCompare(y.nom, 'ca'));
+  const fila = f => {
+    let bts = '';
+    if (f.estat === 'CONFIRMADA') bts += f.arr ? `<button class="chip" data-a="arrMan" data-c="${esc(f.c)}" data-d="0">Desfer</button>` : `<button class="chip on" data-a="arrMan" data-c="${esc(f.c)}" data-d="1">Ha arribat</button>`;
+    if (L.junta && ['PENDENT_PAGAMENT','CADUCADA'].includes(f.estat)) bts += `<button class="chip" data-a="pagadaJ" data-c="${esc(f.c)}">Marcar pagada</button>`;
+    if (L.junta && ACTIUS_INS.includes(f.estat)) bts += S.cancQ === f.c
+      ? `<button class="chip" data-a="cancJ" data-c="${esc(f.c)}">Sí, anul·lar</button><button class="chip" data-a="cancNo">No</button>`
+      : `<button class="chip" data-a="cancQ" data-c="${esc(f.c)}">Anul·lar</button>`;
+    const est = f.estat === 'CONFIRMADA' ? (f.arr ? `<span class="tag">Ha arribat${f.hora ? ' ' + esc(f.hora) : ''}</span>` : '') : tagIns(f.estat);
+    const extra = L.junta ? [f.email, f.tel].filter(Boolean).map(esc).join(' · ') : '';
+    return `<div class="row arr" data-q="${esc((f.nom + ' ' + f.c).toLowerCase())}" style="align-items:flex-start;gap:10px"><div style="min-width:0"><b>${esc(f.nom)}</b><div class="muted" style="font-size:13px">${esc(f.q)} · ${esc(f.c)}${f.imp ? ' · ' + eur(f.imp) : ''}</div>${f.resp ? `<div class="muted" style="font-size:13px">${esc(f.resp)}</div>` : ''}${extra ? `<div class="muted" style="font-size:13px;overflow-wrap:anywhere">${extra}</div>` : ''}${f.notes && /PAGAT SENSE|retornar/.test(f.notes) ? `<div style="font-size:13px;color:var(--red)">${esc(f.notes)}</div>` : ''}</div><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:none">${est}${bts}</div></div>`;
+  };
+  return `<h2>Control d’arribades</h2><p class="muted" style="margin-top:4px">${esc(L.act.nom)} · ${esc(L.act.quan)}</p>
+  ${L.junta && L.pin ? `<div class="card" style="margin-top:12px"><div class="row"><span>PIN per als voluntaris</span><b style="font-size:20px;letter-spacing:3px">${esc(L.pin)}</b></div></div>` : ''}
+  <div class="card" style="margin-top:12px"><div class="row"><span>Han arribat</span><b>${L.tot.arr} de ${L.tot.conf} places</b></div><div class="bar"><i style="width:${p}%"></i></div>
+  ${L.junta && (L.tot.pend || L.tot.espera) ? `<p class="muted" style="margin-top:8px;font-size:13px">${L.tot.pend ? L.tot.pend + ' places pendents de pagament' : ''}${L.tot.pend && L.tot.espera ? ' · ' : ''}${L.tot.espera ? L.tot.espera + ' a la llista d’espera' : ''}</p>` : ''}</div>
+  <button class="btn full" style="margin-top:14px" data-a="escaneja">Escanejar QR</button>
+  <label class="f" style="margin-top:18px">Cerca per nom o codi<input type="text" id="cerca" autocomplete="off" placeholder="Marta, W8SWSY…"></label>
+  <div class="card" style="margin-top:10px">${files.length ? files.map(fila).join('') : '<p class="muted">Encara no hi ha cap inscripció.</p>'}</div>
+  <button class="link" style="margin-top:10px" data-a="arrRefresca">Actualitzar la llista</button>`;
+}
+function vEscaner(id){
+  const a = act(id);
+  return `<h2>Escanejar QR</h2><p class="muted" style="margin-top:4px">${esc(a.nom)}</p>
+  <div class="cam"><video id="cam" playsinline muted></video><div class="mira" aria-hidden="true"></div></div>
+  <div id="res" class="res" aria-live="assertive"></div>
+  <p class="muted" id="camEst" style="margin-top:10px">Apunta la càmera al QR de l’entrada. Cada lectura queda registrada.</p>`;
+}
+let CAM = null;
+function aturaCamera(){
+  if (!CAM) return;
+  CAM.on = false;
+  try { CAM.stream.getTracks().forEach(t => t.stop()); } catch(e){}
+  CAM = null;
+}
+async function iniciaCamera(id){
+  if (CAM) return;
+  const v = document.getElementById('cam');
+  if (!v) return;
+  CAM = {on:true, id, ultim:'', t:0, ocupat:false, stream:null};
+  const est = t => { const e = document.getElementById('camEst'); if (e) e.textContent = t; };
+  try {
+    CAM.stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}, audio:false});
+    if (!CAM || !CAM.on){ CAM && aturaCamera(); return; }
+    v.srcObject = CAM.stream; await v.play();
+    let det = null;
+    if ('BarcodeDetector' in window){ try { det = new BarcodeDetector({formats:['qr_code']}); } catch(e){} }
+    if (!det) await carregaScript(LIB_JSQR);
+    const cv = document.createElement('canvas'), cx = cv.getContext('2d', {willReadFrequently:true});
+    const bucle = async () => {
+      if (!CAM || !CAM.on) return;
+      if (!CAM.ocupat && v.readyState >= 2){
+        let txt = '';
+        try {
+          if (det){ const r = await det.detect(v); if (r[0]) txt = r[0].rawValue; }
+          else if (window.jsQR){
+            const k = Math.min(1, 640 / Math.max(v.videoWidth, v.videoHeight));
+            cv.width = Math.round(v.videoWidth * k); cv.height = Math.round(v.videoHeight * k);
+            cx.drawImage(v, 0, 0, cv.width, cv.height);
+            const r = jsQR(cx.getImageData(0, 0, cv.width, cv.height).data, cv.width, cv.height);
+            if (r) txt = r.data;
+          }
+        } catch(e){}
+        if (txt) llegitQR(txt);
+      }
+      setTimeout(bucle, 200);
+    };
+    bucle();
+  } catch(e){
+    est('No es pot fer servir la càmera. Dona permís a la càmera al navegador, o torna enrere i fes servir la cerca per nom.');
+  }
+}
+function llegitQR(txt){
+  const ara = Date.now();
+  if (CAM.ultim === txt && ara - CAM.t < 4000) return;
+  CAM.ultim = txt; CAM.t = ara;
+  const m = String(txt).match(/v\.([A-Z0-9]{6})\.([0-9a-f]{20})/);
+  if (!m){ resultatQR('ko', 'Aquest QR no és d’una inscripció de l’associació.'); return; }
+  CAM.ocupat = true;
+  resultatQR('wait', 'Comprovant…');
+  const id = CAM.id;
+  motor('registraArribada', {c:m[1], s:m[2], act:id, token:token(), pin:(S.pins || {})[id] || ''}).then(r => {
+    if (CAM) CAM.ocupat = false;
+    if (S.arr) delete S.arr[id];
+    if (r.ok) resultatQR(r.ja ? 'ja' : 'ok', r.ja ? `Ja havia arribat${r.ins.hora ? ' a les ' + r.ins.hora : ''}` : 'Benvinguts!', r.ins);
+    else resultatQR('ko', r.msg || ({NO_CONFIRMADA:'Inscripció no confirmada' + (r.ins ? ': ' + (ESTAT_INS[r.ins.estat] || [r.ins.estat])[0].toLowerCase() : ''), QR_FALS:'QR fals o alterat', NO_TROBAT:'No s’ha trobat aquesta inscripció', PIN:'El PIN ja no és vàlid'}[r.codi] || msgJ(r)), r.ins);
+  });
+}
+function resultatQR(tipus, t, ins){
+  const e = document.getElementById('res');
+  if (!e) return;
+  e.className = 'res ' + tipus;
+  e.innerHTML = `<b>${esc(t)}</b>${ins ? `<div>${esc(ins.nom)}</div><div>${esc(ins.q)}</div>` : ''}`;
+  if (navigator.vibrate) navigator.vibrate(tipus === 'ok' ? 80 : tipus === 'ko' ? [80, 60, 80] : 30);
+}
+
+/* --- Assistent per crear i editar activitats (junta) --- */
+const WZ_PASSOS = ['L’activitat', 'Cal inscripció?', 'Inscripció', 'Informació i agenda del dia', 'Revisar i publicar'];
+function wzNou(){
+  return {pas:1, edit:false, teIns:false, ocup:0, nEnt:0, nPreg:0, d:{codi:'', nom:'', cat:'', catNova:'', data:'', hIni:'', hFi:'', multi:false, dataFi:'', lloc:'', desc:'', cartell:'',
+    ins:true, mode:'NO', ent:[{t:'Entrada', ps:'', pn:''}], afor:'', max:'1', obreD:'', obreH:'', tancaD:'', tancaH:'', preg:[], info:[], agenda:[], visible:true}};
+}
+function wzDesa(){ try { if (S.wz && !S.wz.edit){ const c = Object.assign({}, S.wz); delete c.prev; delete c.esb; localStorage.setItem('avv-wz', JSON.stringify(c)); } } catch(e){} }
+function wzOblida(){ try { localStorage.removeItem('avv-wz'); } catch(e){} S.wzEsborrany = null; }
+function wzLlegeix(){
+  if (!S.wz) return;
+  document.querySelectorAll('[data-w]').forEach(el => {
+    const p = el.dataset.w.split('.'); let o = S.wz.d;
+    for (let i = 0; i < p.length - 1; i++){ if (o[p[i]] == null) o[p[i]] = /^\d+$/.test(p[i + 1]) ? [] : {}; o = o[p[i]]; }
+    o[p[p.length - 1]] = el.type === 'checkbox' ? el.checked : el.value;
+  });
+}
+const avuiISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const isoDe = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const dataDe = (dia, hora) => { const m = String(dia || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); if (!m) return null; const h = String(hora || '').match(/^(\d{1,2}):(\d{2})$/); return new Date(+m[1], +m[2] - 1, +m[3], h ? +h[1] : 0, h ? +h[2] : 0); };
+const numW = x => Math.round((parseFloat(String(x == null ? '' : x).replace(',', '.')) || 0) * 100) / 100;
+function wzCategoria(d){ return d.cat === '__nova' ? String(d.catNova || '').trim() : d.cat; }
+function wzValida(pas){
+  const d = S.wz.d;
+  if (pas === 1){
+    if (!String(d.nom).trim()) return 'Escriu el nom de l’activitat.';
+    const ini = dataDe(d.data, d.hIni);
+    if (!ini) return 'Tria la data.';
+    if (!S.wz.edit && d.data < avuiISO()) return 'La data no pot ser anterior a avui.';
+    if (d.cat === '__nova' && !String(d.catNova || '').trim()) return 'Escriu el nom de la categoria nova.';
+    if (d.multi){ if (!d.dataFi || d.dataFi <= d.data) return 'La data de final ha de ser posterior a la data.'; }
+    else if (d.hFi){ if (!d.hIni) return 'Si poses hora de final, posa també l’hora d’inici.'; if (d.hFi <= d.hIni) return 'L’hora de final ha de ser posterior a l’hora d’inici.'; }
+    if (S.wz.puja) return 'Espera que acabi de pujar la imatge.';
+  }
+  if (pas === 3 && d.ins){
+    const ent = d.ent.filter(e => String(e.t || '').trim());
+    if (!ent.length) return 'Cal com a mínim un tipus d’entrada.';
+    if (d.mode !== 'NO' && ent.every(e => numW(e.ps) === numW(e.pn))) return 'Has triat preu de soci, però els preus de soci i no soci són iguals.';
+    if (ent.some(e => numW(e.pn) < 0 || numW(e.ps) < 0)) return 'Els preus no poden ser negatius.';
+    if (!(+d.max >= 1)) return 'El màxim per inscripció ha de ser 1 o més.';
+    if (S.wz.teIns && +d.afor > 0 && +d.afor < S.wz.ocup) return `Ja hi ha ${S.wz.ocup} places ocupades: el total no pot ser més baix.`;
+    const ob = dataDe(d.obreD, d.obreH || '00:00'), tc = dataDe(d.tancaD, d.tancaH || '23:59');
+    if (!ob || !tc) return 'Falten les dates d’obertura o de tancament de les inscripcions.';
+    if (tc <= ob) return 'El tancament ha de ser posterior a l’obertura.';
+    const fi = d.multi ? dataDe(d.dataFi, d.hFi || '23:59') : (d.hFi ? dataDe(d.data, d.hFi) : dataDe(d.data, '23:59'));
+    if (tc > fi) return 'Les inscripcions no poden tancar després que acabi l’activitat.';
+    if (d.preg.some(p => String(p.text || '').trim() && p.tipus === 'desplegable' && !String(p.opcions || '').trim())) return 'Les preguntes desplegables necessiten opcions, separades per punt i coma.';
+  }
+  return '';
+}
+function wzPas3Defectes(){
+  const d = S.wz.d;
+  if (!d.obreD){ const a = new Date(); d.obreD = isoDe(a); d.obreH = `${String(a.getHours()).padStart(2, '0')}:${String(a.getMinutes()).padStart(2, '0')}`; }
+  if (!d.tancaD){ const ini = dataDe(d.data, ''); if (ini){ const v = new Date(ini); v.setDate(v.getDate() - 1); d.tancaD = isoDe(v) < avuiISO() ? d.data : isoDe(v); d.tancaH = '23:59'; } }
+}
+function wzPayload(){
+  const d = S.wz.d;
+  return {codi:d.codi || '', nom:d.nom, cat:wzCategoria(d), data:d.data, hIni:d.multi ? '' : d.hIni, hFi:d.multi ? '' : d.hFi, multi:!!d.multi, dataFi:d.multi ? d.dataFi : '',
+    lloc:d.lloc, desc:d.desc, cartell:d.cartell || '', ins:!!d.ins, mode:d.mode,
+    ent:d.ent.filter(e => String(e.t || '').trim()).map(e => ({t:String(e.t).trim(), ps:d.mode === 'NO' ? numW(e.pn) : numW(e.ps), pn:numW(e.pn)})),
+    afor:+d.afor || 0, max:+d.max || 1, obreD:d.obreD, obreH:d.obreH, tancaD:d.tancaD, tancaH:d.tancaH,
+    preg:d.preg.filter(p => String(p.text || '').trim()).map(p => ({text:p.text, tipus:p.tipus || 'text', opcions:p.opcions || '', oblig:!!p.oblig})),
+    info:d.info.filter(x => String(x[1] || '').trim()), agenda:d.agenda.filter(x => String(x[1] || '').trim()), visible:d.visible !== false};
+}
+function vNova(){
+  const W = S.wz, d = W.d, pas = W.pas;
+  const barra = `<div class="wz-bar" aria-hidden="true">${[1,2,3,4,5].map(i => `<i class="${i <= pas ? 'on' : ''}${i === 3 && !d.ins ? ' skip' : ''}"></i>`).join('')}</div>`;
+  const cap = `${barra}<p class="muted" style="font-size:13px">Pas ${pas} de 5${pas === 4 ? ' · opcional' : ''}${W.edit ? ' · editant' : ''}</p><h2 style="margin:2px 0 6px">${WZ_PASSOS[pas - 1]}</h2>`;
+  const v = x => esc(x == null ? '' : x);
+  let h = '';
+  if (pas === 1){
+    if (S.wzEsborrany) h += `<div class="card avis-o" style="margin:8px 0 4px"><b>Tens una activitat a mig crear${S.wzEsborrany.d.nom ? ': ' + esc(S.wzEsborrany.d.nom) : ''}.</b><div style="display:flex;gap:10px;margin-top:10px"><button class="btn" data-a="wCont">Continuar-la</button><button class="btn ghost" data-a="wNou">Començar de nou</button></div></div>`;
+    const cats = S.cats || [];
+    const catOpts = `<option value="">Sense categoria</option>${cats.map(c => `<option${d.cat === c ? ' selected' : ''}>${esc(c)}</option>`).join('')}${d.cat && d.cat !== '__nova' && !cats.includes(d.cat) ? `<option selected>${esc(d.cat)}</option>` : ''}<option value="__nova"${d.cat === '__nova' ? ' selected' : ''}>+ Nova categoria…</option>`;
+    const img = W.prev || (d.cartell ? URL_CARTELL(d.cartell) : '');
+    h += `<label class="f">Nom *<input type="text" data-w="nom" maxlength="80" value="${v(d.nom)}" placeholder="Calçotada popular"></label>
+    <label class="f">Categoria<select data-w="cat" data-wr>${catOpts}</select></label>
+    ${d.cat === '__nova' ? `<label class="f">Nom de la categoria nova<input type="text" data-w="catNova" maxlength="40" value="${v(d.catNova)}" placeholder="Sortides"></label>` : ''}
+    <label class="f">Data *<input type="date" data-w="data" value="${v(d.data)}"${W.edit ? '' : ` min="${avuiISO()}"`}></label>
+    ${d.multi ? '' : `<div class="g2"><label class="f">Hora d’inici<input type="time" data-w="hIni" value="${v(d.hIni)}"></label><label class="f">Hora de final<input type="time" data-w="hFi" value="${v(d.hFi)}"></label></div><p class="muted" style="font-size:13px;margin-top:4px">Si deixes les hores buides, sortirà com a «tot el dia».</p>`}
+    <label class="chk"><input type="checkbox" data-w="multi" data-wr${d.multi ? ' checked' : ''}><span>Dura més d’un dia</span></label>
+    ${d.multi ? `<label class="f">Data de final *<input type="date" data-w="dataFi" value="${v(d.dataFi)}"></label>` : ''}
+    <label class="f">Lloc<input type="text" data-w="lloc" maxlength="120" value="${v(d.lloc)}" placeholder="Parc de Domeny"></label>
+    <label class="f">Descripció<textarea data-w="desc" rows="4" maxlength="3000" placeholder="Què farem, per a qui és…">${v(d.desc)}</textarea></label>
+    <div class="f">Cartell o logo <span class="muted">(opcional)</span></div>
+    ${img ? `<div class="wz-img"><img src="${esc(img)}" alt="Cartell triat">${W.puja ? '<span class="tag o">Pujant…</span>' : ''}</div><button class="link" data-a="wTreuImg">Treure la imatge</button>`
+          : `<label class="wz-foto"><input type="file" id="wfoto" accept="image/*"><span>Tria una imatge. Si no, sortirà el cartell de colors.</span></label>`}`;
+  }
+  if (pas === 2){
+    const opc = (val, t, s, dis) => `<button class="opt${d.ins === val ? ' on' : ''}" data-a="wIns" data-v="${val ? 1 : 0}"${dis ? ' disabled' : ''}><b>${t}</b><span class="muted">${s}</span></button>`;
+    h += opc(true, 'Sí, cal inscriure’s', 'Places, preus, pagament i QR') + opc(false, 'No, entrada lliure', 'Només es publica l’activitat', W.teIns);
+    if (W.teIns) h += '<p class="muted" style="margin-top:10px;font-size:13px">Aquesta activitat ja té inscripcions: ha de continuar amb inscripció.</p>';
+  }
+  if (pas === 3){
+    const blq = W.teIns;
+    h += `<label class="f">Preu especial per a socis?<select data-w="mode" data-wr${blq ? ' disabled' : ''}><option value="NO"${d.mode === 'NO' ? ' selected' : ''}>No, tothom paga el mateix</option><option value="GRUP"${d.mode === 'GRUP' ? ' selected' : ''}>Sí, per a tot el grup si qui inscriu és soci</option><option value="PER"${d.mode === 'PER' ? ' selected' : ''}>Sí, una plaça per cada soci del grup</option></select></label>
+    ${blq ? '<p class="muted" style="font-size:13px;margin-top:4px">Ja hi ha inscripcions: els preus i les entrades que ja hi havia no es poden canviar. Sí que en pots afegir de noves.</p>' : ''}
+    <div class="sec">Tipus d’entrada</div>
+    ${d.ent.map((e, i) => { const lk = blq && i < W.nEnt, ro = lk ? ' readonly' : '';
+      return `<div class="card wz-ent"><label class="f" style="margin-top:0">Nom<input type="text" data-w="ent.${i}.t" value="${v(e.t)}" placeholder="Adult, Infant, Parada…"${ro}></label>
+      <div class="g2">${d.mode !== 'NO' ? `<label class="f">Preu soci (€)<input type="number" inputmode="decimal" min="0" step="0.01" data-w="ent.${i}.ps" value="${v(e.ps)}"${ro}></label>` : ''}<label class="f">${d.mode !== 'NO' ? 'Preu no soci (€)' : 'Preu (€)'}<input type="number" inputmode="decimal" min="0" step="0.01" data-w="ent.${i}.pn" value="${v(e.pn)}" placeholder="0 = gratuït"${ro}></label></div>
+      ${!lk && d.ent.length > 1 ? `<button class="link" data-a="wTreu" data-l="ent" data-i="${i}">Treure</button>` : ''}</div>`; }).join('')}
+    <button class="btn ghost full" style="margin-top:10px" data-a="wAfegeix" data-l="ent">Afegir tipus d’entrada</button>
+    <div class="g2"><label class="f">Places totals<input type="number" inputmode="numeric" min="0" data-w="afor" value="${v(d.afor)}" placeholder="Sense límit"></label><label class="f">Màxim per inscripció<input type="number" inputmode="numeric" min="1" data-w="max" value="${v(d.max)}"></label></div>
+    <div class="sec">Obertura de les inscripcions</div><div class="g2"><label class="f" style="margin-top:0">Data<input type="date" data-w="obreD" value="${v(d.obreD)}"></label><label class="f" style="margin-top:0">Hora<input type="time" data-w="obreH" value="${v(d.obreH)}"></label></div>
+    <div class="sec">Tancament de les inscripcions</div><div class="g2"><label class="f" style="margin-top:0">Data<input type="date" data-w="tancaD" value="${v(d.tancaD)}"></label><label class="f" style="margin-top:0">Hora<input type="time" data-w="tancaH" value="${v(d.tancaH)}"></label></div>
+    <div class="sec">Preguntes extra <span class="muted">(opcional)</span></div>
+    ${d.preg.map((p, i) => { const lk = blq && i < W.nPreg, ro = lk ? ' readonly' : '', dis = lk ? ' disabled' : '';
+      return `<div class="card wz-ent"><label class="f" style="margin-top:0">Pregunta<input type="text" data-w="preg.${i}.text" value="${v(p.text)}" placeholder="Talla de samarreta"${ro}></label>
+      <label class="f">Tipus<select data-w="preg.${i}.tipus" data-wr${dis}>${[['text','Text'],['número','Número'],['desplegable','Llista d’opcions'],['sí/no','Sí o no']].map(([k, t]) => `<option value="${k}"${(p.tipus || 'text') === k ? ' selected' : ''}>${t}</option>`).join('')}</select></label>
+      ${p.tipus === 'desplegable' ? `<label class="f">Opcions, separades per punt i coma<input type="text" data-w="preg.${i}.opcions" value="${v(p.opcions)}" placeholder="S; M; L; XL"${ro}></label>` : ''}
+      <label class="chk"><input type="checkbox" data-w="preg.${i}.oblig"${p.oblig ? ' checked' : ''}${dis}><span>Obligatòria</span></label>
+      ${lk ? '' : `<button class="link" data-a="wTreu" data-l="preg" data-i="${i}">Treure</button>`}</div>`; }).join('')}
+    <button class="btn ghost full" style="margin-top:10px" data-a="wAfegeix" data-l="preg">Afegir pregunta</button>
+    <p class="muted" style="font-size:13px;margin-top:14px">Per defecte: 24 hores per pagar i recordatori amb el QR la vigília a les 10:00.</p>`;
+  }
+  if (pas === 4){
+    h += `<div class="sec">Informació útil</div>
+    ${d.info.map((x, i) => `<div class="g2 wz-par"><input type="text" data-w="info.${i}.0" value="${v(x[0])}" placeholder="Cal portar" aria-label="Etiqueta"><input type="text" data-w="info.${i}.1" value="${v(x[1])}" placeholder="Gots i coberts" aria-label="Text"></div><button class="link" data-a="wTreu" data-l="info" data-i="${i}">Treure</button>`).join('')}
+    <button class="btn ghost full" style="margin-top:8px" data-a="wAfegeix" data-l="info">Afegir línia</button>
+    <div class="sec">Agenda del dia</div>
+    ${d.agenda.map((x, i) => `<div class="wz-ag"><input type="time" data-w="agenda.${i}.0" value="${v(x[0])}" aria-label="Hora"><input type="text" data-w="agenda.${i}.1" value="${v(x[1])}" placeholder="Arribada i benvinguda" aria-label="Què passa"></div><button class="link" data-a="wTreu" data-l="agenda" data-i="${i}">Treure</button>`).join('')}
+    <button class="btn ghost full" style="margin-top:8px" data-a="wAfegeix" data-l="agenda">Afegir moment</button>`;
+  }
+  if (pas === 5){
+    const P = wzPayload(), ini = dataDe(P.data, P.hIni), fi = P.multi ? dataDe(P.dataFi, '') : (P.hFi ? dataDe(P.data, P.hFi) : null);
+    const fake = {ini:ini ? ini.getTime() : 0, fi:fi ? fi.getTime() : null, horari:'', ins:P.ins, estat:'OBERTES', ent:P.ent};
+    const [et, c] = etiqueta(fake);
+    const insTxt = P.ins ? `${P.afor ? P.afor + ' places' : 'Sense límit de places'} · ${P.ent.length ? preuTxt(fake) : ''}` : 'No, entrada lliure';
+    h += `<div class="card">${filaIA('Nom', P.nom)}${filaIA('Quan', ini ? quanTxt(fake) : '')}${P.lloc ? filaIA('Lloc', P.lloc) : ''}${P.cat ? filaIA('Categoria', P.cat) : ''}${filaIA('Inscripció', insTxt)}${filaIA('Cartell', P.cartell ? 'Imatge pròpia' : 'Cartell de colors')}</div>
+    <p class="muted" style="margin:14px 0 6px">Així es veurà a l’app:</p><span class="tag ${c}">${esc(et)}</span>
+    <label class="chk" style="margin-top:16px"><input type="checkbox" data-w="visible"${d.visible !== false ? ' checked' : ''}><span><b>Visible a l’app</b><br><span class="muted">Desmarca-ho per desar-la com a esborrany. Només la junta la veurà.</span></span></label>`;
+    if (W.edit){
+      h += `<div class="sec">Altres accions</div>`;
+      h += W.teIns ? `<p class="muted" style="font-size:13px">Aquesta activitat té inscripcions: no es pot esborrar, només amagar-la desmarcant «Visible a l’app».</p>`
+        : W.esb ? `<div class="card"><p>Per esborrar-la, escriu el nom de l’activitat: <b>${esc(d.nom)}</b></p><input type="text" id="wesb" autocomplete="off" style="margin-top:8px"><div class="err" id="e-wesb"></div><div style="display:flex;gap:10px;margin-top:12px"><button class="btn" style="background:var(--red)" data-a="wEsb">Esborrar definitivament</button><button class="btn ghost" data-a="wEsbNo">No</button></div></div>`
+        : `<button class="link" style="color:var(--red)" data-a="wEsbQ">Esborrar l’activitat</button>`;
+    }
+  }
+  const nav = `<div class="err" id="e-wz" style="margin-top:14px"></div><div class="wz-nav">${pas > 1 ? '<button class="btn ghost" data-a="wAnt">Enrere</button>' : '<span></span>'}<button class="btn" data-a="wSeg">${pas === 5 ? (W.edit ? 'Desar els canvis' : 'Publicar l’activitat') : 'Següent'}</button></div>`;
+  return cap + h + nav;
+}
+function pujaFoto(f){
+  if (!S.wz) return;
+  if (!/^image\//.test(f.type)){ toast('Tria un fitxer d’imatge.'); return; }
+  const rd = new FileReader();
+  rd.onload = () => {
+    const im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, 1600 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      const x = c.getContext('2d'); x.fillStyle = '#ffffff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+      const url = c.toDataURL('image/jpeg', 0.82);
+      wzLlegeix(); S.wz.prev = url; S.wz.puja = true; render();
+      motor('juntaPujaCartell', {token:token(), b64:url.split(',')[1]}).then(r => {
+        if (!S.wz) return;
+        S.wz.puja = false;
+        if (r.ok){ S.wz.d.cartell = r.id; toast('Imatge pujada'); wzDesa(); }
+        else { S.wz.prev = null; toast(r.msg || msgJ(r)); }
+        if (S.sub && S.sub.v === 'nova'){ wzLlegeix(); render(); }
+      });
+    };
+    im.onerror = () => toast('No s’ha pogut llegir la imatge.');
+    im.src = rd.result;
+  };
+  rd.readAsDataURL(f);
+}
+function obreAssistent(){
+  S.wz = wzNou(); S.wzEsborrany = null;
+  try { const e = JSON.parse(localStorage.getItem('avv-wz') || 'null'); if (e && e.d && (e.d.nom || e.d.data)) S.wzEsborrany = e; } catch(e){}
+  carregaCats();
+  sub({v:'nova', up:null});
+}
+function carregaCats(){
+  motor('juntaCategories', {token:token()}).then(r => { if (r.ok){ S.cats = r.categories; if (S.sub && S.sub.v === 'nova' && S.wz && S.wz.pas === 1){ wzLlegeix(); render(); } } });
+}
+
 /* ---------- Render ---------- */
 function render(){
+  if (CAM && !(S.sub && S.sub.v === 'escaner')) aturaCamera();
   S.junta = !!(S.user && S.user.junta);
   if (S.user || S.soci) S.entrat = true;
   desa();
@@ -765,12 +1286,15 @@ function render(){
   nav.style.display = S.entrat ? '' : 'none';
   const t = tab();
   if (t === 'junta' && !S.junta && S.sub) S.sub = null;
-  if (S.sub && ['detall','info','agenda','inscriure','despAct','form'].includes(S.sub.v) && !act(S.sub.id)) S.sub = null;
+  if (S.sub && ['detall','info','agenda','inscriure','despAct','form','arribades','escaner'].includes(S.sub.v) && !act(S.sub.id)) S.sub = null;
+  if (S.sub && S.sub.v === 'nova' && !S.wz) S.sub = null;
   $('#top').innerHTML = header();
   $('#nav').innerHTML = navHTML();
   const m = $('#main'), s = S.sub;
-  if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vDespAct(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, ident:vIdent, despesa:vDespesa, inscrits:vInscrits, socis:vSocis, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents})[s.v]();
+  if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vDespAct(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, ident:vIdent, despesa:vDespesa, inscrits:vInscrits, socis:vSocis, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), escaner:()=>vEscaner(s.id), nova:vNova})[s.v]();
   else m.innerHTML = ({inici:vInici, activitats:vActivitats, cursos:vCursos, soci:vSoci, junta:vJunta})[t]();
+  if (s && (s.v === 'ins' || s.v === 'qr')) setTimeout(pintaQR, 0);
+  if (s && s.v === 'escaner') setTimeout(() => iniciaCamera(s.id), 0);
 }
 function err(id, msg){ const e = document.getElementById('e-'+id); if (e) e.textContent = msg || ''; return !msg; }
 function val(id){ const e = document.getElementById(id); return e ? e.value.trim() : ''; }
@@ -790,6 +1314,9 @@ document.addEventListener('click', e => {
   const d = b.dataset;
   if (d.go){ go(d.go); return; }
   if (d.det){ S.q = 1; sub({v:'detall', id:d.det}); return; }
+  if (d.ins){ const [c, s2] = d.ins.split('.'); S.insV = {}; S.anullaQ = null; sub({v:'ins', c, s:s2, up:S.sub}); return; }
+  if (d.arr){ S.arr = {}; S.cancQ = null; sub({v:'arribades', id:d.arr, up:{v:'inscrits'}}); return; }
+  if (S.wz && S.sub && S.sub.v === 'nova') wzLlegeix();
   if (d.f){ S.filtre = d.f; render(); return; }
   if (d.fc){ S.fc = d.fc; render(); return; }
   if (d.curs){ sub({v:'curs', id:d.curs}); return; }
@@ -805,6 +1332,8 @@ document.addEventListener('click', e => {
   switch (d.a){
     case 'back': {
       const s = S.sub;
+      if (s && s.v === 'nova') wzDesa();
+      if (/^#(ins|v)\./.test(location.hash)) history.replaceState(null, '', location.pathname + '#activitats');
       if (s && s.up) sub(s.up);
       else if (s && s.v === 'pagament' && S.pag.back) sub(S.pag.back);
       else { S.sub = null; render(); }
@@ -869,13 +1398,13 @@ document.addEventListener('click', e => {
         }
         desaToken(r.token); esborraPendent(); S.bloq = 0; S.idPas = false;
         aplicaPerfil(r.perfil, S.idDni.toUpperCase().replace(/[\s.-]/g,''));
-        S.agCarr = false; carregaAgenda();
+        S.agCarr = false; carregaAgenda(); S.actCarr = false; carregaActivitats(); carregaMeves();
         toast(`Hola, ${r.perfil.nom}! Ja has entrat.`);
         if (S.after){ const t = S.after; S.after = null; sub(t); }
         else { S.sub = null; const t = S.afterTab || 'inici'; S.afterTab = null; go(t); }
       });
       break; }
-    case 'sortir': motor('tancarSessio', {token:token()}); desaToken(''); S.confS = false; S.entrat = false; S.junta = false; S.rol = 'visitant'; S.soci = null; S.user = null; S.ins = []; oblidaAgenda(); toast('Sessió tancada'); go('inici'); break;
+    case 'sortir': motor('tancarSessio', {token:token()}); desaToken(''); S.confS = false; S.entrat = false; S.junta = false; S.rol = 'visitant'; S.soci = null; S.user = null; S.ins = []; S.meves = []; S.wz = null; try { localStorage.removeItem('avv-meves'); localStorage.removeItem('avv-activitats'); } catch(e){} S.acts = null; S.actCarr = false; carregaActivitats(); oblidaAgenda(); toast('Sessió tancada'); go('inici'); break;
     case 'desaMov': if (req([['di','Escriu l’import', v => +v > 0],['dc','Escriu el concepte']])){ toast(S.mov === 'ing' ? 'Ingrés desat' : 'Despesa desada'); S.sub = null; render(); } break;
     case 'desaAct': {
       let ok = true;
@@ -901,7 +1430,84 @@ document.addEventListener('click', e => {
     case 'privAlta': keepAlta(); S.privAlta = !S.privAlta; render(); restoreAlta(); break;
     case 'remesa': toast('Remesa de 12 rebuts preparada'); break;
     case 'pdf': toast('Informe preparat'); break;
-    case 'nova': toast('Aquí s’obrirà el creador d’activitats'); break;
+    case 'nova': obreAssistent(); break;
+    // Inscripcions
+    case 'fq': { const a = act(S.sub.id), F = S.fi; if (!a || !F) break; const tot = F.q.reduce((x, y) => x + y, 0); if (+d.d > 0 && tot >= a.max) break; F.q[+d.i] = Math.max(0, F.q[+d.i] + +d.d); render(); break; }
+    case 'fIns': enviaIns(b); break;
+    case 'pagaIns': pagaIns(S.sub.c, S.sub.s, b); break;
+    case 'anullaQ': S.anullaQ = S.sub.c; render(); break;
+    case 'anullaNo': S.anullaQ = null; render(); break;
+    case 'anulla': { const s = S.sub; b.disabled = true;
+      motor('anullaInscripcio', {c:s.c, s:s.s}).then(r => { S.anullaQ = null; if (!r.ok){ b.disabled = false; toast(r.msg || msgJ(r)); return; } toast('Inscripció anul·lada'); S.insV = {}; carregaMeves(); carregaActivitats(); render(); });
+      break; }
+    // Arribades
+    case 'arrQR': { const s = S.sub, x = (S.insV || {})[s.c]; if (!x) break; b.disabled = true;
+      motor(d.d === '1' ? 'registraArribada' : 'desferArribada', {c:s.c, s:s.s, act:x.act, token:token(), pin:(S.pins || {})[x.act] || ''}).then(r => {
+        b.disabled = false;
+        if (!r.ok){ toast(r.msg || msgJ(r)); return; }
+        toast(d.d === '1' ? (r.ja ? 'Ja havia arribat' : 'Arribada registrada') : 'Arribada desfeta');
+        if (r.ins) S.insV[s.c] = r.ins; if (S.arr) delete S.arr[x.act]; render();
+      });
+      break; }
+    case 'pinAct': { const id = S.sub.id, pa = val('pa'); if (!/^\d{4}$/.test(pa)){ err('pa', 'El PIN té 4 xifres.'); break; } S.pins = S.pins || {}; S.pins[id] = pa; desaPins(); S.pinErr = ''; S.arr = {}; render(); break; }
+    case 'escaneja': sub({v:'escaner', id:S.sub.id, up:S.sub}); break;
+    case 'arrRefresca': if (S.arr) delete S.arr[S.sub.id]; render(); break;
+    case 'arrMan': { const id = S.sub.id; b.disabled = true;
+      motor(d.d === '1' ? 'registraArribada' : 'desferArribada', {c:d.c, act:id, token:token(), pin:(S.pins || {})[id] || ''}).then(r => {
+        if (!r.ok){ b.disabled = false; toast(r.msg || msgJ(r)); return; }
+        toast(d.d === '1' ? (r.ja ? 'Ja havia arribat' : 'Arribada registrada') : 'Arribada desfeta'); delete S.arr[id]; render();
+      });
+      break; }
+    case 'pagadaJ': { const id = S.sub.id; b.disabled = true;
+      motor('juntaMarcaPagada', {token:token(), c:d.c}).then(r => { if (!r.ok){ b.disabled = false; toast(r.msg || msgJ(r)); return; } toast('Marcada com a pagada. Li hem enviat el QR.'); delete S.arr[id]; carregaActivitats(); render(); });
+      break; }
+    case 'cancQ': S.cancQ = d.c; render(); break;
+    case 'cancNo': S.cancQ = null; render(); break;
+    case 'cancJ': { const id = S.sub.id; b.disabled = true;
+      motor('juntaCancellaIns', {token:token(), c:d.c}).then(r => { S.cancQ = null; if (!r.ok){ b.disabled = false; toast(r.msg || msgJ(r)); return; } toast('Inscripció anul·lada'); delete S.arr[id]; carregaActivitats(); render(); });
+      break; }
+    // Assistent per crear i editar activitats
+    case 'editaAct': { const id = S.sub.id; b.disabled = true;
+      motor('juntaActivitat', {token:token(), codi:id}).then(r => {
+        b.disabled = false;
+        if (!r.ok){ toast(msgJ(r)); return; }
+        const dd = Object.assign(r.d, {catNova:''}); if (!dd.ent.length) dd.ent = [{t:'Entrada', ps:'', pn:''}];
+        S.wz = {pas:1, edit:true, teIns:r.teIns, ocup:r.ocup, nEnt:r.teIns ? r.d.ent.length : 0, nPreg:r.teIns ? r.d.preg.length : 0, d:dd}; S.wzEsborrany = null;
+        carregaCats(); sub({v:'nova', up:{v:'detall', id}});
+      });
+      break; }
+    case 'wCont': S.wz = S.wzEsborrany; S.wz.edit = false; S.wzEsborrany = null; render(); break;
+    case 'wNou': wzOblida(); S.wz = wzNou(); render(); break;
+    case 'wIns': S.wz.d.ins = d.v === '1'; render(); break;
+    case 'wAfegeix': { const W = S.wz.d, L = d.l; W[L] = W[L] || []; W[L].push(L === 'ent' ? {t:'', ps:'', pn:''} : L === 'preg' ? {text:'', tipus:'text', opcions:'', oblig:false} : ['', '']); render(); break; }
+    case 'wTreu': S.wz.d[d.l].splice(+d.i, 1); render(); break;
+    case 'wTreuImg': S.wz.d.cartell = ''; S.wz.prev = null; wzDesa(); render(); break;
+    case 'wAnt': { const W = S.wz; W.pas = Math.max(1, W.pas - 1); if (W.pas === 3 && !W.d.ins) W.pas = 2; wzDesa(); render(); window.scrollTo(0,0); break; }
+    case 'wSeg': {
+      const W = S.wz, e1 = wzValida(W.pas);
+      if (e1){ err('wz', e1); break; }
+      if (W.pas < 5){ W.pas++; if (W.pas === 3){ if (W.d.ins) wzPas3Defectes(); else W.pas = 4; } wzDesa(); render(); window.scrollTo(0,0); break; }
+      const e3 = W.d.ins ? wzValida(3) : ''; if (e3){ err('wz', e3); break; }
+      const txt = b.textContent; b.disabled = true; b.textContent = 'Desant…';
+      motor('juntaDesaActivitat', {token:token(), d:wzPayload()}).then(r => {
+        b.disabled = false; b.textContent = txt;
+        if (!r.ok){ err('wz', r.msg || msgJ(r)); return; }
+        const edit = W.edit; if (!edit) wzOblida(); S.wz = null;
+        toast(edit ? 'Canvis desats' : 'Activitat creada');
+        (carregaActivitats(true, true) || Promise.resolve()).then(() => go('activitats', act(r.codi) ? {v:'detall', id:r.codi} : null));
+      });
+      break; }
+    case 'wEsbQ': S.wz.esb = true; render(); break;
+    case 'wEsbNo': S.wz.esb = false; render(); break;
+    case 'wEsb': {
+      if (val('wesb') !== String(S.wz.d.nom).trim()){ err('wesb', 'El nom no coincideix.'); break; }
+      b.disabled = true;
+      motor('juntaEsborraActivitat', {token:token(), codi:S.wz.d.codi}).then(r => {
+        if (!r.ok){ b.disabled = false; err('wesb', r.msg || msgJ(r)); return; }
+        S.wz = null; toast('Activitat esborrada');
+        (carregaActivitats(true, true) || Promise.resolve()).then(() => go('junta'));
+      });
+      break; }
     case 'sortirJ': S.junta = false; S.pin = ''; go('inici'); break;
     // Avisos i agenda
     case 'afegeixCal': S.agObre = S.agObre === d.ev ? null : d.ev; S.agAmaga = null; S.agEdita = null; render(); break;
@@ -980,10 +1586,25 @@ recupera();
 function oblidaAgenda(){ S.ag = null; try { localStorage.removeItem('avv-agenda'); } catch(e){} S.agCarr = false; carregaAgenda(); }
 try { const c = JSON.parse(localStorage.getItem('avv-agenda') || 'null'); if (c && c.ok && (token() || c.nivell === 'convidat')) S.ag = c; } catch(e){}
 document.addEventListener('change', e => { if (e.target.id === 'vn') actCad(); });
+document.addEventListener('change', e => {
+  const t = e.target, ds = t.dataset || {};
+  if (t.id === 'wfoto' && t.files && t.files[0]){ pujaFoto(t.files[0]); return; }
+  if (ds.fi !== undefined && S.fi) S.fi.v[ds.fi] = t.type === 'checkbox' ? t.checked : t.value;
+  if (ds.wr !== undefined && S.wz){ wzLlegeix(); render(); }
+});
+document.addEventListener('input', e => {
+  const t = e.target, ds = t.dataset || {};
+  if (ds.fi !== undefined && S.fi) S.fi.v[ds.fi] = t.type === 'checkbox' ? t.checked : t.value;
+  if (t.id === 'cerca'){ const q = t.value.trim().toLowerCase(); document.querySelectorAll('.arr[data-q]').forEach(r => { r.style.display = !q || r.dataset.q.includes(q) ? '' : 'none'; }); }
+});
 carregaAgenda();
 try { const c = JSON.parse(localStorage.getItem('avv-activitats') || 'null'); if (c && c.ok) S.acts = c; } catch(e){}
 carregaActivitats();
-document.addEventListener('visibilitychange', () => { if (!document.hidden && S.acts && Date.now() - S.acts.generat > 5 * 60000) carregaActivitats(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){ aturaCamera(); return; }
+  if (S.sub && S.sub.v === 'escaner') render();
+  if (S.acts && Date.now() - S.acts.generat > 5 * 60000) carregaActivitats();
+});
 if (!token()){ const pd = llegeixPendent(); if (pd){ S.idDni = pd.dni; S.idPas = true; S.rsT = pd.t + 60000; S.after = pd.after; S.afterTab = pd.afterTab; S.sub = {v:'ident'}; } }
 if (!token() && (S.soci || S.user)){ S.soci = null; S.user = null; S.rol = 'visitant'; S.entrat = false; }
 if (token()) motor('sessio', {token:token()}).then(r => {
@@ -991,7 +1612,11 @@ if (token()) motor('sessio', {token:token()}).then(r => {
   else if (r.codi === 'SESSIO_CADUCADA'){ desaToken(''); S.soci = null; S.user = null; S.rol = 'visitant'; S.entrat = false; S.sub = null; oblidaAgenda(); render(); toast('La sessió ha caducat. Torna a entrar amb el teu DNI.'); }
 });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
-window.addEventListener('hashchange', () => { if (!S.keep) S.sub = null; S.keep = false; render(); window.scrollTo(0,0); });
+window.addEventListener('hashchange', () => { if (rutaHash()){ render(); return; } if (!S.keep) S.sub = null; S.keep = false; render(); window.scrollTo(0,0); });
+try { S.pins = JSON.parse(localStorage.getItem('avv-pins') || '{}') || {}; } catch(e){ S.pins = {}; }
+try { const mv = JSON.parse(localStorage.getItem('avv-meves') || 'null'); if (Array.isArray(mv)) S.meves = mv; } catch(e){}
+rutaHash();
+carregaMeves();
 render();
 </script>
 </body>
