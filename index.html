@@ -847,7 +847,8 @@ function pagaIns(c, s, b){
 function vIns(){
   const s = S.sub, x = (S.insV || {})[s.c];
   if (!x){ carregaIns(); return `<p class="muted" style="margin-top:20px">${S.insErr ? esc(S.insErr) : 'Carregant la inscripció…'}</p>`; }
-  const org = esJ() || !!(S.pins || {})[x.act];
+  // Controls d'organitzador només quan s'ha obert un QR escanejat (#v.…), mai a «la meva inscripció»
+  const org = s.v === 'qr' && (esJ() || !!(S.pins || {})[x.act]);
   const imp = x.import ? eur(x.import) + (x.nSoci ? ` · ${x.nSoci} a preu de soci` : '') : 'Gratuïta';
   let h = `<h1 style="margin:6px 0 4px">${esc(x.actNom)}</h1><p class="muted">${esc(x.quan)}${x.lloc ? ' · ' + esc(x.lloc) : ''}</p>
   <div class="card" style="margin-top:14px">${filaIA('Nom', x.nom)}${filaIA('Places', x.q)}${filaIA('Import', imp)}<div class="row"><span class="muted">Estat</span>${tagIns(x.estat)}</div></div>`;
