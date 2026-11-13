@@ -940,7 +940,7 @@ function rutaHash(){
   // L'adreça queda com #ins.CODI.SIG (o #v.…): recarregar torna a obrir la inscripció, però mai no torna a pagar sol
   history.replaceState(history.state, '', location.pathname + '#' + (t === 'v' ? 'v' : 'ins') + '.' + c + '.' + s);
   if (t !== 'v') desaInsCodi(c, s);
-  S.insV = {};
+  S.insV = {}; S.insErr = '';
   S.sub = {v: t === 'v' ? 'qr' : 'ins', c, s, comprova: t === 'pagat', paga: t === 'pagar'};
   return true;
 }
@@ -952,7 +952,7 @@ function carregaIns(){
   S.insCarr = s.c; S.insErr = '';
   motor('estatInscripcio', {c:s.c, s:s.s, comprova:!!s.comprova}).then(r => {
     S.insCarr = null;
-    if (!r.ok){ S.insErr = r.codi === 'QR_FALS' ? 'Aquest codi no és vàlid.' : r.codi === 'NO_TROBAT' ? 'No hem trobat aquesta inscripció.' : msgJ(r); if (S.sub === s) render(); return; }
+    if (!r.ok){ S.insErrC = s.c; S.insErr = r.codi === 'QR_FALS' ? 'Aquest codi no és vàlid.' : r.codi === 'NO_TROBAT' ? 'No hem trobat aquesta inscripció.' : msgJ(r); if (S.sub === s) render(); return; }
     S.insV = S.insV || {}; S.insV[s.c] = r.ins;
     if (s.comprova && r.ins.estat === 'CONFIRMADA'){ toast('Pagament rebut. Ja tens el QR.'); carregaMeves(); carregaActivitats(); }
     if (s.paga && r.ins.estat === 'PENDENT_PAGAMENT'){ s.paga = false; pagaIns(s.c, s.s); }
@@ -972,7 +972,12 @@ function pagaIns(c, s, b){
 }
 function vIns(){
   const s = S.sub, x = (S.insV || {})[s.c];
-  if (!x){ carregaIns(); return `<p class="muted" style="margin-top:20px">${S.insErr ? esc(S.insErr) : 'Carregant la inscripció…'}</p>`; }
+  if (!x){
+    // Si ha fallat, no es torna a demanar sol (abans es repetia sense parar i semblava que es quedava carregant)
+    const ko = S.insErr && S.insErrC === s.c;
+    if (!ko) carregaIns();
+    return ko ? `<div class="card" style="margin-top:20px"><p>${esc(S.insErr)}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaIns">Tornar-ho a provar</button></div>` : '<p class="muted" style="margin-top:20px">Carregant la inscripció…</p>';
+  }
   // Controls d'organitzador només quan s'ha obert un QR escanejat (#v.…), mai a «la meva inscripció»
   const org = s.v === 'qr' && (esJ() || !!(S.pins || {})[x.act]);
   const imp = x.import ? eur(x.import) + (x.nSoci ? ` · ${x.nSoci} a preu de soci` : '') : 'Gratuïta';
@@ -1096,9 +1101,9 @@ function enviaIns(b){
   const txt = b.textContent; b.disabled = true; b.textContent = 'Enviant…';
   motor('inscriure', {codi:a.codi, token:token(), nom:val('fn'), email:val('fe'), tel:val('ft'), dni:amb ? '' : val('fd'), n:F.q, socis, resp, rgpd:true}).then(r => {
     b.disabled = false; b.textContent = txt;
-    if (r.codi === 'JA_INSCRIT' && r.c){ desaInsCodi(r.c, r.s); S.insV = {}; sub({v:'ins', c:r.c, s:r.s, up:{v:'detall', id:a.codi}}); toast('Ja hi estaves inscrit'); return; }
+    if (r.codi === 'JA_INSCRIT' && r.c){ desaInsCodi(r.c, r.s); S.insV = {}; S.insErr = ''; sub({v:'ins', c:r.c, s:r.s, up:{v:'detall', id:a.codi}}); toast('Ja hi estaves inscrit'); return; }
     if (!r.ok){ err('fins', r.msg || msgJ(r)); return; }
-    desaInsCodi(r.c, r.s); S.fi = null; S.insV = {}; carregaMeves(); carregaActivitats();
+    desaInsCodi(r.c, r.s); S.fi = null; S.insV = {}; S.insErr = ''; carregaMeves(); carregaActivitats();
     toast(r.estat === 'CONFIRMADA' ? 'Inscripció confirmada' : r.estat === 'LLISTA_ESPERA' ? 'T’hem apuntat a la llista d’espera' : 'Plaça reservada: falta pagar');
     sub({v:'ins', c:r.c, s:r.s, paga: r.estat === 'PENDENT_PAGAMENT', up:{v:'detall', id:a.codi}});
   });
@@ -1113,7 +1118,7 @@ function carregaArr(id){
     S.arrCarr = null;
     if (!r.ok){
       if (r.codi === 'PIN' || r.codi === 'BLOQUEJAT'){ delete S.pins[id]; desaPins(); S.pinErr = r.codi === 'PIN' ? 'Aquest PIN no és correcte.' : MSG.BLOQUEJAT; }
-      else S.arrErr = msgJ(r);
+      else { S.arrErr = msgJ(r); S.arrErrId = id; }
       render(); return;
     }
     S.arr = S.arr || {}; S.arr[id] = r; render();
@@ -1132,7 +1137,11 @@ function vArribades(id){
     <label class="f">PIN<input type="tel" id="pa" inputmode="numeric" maxlength="4" autocomplete="off"></label><div class="err" id="e-pa">${esc(S.pinErr || '')}</div>
     <button class="btn full" style="margin-top:16px" data-a="pinAct">Entrar</button>`;
   const L = (S.arr || {})[id];
-  if (!L){ carregaArr(id); return `<h2>Control d’arribades</h2><p class="muted" style="margin-top:20px">${S.arrErr ? esc(S.arrErr) : 'Carregant les inscripcions…'}</p>`; }
+  if (!L){
+    const ko = S.arrErr && S.arrErrId === id;
+    if (!ko) carregaArr(id);
+    return `<h2>Control d’arribades</h2>` + (ko ? `<div class="card" style="margin-top:20px"><p>${esc(S.arrErr)}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaArr">Tornar-ho a provar</button></div>` : '<p class="muted" style="margin-top:20px">Carregant les inscripcions…</p>');
+  }
   const p = L.tot.conf ? Math.min(100, Math.round(L.tot.arr / L.tot.conf * 100)) : 0;
   const files = L.files.filter(f => f.estat === 'CONFIRMADA').sort((x, y) => (x.arr - y.arr) || x.nom.localeCompare(y.nom, 'ca'));
   const fila = f => `<div class="row arr" data-q="${esc((f.nom + ' ' + f.c).toLowerCase())}" style="align-items:flex-start;gap:10px">
@@ -1470,7 +1479,7 @@ document.addEventListener('click', e => {
   const d = b.dataset;
   if (d.go){ go(d.go); return; }
   if (d.det){ S.q = 1; sub({v:'detall', id:d.det}); return; }
-  if (d.ins){ const [c, s2] = d.ins.split('.'); S.insV = {}; S.anullaQ = null; sub({v:'ins', c, s:s2, up:S.sub}); return; }
+  if (d.ins){ const [c, s2] = d.ins.split('.'); S.insV = {}; S.insErr = ''; S.anullaQ = null; sub({v:'ins', c, s:s2, up:S.sub}); return; }
   if (d.arr){ obreArribades(d.arr, {v:'inscrits'}); return; }
   if (d.sa === 'arribades'){ obreArribades(S.sub.id, S.sub); return; }
   if (S.wz && S.sub && S.sub.v === 'nova') wzLlegeix();
@@ -1574,13 +1583,13 @@ document.addEventListener('click', e => {
         }
         desaToken(r.token); esborraPendent(); S.bloq = 0; S.idPas = false;
         aplicaPerfil(r.perfil, S.idDni.toUpperCase().replace(/[\s.-]/g,''));
-        S.agCarr = false; carregaAgenda(); S.actCarr = false; carregaActivitats(); S.fi = null; S.insV = {}; S.mevesCarr = false; carregaMeves();
+        S.agCarr = false; carregaAgenda(); S.actCarr = false; carregaActivitats(); S.fi = null; S.insV = {}; S.insErr = ''; S.mevesCarr = false; carregaMeves();
         toast(`Hola, ${r.perfil.nom}! Ja has entrat.`);
         if (S.after){ const t = S.after; S.after = null; sub(t); }
         else { S.sub = null; const t = S.afterTab || 'inici'; S.afterTab = null; go(t); }
       });
       break; }
-    case 'sortir': motor('tancarSessio', {token:token()}); desaToken(''); S.confS = false; S.entrat = false; S.junta = false; S.rol = 'visitant'; S.soci = null; S.user = null; S.ins = []; S.meves = []; S.wz = null; S.fi = null; S.insV = {}; S.anullaQ = null; try { localStorage.removeItem('avv-meves'); localStorage.removeItem('avv-ins'); localStorage.removeItem('avv-activitats'); } catch(e){} S.acts = null; S.actCarr = false; carregaActivitats(); S.mevesCarr = false; carregaMeves(); oblidaAgenda(); toast('Sessió tancada'); go('inici'); break;
+    case 'sortir': motor('tancarSessio', {token:token()}); desaToken(''); S.confS = false; S.entrat = false; S.junta = false; S.rol = 'visitant'; S.soci = null; S.user = null; S.ins = []; S.meves = []; S.wz = null; S.fi = null; S.insV = {}; S.insErr = ''; S.anullaQ = null; try { localStorage.removeItem('avv-meves'); localStorage.removeItem('avv-ins'); localStorage.removeItem('avv-activitats'); } catch(e){} S.acts = null; S.actCarr = false; carregaActivitats(); S.mevesCarr = false; carregaMeves(); oblidaAgenda(); toast('Sessió tancada'); go('inici'); break;
     case 'desaMov': if (req([['di','Escriu l’import', v => +v > 0],['dc','Escriu el concepte']])){ toast(S.mov === 'ing' ? 'Ingrés desat' : 'Despesa desada'); S.sub = null; render(); } break;
     case 'desaAct': {
       let ok = true;
@@ -1614,7 +1623,7 @@ document.addEventListener('click', e => {
     case 'anullaQ': S.anullaQ = S.sub.c; render(); break;
     case 'anullaNo': S.anullaQ = null; render(); break;
     case 'anulla': { const s = S.sub; b.disabled = true;
-      motor('anullaInscripcio', {c:s.c, s:s.s}).then(r => { S.anullaQ = null; if (!r.ok){ b.disabled = false; toast(r.msg || msgJ(r)); return; } toast('Inscripció anul·lada'); S.insV = {}; carregaMeves(); carregaActivitats(); render(); });
+      motor('anullaInscripcio', {c:s.c, s:s.s}).then(r => { S.anullaQ = null; if (!r.ok){ b.disabled = false; toast(r.msg || msgJ(r)); return; } toast('Inscripció anul·lada'); S.insV = {}; S.insErr = ''; carregaMeves(); carregaActivitats(); render(); });
       break; }
     // Arribades
     case 'arrQR': { const s = S.sub, x = (S.insV || {})[s.c]; if (!x) break; b.disabled = true;
@@ -1736,6 +1745,8 @@ document.addEventListener('click', e => {
       p.then(() => { if (tab() === 'junta' && !S.sub) render(); });
       break; }
     case 'refrescaCal': S.pend = null; S.pendErr = null; S.pendRef = true; render(); break;
+    case 'reintentaIns': S.insErr = ''; render(); break;
+    case 'reintentaArr': S.arrErr = ''; render(); break;
     case 'reintentaJ': S.avJErr = null; S.pendErr = null; render(); break;
     case 'nouAvis': S.avEd = null; S.avU = 'setmanes'; sub({v:'avisForm', up:{v:'avisosJ'}}); break;
     case 'editaAvis': { const a = (S.avJ || []).find(x => x.id === d.id); if (!a) break; S.avEd = Object.assign({}, a); S.avU = a.u; sub({v:'avisForm', up:{v:'avisosJ'}}); break; }
