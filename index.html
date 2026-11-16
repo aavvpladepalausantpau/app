@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ca">
-<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-16 (les inscripcions d’activitats passades ja no surten) -->
+<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-16b (despeses i ingressos reals: formulari complet, motor 1.8 + Despeses.gs 1.0, Comptes 2.0) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -52,7 +52,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .chip{border:1px solid var(--line);background:var(--surf);color:var(--ink);border-radius:999px;padding:7px 14px;font:500 14px Figtree,sans-serif;cursor:pointer;white-space:nowrap}
 .chip.on{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
 label.f{display:block;margin:14px 0 0;font-size:14px;font-weight:600}
-input[type=text],input[type=email],input[type=tel],input[type=number],select{width:100%;margin-top:6px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--ink);font:16px Figtree,sans-serif}
+input[type=text],input[type=email],input[type=tel],input[type=number],input[type=date],select{width:100%;margin-top:6px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--ink);font:16px Figtree,sans-serif}
 .err{color:var(--red);font-size:13px;margin-top:4px;min-height:0}
 .chk{display:flex;gap:10px;align-items:flex-start;margin-top:16px;font-size:14px}.chk input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--pri)}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
@@ -175,7 +175,7 @@ const AVISOS = [
 const curs = id => CURSOS.find(c => c.id === id);
 // ===== Connexió amb el motor d'accés (Apps Script del full de socis) =====
 const MOTOR = 'https://script.google.com/macros/s/AKfycbxNeEcaHhN8SjH7W2cjmJyPAxlmYY7vP-Ic8kJQ28GtfK09pbjvBpb2hJFMF_JVuxu2/exec';
-const PROVES = true; // versió de proves: els cursos encara són d'exemple. L'entrada, els avisos, les activitats, les inscripcions i l'alta de soci ja són reals.
+const PROVES = true; // versió de proves: els cursos encara són d'exemple. L'entrada, els avisos, les activitats, les inscripcions, les despeses i l'alta de soci ja són reals.
 function motor(accio, dades){
   return fetch(MOTOR, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(Object.assign({accio}, dades || {}))})
     .then(r => r.json()).catch(() => ({ok:false, codi:'XARXA'}));
@@ -555,7 +555,7 @@ function vBenvinguda(){
   </div></div>`;
 }
 function vInici(){
-  let h = PROVES ? '<div class="card" style="margin-top:8px;background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink);font-size:14px"><b>Versió de proves.</b> L’entrada amb el DNI, els avisos, les activitats, les inscripcions i l’alta de soci ja són reals. Els cursos encara són d’exemple.</div>' : '';
+  let h = PROVES ? '<div class="card" style="margin-top:8px;background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink);font-size:14px"><b>Versió de proves.</b> L’entrada amb el DNI, els avisos, les activitats, les inscripcions, les despeses i l’alta de soci ja són reals. Els cursos encara són d’exemple.</div>' : '';
   h += botoInstal('margin-top:12px');
   h += agendaAvisos();
   let soci = '';
@@ -635,16 +635,146 @@ function vAgenda(id){
   const a = act(id);
   return `<h1 style="margin:6px 0 4px">Agenda del dia</h1><p class="muted">${esc(a.nom)} · ${esc(quanTxt(a))}</p><div class="tline">${a.agenda.map(([h,t]) => `<div class="tl-i"><div class="tl-h">${esc(h)}</div><div class="tl-t">${esc(t)}</div></div>`).join('')}</div>`;
 }
-function vDespAct(id){
-  const a = act(id);
-  const qui = `<div class="card" style="margin-top:12px"><div class="row"><span>Apuntada per</span><b>${S.soci.nom}</b></div></div>`;
-  return `<h2>Apuntar un moviment</h2><p class="muted" style="margin-top:4px">${a.nom}</p>${qui}
-  <div class="seg" style="margin-top:14px"><button class="${S.mov!=='ing'?'on':''}" data-mov="desp">Despesa</button><button class="${S.mov==='ing'?'on':''}" data-mov="ing">Ingrés</button></div>
-  <label class="f">Import (€)<input type="number" id="di" inputmode="decimal" step="0.01" min="0"></label><div class="err" id="e-di"></div>
-  <label class="f">Concepte<input type="text" id="dc" placeholder="Bosses i cinta per a les parades"></label><div class="err" id="e-dc"></div>
-  ${S.mov!=='ing' ? `<label class="f">Qui l’ha pagat?<select id="dq"><option>Jo, cal que me’l tornin</option><option>L’associació</option></select></label>` : ''}
-  <label class="f">Foto del tiquet o factura<input type="file" accept="image/*,application/pdf" style="margin-top:8px;font-size:14px"></label>
-  <button class="btn full" style="margin-top:20px" data-a="desaAct">Enviar al tresorer</button>`;
+/* ---------- Despeses i ingressos (motor: Despeses.gs → Comptes d'Activitats) ---------- */
+// Formulari complet, el mateix des de la fitxa de l'activitat (amb l'activitat ja triada), des del carnet i des de la Junta.
+// El nom, el número de soci i el correu surten de la sessió: el motor no fa cas del que envia l'app.
+const MV_CFG_MIN = 10;
+const MSG_MV = {FORA_TERMINI:'Aquesta activitat ja no admet despeses: fa més de 30 dies que va acabar. Parla amb la junta.', COMPTES:'Ara mateix no es pot desar als comptes. Torna-ho a provar d’aquí a una estona i, si continua, avisa la junta.'};
+function carregaMvCfg(forca){
+  if (S.mvCarr) return;
+  if (!forca && S.mvCfg && Date.now() - S.mvCfg.t < MV_CFG_MIN * 60000) return;
+  S.mvCarr = true; S.mvCfgErr = '';
+  motor('despesesConfig', {token:token()}).then(r => {
+    S.mvCarr = false;
+    if (r.ok){ r.t = Date.now(); S.mvCfg = r; }
+    else S.mvCfgErr = MSG_MV[r.codi] || msgJ(r);
+    if (S.sub && ['despAct','despesa'].includes(S.sub.v)) render();
+  });
+}
+// Estat del formulari: es recorda mentre no s'envia (encara que es canviï de pantalla)
+function mvNou(clau){
+  const c = S.mvCfg;
+  S.mv = {clau, tipus:'Despesa', fitxers:[], err:'', env:false, res:null,
+    v:{act: clau || '', import:'', data:avuiISO(), concepte:'', proveidor:'', categoria:'', doc:'', pagat: c ? c.pagatDes[0] : '', notes:''}};
+}
+function mvTipus(t){
+  const c = S.mvCfg, v = S.mv.v;
+  S.mv.tipus = t; v.categoria = ''; v.doc = ''; v.pagat = t === 'Despesa' && c ? c.pagatDes[0] : '';
+}
+function mvCalJust(){ return S.mv.tipus === 'Despesa' && S.mv.v.doc !== 'Sense justificant'; }
+function vMov(id){
+  if (!esSoci()) return `<p class="muted" style="margin-top:20px">Per apuntar despeses cal entrar amb el teu DNI de soci.</p>`;
+  carregaMvCfg();
+  const c = S.mvCfg;
+  if (!c) return `<h2>Apuntar una despesa o un ingrés</h2>${S.mvCfgErr ? `<p style="margin-top:14px">${esc(S.mvCfgErr)}</p><button class="btn ghost full" style="margin-top:14px" data-a="mvRetry">Tornar-ho a provar</button>` : '<p class="muted" style="margin-top:14px">Carregant…</p>'}`;
+  const clau = id || '';
+  if (!S.mv || S.mv.clau !== clau) mvNou(clau);
+  const M = S.mv, v = M.v, des = M.tipus === 'Despesa';
+  if (!v.pagat && des) v.pagat = c.pagatDes[0];
+  if (M.res){
+    const r = M.res;
+    return `<h2>Registrat</h2><div class="card" style="margin-top:14px;background:var(--pri-soft);border-color:var(--pri);color:var(--pri-soft-ink)"><b>Número ${esc(r.id)}</b><p style="margin-top:4px">${esc(r.resum)}</p></div>
+    ${r.reemb ? `<p style="margin-top:12px">Queda pendent de reemborsar. Quan el tresorer t’ho hagi retornat, t’arribarà un correu a ${esc(c.jo.email)}.</p>` : ''}
+    <p class="muted" style="margin-top:12px">El tresorer el revisarà. La foto o el PDF ja són a la carpeta de l’activitat.</p>
+    <button class="btn full" style="margin-top:20px" data-a="mvAltre">Apuntar-ne un altre</button>`;
+  }
+  const llista = c.activitats;
+  const fixa = id ? llista.find(a => a.codi === id) : null;
+  if (id && !fixa) return `<h2>Apuntar una despesa o un ingrés</h2><p style="margin-top:14px">${esc(MSG_MV.FORA_TERMINI)}</p>`;
+  if (!llista.length) return `<h2>Apuntar una despesa o un ingrés</h2><p style="margin-top:14px">Ara mateix no hi ha cap activitat on puguis apuntar despeses.</p>`;
+  const radios = (k, l) => l.map(x => `<label class="chk" style="margin-top:10px"><input type="radio" name="mv-${k}" data-mv="${k}" value="${esc(x)}"${v[k] === x ? ' checked' : ''}><span>${esc(x)}</span></label>`).join('');
+  const opcions = (l, sel) => '<option value=""></option>' + l.map(x => `<option${x === sel ? ' selected' : ''}>${esc(x)}</option>`).join('');
+  const actHTML = fixa
+    ? `<p class="muted" style="margin-top:4px">${esc(fixa.nom)}${fixa.quan ? ' · ' + esc(fixa.quan) : ''}</p>`
+    : `<label class="f">Activitat *<select id="mv-act" data-mv="act"><option value=""></option>${llista.map(a => `<option value="${esc(a.codi)}"${v.act === a.codi ? ' selected' : ''}>${esc(a.nom)}${a.quan ? ' · ' + esc(a.quan) : ''}</option>`).join('')}</select></label><div class="err" id="e-mv-act"></div>
+       ${c.junta ? '' : `<p class="muted" style="font-size:13px;margin-top:4px">Surten les activitats que encara no han acabat o que fa menys de ${c.dies} dies que van acabar.</p>`}`;
+  const fitxers = M.fitxers.map((x, i) => `<div class="row" style="gap:10px">${x.vista ? `<img src="${x.vista}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px">` : '<span aria-hidden="true" style="font-size:24px">📄</span>'}<span style="flex:1;min-width:0;overflow-wrap:anywhere;font-size:14px">${esc(x.nom)}${x.carregant ? ' · preparant…' : ''}</span><button class="chip" data-a="mvTreu" data-i="${i}">Treure</button></div>`).join('');
+  const pagatMembre = des && v.pagat === c.pagatDes[0];
+  return `<h2>Apuntar ${fixa ? 'un moviment' : 'una despesa o un ingrés'}</h2>${actHTML}
+  <div class="card" style="margin-top:12px"><div class="row"><span>Apuntat per</span><b style="text-align:right">${esc(c.jo.nom)}${c.jo.num ? ` · núm. ${esc(c.jo.num)}` : ''}</b></div></div>
+  <div class="seg" style="margin-top:14px"><button class="${des ? 'on' : ''}" data-mt="Despesa">Despesa</button><button class="${!des ? 'on' : ''}" data-mt="Ingrés">Ingrés</button></div>
+  <label class="f">Import (€) *<input type="text" id="mv-import" data-mv="import" inputmode="decimal" autocomplete="off" placeholder="0,00" value="${esc(v.import)}"></label><div class="err" id="e-mv-import"></div>
+  <label class="f">Data ${des ? 'del tiquet o la factura' : 'del cobrament'} *<input type="date" id="mv-data" data-mv="data" value="${esc(v.data)}" max="${avuiISO()}"></label><div class="err" id="e-mv-data"></div>
+  <label class="f">Concepte *<input type="text" id="mv-concepte" data-mv="concepte" maxlength="150" placeholder="${des ? 'Bosses i cinta per a les parades' : 'Venda de tiquets de la barra'}" value="${esc(v.concepte)}"></label><div class="err" id="e-mv-concepte"></div>
+  <label class="f">${des ? 'Botiga o proveïdor' : 'Qui ho paga'}<input type="text" id="mv-proveidor" data-mv="proveidor" maxlength="100" placeholder="${des ? 'Bonpreu, Ferreteria Pla…' : 'Ajuntament, venda a la barra…'}" value="${esc(v.proveidor)}"></label>
+  <label class="f">Categoria *<select id="mv-categoria" data-mv="categoria">${opcions(des ? c.catDes : c.catIng, v.categoria)}</select></label><div class="err" id="e-mv-categoria"></div>
+  ${des ? `<div class="sec" style="margin-top:18px">Tipus de document *</div>${radios('doc', c.docs)}<div class="err" id="e-mv-doc"></div>` : ''}
+  <div class="sec" style="margin-top:18px">${des ? 'Qui ho ha pagat? *' : 'On s’ha cobrat? *'}</div>${radios('pagat', des ? c.pagatDes : c.pagatIng)}<div class="err" id="e-mv-pagat"></div>
+  ${pagatMembre ? `<p class="muted" style="font-size:13px;margin-top:6px">Quan et reemborsem t’arribarà un correu a ${esc(c.jo.email)}.</p>` : ''}
+  <div class="sec" style="margin-top:18px">Foto del tiquet o factura ${mvCalJust() ? '*' : '(opcional)'}</div>
+  <label class="btn ghost full" for="mvfx" style="display:block;text-align:center;margin-top:8px;cursor:pointer">📷 Fer una foto o adjuntar un fitxer</label>
+  <input type="file" id="mvfx" accept="image/*,application/pdf" multiple style="display:none">
+  <p class="muted" style="font-size:13px;margin-top:6px">Fotos o PDF, fins a ${c.maxFitxers} fitxers. Que el tiquet es vegi sencer, pla i amb bona llum.</p>
+  ${fitxers ? `<div class="card" style="margin-top:8px">${fitxers}</div>` : ''}<div class="err" id="e-mv-fitxers"></div>
+  <label class="f">Observacions<input type="text" id="mv-notes" data-mv="notes" maxlength="300" value="${esc(v.notes)}"></label>
+  <div class="err" id="e-mv" style="margin-top:14px">${esc(M.err)}</div>
+  <button class="btn full" style="margin-top:12px" data-a="mvEnvia"${M.env ? ' disabled' : ''}>${M.env ? 'Enviant… pot trigar uns segons' : (des ? 'Enviar la despesa' : 'Enviar l’ingrés')}</button>`;
+}
+// Foto reduïda a 1800 px (JPEG) com fa el formulari web dels Comptes; els PDF van tal qual.
+function mvLlegeix(f){
+  return new Promise(ok => {
+    const rd = new FileReader();
+    rd.onerror = () => ok(null);
+    rd.onload = () => {
+      const url = String(rd.result);
+      if (!/^image\//.test(f.type)){ ok({nom:f.name, tipus:f.type || 'application/pdf', b64:url.split(',')[1]}); return; }
+      const im = new Image();
+      im.onload = () => {
+        try {
+          const k = Math.min(1, 1800 / Math.max(im.width, im.height)), cv = document.createElement('canvas');
+          cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k);
+          const x = cv.getContext('2d'); x.fillStyle = '#ffffff'; x.fillRect(0, 0, cv.width, cv.height); x.drawImage(im, 0, 0, cv.width, cv.height);
+          const d = cv.toDataURL('image/jpeg', 0.82);
+          ok({nom:f.name.replace(/\.[^.]+$/, '') + '.jpg', tipus:'image/jpeg', b64:d.split(',')[1], vista:d});
+        } catch(e){ ok(null); }
+      };
+      im.onerror = () => ok(null);   // per exemple, HEIC en un navegador que no el sap obrir
+      im.src = url;
+    };
+    rd.readAsDataURL(f);
+  });
+}
+function mvAfegeix(llista){
+  const M = S.mv, c = S.mvCfg; if (!M || !c) return;
+  [].slice.call(llista || []).forEach(f => {
+    if (M.fitxers.length >= c.maxFitxers){ toast(`Com a màxim ${c.maxFitxers} fitxers`); return; }
+    if (!/^image\//.test(f.type) && f.type !== 'application/pdf'){ toast('Només fotos o PDF'); return; }
+    const x = {nom:f.name, carregant:true}; M.fitxers.push(x); render();
+    mvLlegeix(f).then(r => {
+      const i = M.fitxers.indexOf(x); if (i < 0) return;
+      if (!r){ M.fitxers.splice(i, 1); toast('No s’ha pogut llegir ' + f.name + '. Prova de fer-ne una foto.'); }
+      else if (r.b64.length * 0.75 > c.maxMB * 1048576){ M.fitxers.splice(i, 1); toast(f.name + ' supera els ' + c.maxMB + ' MB'); }
+      else M.fitxers[i] = r;
+      if (S.mv === M && S.sub && ['despAct','despesa'].includes(S.sub.v)) render();
+    });
+  });
+}
+function mvEnvia(){
+  const M = S.mv, c = S.mvCfg, v = M.v; if (!M || !c || M.env) return;
+  const des = M.tipus === 'Despesa';
+  const imp = Number(String(v.import).replace(/\s|€/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'));
+  let ok = true;
+  const e = (id, msg) => { if (!err(id, msg)) ok = false; };
+  e('mv-act', v.act ? '' : 'Tria l’activitat');
+  e('mv-import', imp > 0 && imp <= 100000 ? '' : 'Escriu l’import (per exemple 12,50)');
+  e('mv-data', /^\d{4}-\d{2}-\d{2}$/.test(v.data) && v.data <= avuiISO() ? '' : 'Revisa la data');
+  e('mv-concepte', v.concepte.trim() ? '' : 'Escriu el concepte');
+  e('mv-categoria', v.categoria ? '' : 'Tria la categoria');
+  if (des) e('mv-doc', v.doc ? '' : 'Tria el tipus de document');
+  e('mv-pagat', v.pagat ? '' : (des ? 'Indica qui ho ha pagat' : 'Indica on s’ha cobrat'));
+  if (M.fitxers.some(x => x.carregant)){ toast('Espera que acabin de preparar-se les fotos'); return; }
+  e('mv-fitxers', mvCalJust() && !M.fitxers.length ? 'Afegeix la foto del tiquet o el PDF de la factura (o tria «Sense justificant»)' : '');
+  if (!ok){ const p = document.querySelector('.err:not(:empty)'); if (p) p.scrollIntoView({block:'center'}); return; }
+  M.env = true; M.err = ''; render();
+  const d = {act:v.act, tipus:M.tipus, import:String(v.import), data:v.data, concepte:v.concepte.trim(), proveidor:v.proveidor.trim(), categoria:v.categoria,
+    doc: des ? v.doc : '', pagat:v.pagat, notes:v.notes.trim(), fitxers:M.fitxers.map(x => ({nom:x.nom, tipus:x.tipus, b64:x.b64}))};
+  motor('desaDespesa', {token:token(), d}).then(r => {
+    M.env = false;
+    if (r.ok){ M.res = r; M.fitxers = []; }
+    else M.err = r.msg || MSG_MV[r.codi] || msgJ(r);
+    if (S.mv === M && S.sub && ['despAct','despesa'].includes(S.sub.v)){ render(); if (r.ok) window.scrollTo(0, 0); }
+    else if (r.ok) toast('Registrat amb el número ' + r.id);
+  });
 }
 function vForm(id){
   const a = act(id), s = S.soci || {};
@@ -843,6 +973,7 @@ function vCarnet(){
   return `<div class="carnet"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-size:13px;opacity:.85">AVV Pla de Palau – Sant Pau</div><div class="nm">${s.nom}</div><div style="opacity:.9">Soci núm. ${s.num}</div></div><div class="qr">${qrSVG(s.num)}</div></div><div style="display:flex;justify-content:space-between;margin-top:22px;font-size:14px"><span>Vàlid fins al 31/12/2026</span><span>${s.dni}</span></div></div>
   <div class="sec">Quota 2026</div><div class="card"><div class="row"><span>Estat</span>${pend ? '<span class="tag o">Pendent de cobrament</span>' : '<span class="tag">Pagada</span>'}</div>${s.pag ? `<div class="row"><span>Forma de pagament</span><b>${s.pag==='domi'?'Domiciliació':'Targeta'}</b></div>` : ''}</div>
   ${meves()}
+  <button class="card act" data-s="despesa" style="margin-top:12px"><span class="mi" aria-hidden="true" style="flex:none">${MI.desp}</span><div><div class="n">Apuntar una despesa o un ingrés</div><div class="s">Tiquets i factures de les activitats</div></div><span style="margin-left:auto;color:var(--mut);font-size:22px">›</span></button>
   <div class="sec">Les meves dades</div><div class="card"><div class="row"><span>Correu</span><b style="overflow-wrap:anywhere;text-align:right">${s.email}</b></div>${s.tel ? `<div class="row"><span>Telèfon</span><b>${s.tel}</b></div>` : ''}</div><p class="muted" style="margin-top:8px;font-size:13px">Si alguna dada no és correcta, escriu-nos a aavvpladepalausantpau@gmail.com.</p>
   <button class="card act" data-s="priv" style="margin-top:12px"><div class="n">Privacitat</div><span style="margin-left:auto;color:var(--mut);font-size:22px">›</span></button>
   ${sortirHTML()}`;
@@ -861,15 +992,6 @@ function vJunta(){
   <button class="tile" data-s="informes"><span class="ic">📄</span><b>Informes</b></button></div>
   <button class="btn ghost full" style="margin-top:14px" data-a="nova">Crear una activitat nova</button>
   <button class="btn ghost full" style="margin-top:10px" data-a="refrescaAct">Tornar a llegir les activitats ara</button><p class="muted" style="font-size:13px;margin-top:6px">L’app llegeix el full d’activitats cada 5 minuts. Si acabes de canviar-hi alguna cosa i encara no surt, prem aquest botó.</p>`;
-}
-function vDespesa(){
-  return `<h2>Apuntar un moviment</h2><div class="seg" style="margin-top:12px"><button class="${S.mov!=='ing'?'on':''}" data-mov="desp">Despesa</button><button class="${S.mov==='ing'?'on':''}" data-mov="ing">Ingrés</button></div>
-  <label class="f">Import (€)<input type="number" id="di" inputmode="decimal" step="0.01" min="0"></label><div class="err" id="e-di"></div>
-  <label class="f">Concepte<input type="text" id="dc" placeholder="Compra de material per al taller"></label><div class="err" id="e-dc"></div>
-  <label class="f">Activitat<select id="da">${acts().map(a => `<option>${esc(a.nom)}</option>`).join('')}<option>Despeses generals</option></select></label>
-  ${S.mov!=='ing' ? `<label class="f">Qui l’ha pagat?<select id="dq"><option>L’associació</option><option>Un membre (cal reemborsar)</option></select></label>` : ''}
-  <label class="f">Foto del tiquet o factura<input type="file" accept="image/*,application/pdf" style="margin-top:8px;font-size:14px"></label>
-  <button class="btn full" style="margin-top:20px" data-a="desaMov">Desar</button>`;
 }
 function vInscrits(){
   const l = acts().filter(a => a.ins);
@@ -1461,7 +1583,7 @@ function render(){
   $('#nav').innerHTML = navHTML();
   const m = $('#main'), s = S.sub;
   if (S.esperaAct) m.innerHTML = `<p class="muted" style="margin-top:24px">${S.actErr ? 'Ara mateix no s’han pogut carregar les activitats. Torna-ho a provar d’aquí a una estona.' : 'Carregant l’activitat…'}</p>`;
-  else if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vDespAct(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, fesSoci:vFesSoci, altaEstat:vAltaEstat, ident:vIdent, despesa:vDespesa, inscrits:vInscrits, socis:vSocis, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), escaner:()=>vEscaner(s.id), nova:vNova})[s.v]();
+  else if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vMov(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, fesSoci:vFesSoci, altaEstat:vAltaEstat, ident:vIdent, despesa:()=>vMov(''), inscrits:vInscrits, socis:vSocis, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), escaner:()=>vEscaner(s.id), nova:vNova})[s.v]();
   else m.innerHTML = ({inici:vInici, activitats:vActivitats, cursos:vCursos, soci:vSoci, junta:vJunta})[t]();
   if (s && (s.v === 'ins' || s.v === 'qr')) setTimeout(pintaQR, 0);
   if (s && s.v === 'escaner') setTimeout(() => iniciaCamera(s.id), 0);
@@ -1507,7 +1629,7 @@ document.addEventListener('click', e => {
   if (d.un){ S.avU = d.un; document.querySelectorAll('#vu button').forEach(x => x.classList.toggle('on', x.dataset.un === d.un)); actCad(); return; }
   if (d.sa){ const id = S.sub.id; if (d.sa === 'despAct' && !esSoci()){ S.after = {v:'despAct', id, up:{v:'detall', id}}; S.idPas = false; S.idDni = ''; sub({v:'ident', up:{v:'detall', id}}); return; } sub({v:d.sa, id, up:{v:'detall', id}}); return; }
   if (d.pag){ S.alta.pag = d.pag; keepAlta(); render(); restoreAlta(); return; }
-  if (d.mov){ S.mov = d.mov; render(); return; }
+  if (d.mt){ if (S.mv && S.mv.tipus !== d.mt){ mvTipus(d.mt); render(); } return; }
   if (d.k !== undefined){ pinKey(d.k); return; }
   switch (d.a){
     case 'back': if (enSub()) history.back(); else enrere(); break;
@@ -1603,14 +1725,11 @@ document.addEventListener('click', e => {
         else { S.sub = null; const t = S.afterTab || 'inici'; S.afterTab = null; go(t); }
       });
       break; }
-    case 'sortir': motor('tancarSessio', {token:token()}); desaToken(''); S.confS = false; S.entrat = false; S.junta = false; S.rol = 'visitant'; S.soci = null; S.user = null; S.ins = []; S.meves = []; S.wz = null; S.fi = null; S.insV = {}; S.insErr = ''; S.anullaQ = null; try { localStorage.removeItem('avv-meves'); localStorage.removeItem('avv-ins'); localStorage.removeItem('avv-activitats'); } catch(e){} S.acts = null; S.actCarr = false; carregaActivitats(); S.mevesCarr = false; carregaMeves(); oblidaAgenda(); toast('Sessió tancada'); go('inici'); break;
-    case 'desaMov': if (req([['di','Escriu l’import', v => +v > 0],['dc','Escriu el concepte']])){ toast(S.mov === 'ing' ? 'Ingrés desat' : 'Despesa desada'); S.sub = null; render(); } break;
-    case 'desaAct': {
-      let ok = true;
-      if (!esSoci() && !req([['dk','Aquest codi de soci no existeix. Mira’l al teu carnet.', v => /^PP\d{3}[A-Z]$/i.test(v)]])) ok = false;
-      if (!req([['di','Escriu l’import', v => +v > 0],['dc','Escriu el concepte']])) ok = false;
-      if (!ok) return;
-      const id = S.sub.id; toast((S.mov === 'ing' ? 'Ingrés' : 'Despesa') + ' enviada al tresorer'); sub({v:'detall', id}); break; }
+    case 'sortir': motor('tancarSessio', {token:token()}); desaToken(''); S.mv = null; S.mvCfg = null; S.confS = false; S.entrat = false; S.junta = false; S.rol = 'visitant'; S.soci = null; S.user = null; S.ins = []; S.meves = []; S.wz = null; S.fi = null; S.insV = {}; S.insErr = ''; S.anullaQ = null; try { localStorage.removeItem('avv-meves'); localStorage.removeItem('avv-ins'); localStorage.removeItem('avv-activitats'); } catch(e){} S.acts = null; S.actCarr = false; carregaActivitats(); S.mevesCarr = false; carregaMeves(); oblidaAgenda(); toast('Sessió tancada'); go('inici'); break;
+    case 'mvEnvia': mvEnvia(); break;
+    case 'mvTreu': if (S.mv){ S.mv.fitxers.splice(+d.i, 1); render(); } break;
+    case 'mvAltre': { const k = S.mv ? S.mv.clau : ''; mvNou(k); render(); window.scrollTo(0, 0); break; }
+    case 'mvRetry': carregaMvCfg(true); render(); break;
     case 'insCurs': {
       const id = S.sub.id, c = curs(id);
       if (c.ocup >= c.places){ toast('T’hem apuntat a la llista d’espera'); break; }
@@ -1809,11 +1928,14 @@ document.addEventListener('change', e => { if (e.target.id === 'vn') actCad(); }
 document.addEventListener('change', e => {
   const t = e.target, ds = t.dataset || {};
   if (t.id === 'wfoto' && t.files && t.files[0]){ pujaFoto(t.files[0]); return; }
+  if (t.id === 'mvfx'){ const l = [].slice.call(t.files || []); t.value = ''; mvAfegeix(l); return; }
+  if (ds.mv && S.mv){ S.mv.v[ds.mv] = t.value; if (t.type === 'radio' || ds.mv === 'act') render(); return; }
   if (ds.fi !== undefined && S.fi) S.fi.v[ds.fi] = t.type === 'checkbox' ? t.checked : t.value;
   if (ds.wr !== undefined && S.wz){ wzLlegeix(); render(); }
 });
 document.addEventListener('input', e => {
   const t = e.target, ds = t.dataset || {};
+  if (ds.mv && S.mv && t.type !== 'radio') S.mv.v[ds.mv] = t.value;
   if (ds.fi !== undefined && S.fi) S.fi.v[ds.fi] = t.type === 'checkbox' ? t.checked : t.value;
   if (t.id === 'cerca'){ const q = t.value.trim().toLowerCase(); document.querySelectorAll('.arr[data-q]').forEach(r => { r.style.display = !q || r.dataset.q.includes(q) ? '' : 'none'; }); }
 });
