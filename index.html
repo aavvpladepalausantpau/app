@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ca">
+<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-16 (les inscripcions d’activitats passades ja no surten) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -574,7 +575,7 @@ function vActivitats(){
   if (!cats.includes(S.filtre)) S.filtre = 'Totes';
   const l = tot.filter(a => S.filtre === 'Totes' || a.cat === S.filtre);
   const chips = cats.length > 1 ? `<div class="chips">${cats.map(c => `<button class="chip ${S.filtre===c?'on':''}" data-f="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : '';
-  return `<h1 style="margin:6px 0 14px">Activitats</h1>${meves()}${chips ? `<div style="margin-top:${S.meves && S.meves.length ? 18 : 0}px">${chips}</div>` : ''}<div style="margin-top:14px">${blocActs(l)}</div>`;
+  return `<h1 style="margin:6px 0 14px">Activitats</h1>${meves()}${chips ? `<div style="margin-top:${mevesVigents().length ? 18 : 0}px">${chips}</div>` : ''}<div style="margin-top:14px">${blocActs(l)}</div>`;
 }
 const MI = {
   edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
@@ -893,7 +894,19 @@ const LIB_JSQR = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
 const ESTAT_INS = {CONFIRMADA:['Confirmada',''], PENDENT_PAGAMENT:['Falta pagar','o'], LLISTA_ESPERA:['Llista d’espera','b'], CADUCADA:['Caducada','g'], 'CANCEL·LADA':['Anul·lada','g']};
 const tagIns = e => { const [t, c] = ESTAT_INS[e] || [e, 'g']; return `<span class="tag ${c}">${esc(t)}</span>`; };
 const ACTIUS_INS = ['CONFIRMADA','PENDENT_PAGAMENT','LLISTA_ESPERA'];
-const mevaInsAct = codi => (S.meves || []).find(i => i.act === codi && ACTIUS_INS.includes(i.estat)) || null;
+// «Les meves inscripcions» només de les activitats que no han passat: mateix criteri que acts()
+// (desapareixen a les 00:00 de l'endemà). També filtra la còpia desada al mòbil.
+// Data de final: la de l'activitat a la llista del motor; si no hi és, la inscripció (fi o inici).
+function mevesVigents(){
+  const avui = new Date(); avui.setHours(0, 0, 0, 0);
+  const totes = (S.acts && S.acts.activitats) || [];
+  return (S.meves || []).filter(i => {
+    const a = totes.find(x => x.codi === i.act);
+    const f = (a && (a.fi || a.ini)) || i.fi || i.ini;
+    return !f || f >= avui.getTime();
+  });
+}
+const mevaInsAct = codi => mevesVigents().find(i => i.act === codi && ACTIUS_INS.includes(i.estat)) || null;
 const SCRIPTS = {};
 function carregaScript(url){
   if (!SCRIPTS[url]) SCRIPTS[url] = new Promise((ok, ko) => { const s = document.createElement('script'); s.src = url; s.onload = ok; s.onerror = () => { delete SCRIPTS[url]; ko(); }; document.head.appendChild(s); });
@@ -919,8 +932,9 @@ function carregaMeves(){
   });
 }
 function meves(){
-  if (!S.meves || !S.meves.length) return '';
-  return `<div class="sec">Les meves inscripcions</div>${S.meves.map(i => `<button class="card act" data-ins="${esc(i.c)}.${esc(i.s)}" style="margin-bottom:10px"><div style="min-width:0"><div class="n">${esc(i.actNom)}</div><div class="s">${esc(i.q)}</div><div style="margin-top:6px">${tagIns(i.estat)}</div></div><span style="margin-left:auto;color:var(--mut);font-size:22px" aria-hidden="true">›</span></button>`).join('')}`;
+  const l = mevesVigents();
+  if (!l.length) return '';
+  return `<div class="sec">Les meves inscripcions</div>${l.map(i => `<button class="card act" data-ins="${esc(i.c)}.${esc(i.s)}" style="margin-bottom:10px"><div style="min-width:0"><div class="n">${esc(i.actNom)}</div><div class="s">${esc(i.q)}</div><div style="margin-top:6px">${tagIns(i.estat)}</div></div><span style="margin-left:auto;color:var(--mut);font-size:22px" aria-hidden="true">›</span></button>`).join('')}`;
 }
 
 /* --- Enllaços que arriben per correu, des de SumUp o des d'un QR escanejat amb la càmera --- */
