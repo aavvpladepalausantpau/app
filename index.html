@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ca">
-<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-16b (despeses i ingressos reals: formulari complet, motor 1.8 + Despeses.gs 1.0, Comptes 2.0) -->
+<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-17 (despeses: enllaç de WhatsApp a «tresorer» als errors; parteix de la 2026-11-16b) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -639,6 +639,12 @@ function vAgenda(id){
 // Formulari complet, el mateix des de la fitxa de l'activitat (amb l'activitat ja triada), des del carnet i des de la Junta.
 // El nom, el número de soci i el correu surten de la sessió: el motor no fa cas del que envia l'app.
 const MV_CFG_MIN = 10;
+// La paraula «tresorer» dels missatges d'error obre un WhatsApp amb el tresorer, amb l'error ja escrit
+const WHATSAPP_TRESORER = '34699304442';
+function ambWhatsapp(t){
+  const txt = 'Hola, tinc un problema en apuntar una despesa a l’app: ' + t;
+  return esc(t).replace(/tresorer/, `<a href="https://wa.me/${WHATSAPP_TRESORER}?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;font-weight:600">tresorer</a>`);
+}
 const MSG_MV = {FORA_TERMINI:'Aquesta activitat ja no admet despeses: fa més de 30 dies que va acabar. Parla amb la junta.', COMPTES:'Ara mateix no es pot desar als comptes. Torna-ho a provar d’aquí a una estona i, si continua, avisa la junta.'};
 function carregaMvCfg(forca){
   if (S.mvCarr) return;
@@ -666,7 +672,7 @@ function vMov(id){
   if (!esSoci()) return `<p class="muted" style="margin-top:20px">Per apuntar despeses cal entrar amb el teu DNI de soci.</p>`;
   carregaMvCfg();
   const c = S.mvCfg;
-  if (!c) return `<h2>Apuntar una despesa o un ingrés</h2>${S.mvCfgErr ? `<p style="margin-top:14px">${esc(S.mvCfgErr)}</p><button class="btn ghost full" style="margin-top:14px" data-a="mvRetry">Tornar-ho a provar</button>` : '<p class="muted" style="margin-top:14px">Carregant…</p>'}`;
+  if (!c) return `<h2>Apuntar una despesa o un ingrés</h2>${S.mvCfgErr ? `<p style="margin-top:14px">${ambWhatsapp(S.mvCfgErr)}</p><button class="btn ghost full" style="margin-top:14px" data-a="mvRetry">Tornar-ho a provar</button>` : '<p class="muted" style="margin-top:14px">Carregant…</p>'}`;
   const clau = id || '';
   if (!S.mv || S.mv.clau !== clau) mvNou(clau);
   const M = S.mv, v = M.v, des = M.tipus === 'Despesa';
@@ -707,7 +713,7 @@ function vMov(id){
   <p class="muted" style="font-size:13px;margin-top:6px">Fotos o PDF, fins a ${c.maxFitxers} fitxers. Que el tiquet es vegi sencer, pla i amb bona llum.</p>
   ${fitxers ? `<div class="card" style="margin-top:8px">${fitxers}</div>` : ''}<div class="err" id="e-mv-fitxers"></div>
   <label class="f">Observacions<input type="text" id="mv-notes" data-mv="notes" maxlength="300" value="${esc(v.notes)}"></label>
-  <div class="err" id="e-mv" style="margin-top:14px">${esc(M.err)}</div>
+  <div class="err" id="e-mv" style="margin-top:14px">${ambWhatsapp(M.err)}</div>
   <button class="btn full" style="margin-top:12px" data-a="mvEnvia"${M.env ? ' disabled' : ''}>${M.env ? 'Enviant… pot trigar uns segons' : (des ? 'Enviar la despesa' : 'Enviar l’ingrés')}</button>`;
 }
 // Foto reduïda a 1800 px (JPEG) com fa el formulari web dels Comptes; els PDF van tal qual.
