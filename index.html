@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ca">
-<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-17b (menú de la junta reordenat en 8 caselles; últims socis reals; parteix de la 2026-11-17) -->
+<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-17d (menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -527,7 +527,7 @@ function filaPend(e){
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px"><button class="btn sm ghost" ${dades} data-estat="Descartat">Descartar</button><button class="btn sm" ${dades} data-estat="Publicat">Publicar</button></div></div>`;
 }
 function vPendents(){
-  let h = `<h2>Gestió de reunions</h2><p class="muted" style="margin-top:4px">El que poseu al calendari de Google no surt a l’app fins que algú de la junta ho publica. Els esdeveniments marcats com a privats no apareixen aquí.</p>`;
+  let h = `<h2>Reunions</h2><p class="muted" style="margin-top:4px">El que poseu al calendari de Google no surt a l’app fins que algú de la junta ho publica. Els esdeveniments marcats com a privats no apareixen aquí.</p>`;
   if (S.pendErr) return h + `<div class="card" style="margin-top:14px"><p class="muted">${esc(msgJ({codi:S.pendErr}))}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaJ">Tornar-ho a provar</button></div>`;
   if (!S.pend){ carregaPendents(); return h + '<div class="card" style="margin-top:14px"><p class="muted">Llegint el calendari…</p></div>'; }
   const P = S.pend.pendents, D = S.pend.decidits;
@@ -991,16 +991,16 @@ function vJunta(){
   const np = S.ag ? S.ag.pendents : 0;
   return `<h1 style="margin:6px 0 14px">Junta</h1><div class="tiles">
   <button class="tile" data-s="avisosJ"><span class="ic">📢</span><b>Avisos</b></button>
-  <button class="tile" data-s="pendents"><span class="ic">📅</span><span><b>Gestió de reunions</b>${np ? `<span class="tag o" style="display:block;width:max-content;margin-top:4px">${np} per revisar</span>` : ''}</span></button>
-  <button class="tile" data-s="gestioAct"><span class="ic">🗂️</span><b>Gestió d’activitats</b></button>
-  <button class="tile" data-s="inscrits"><span class="ic">📋</span><b>Gestionar arribades</b></button>
+  <button class="tile" data-s="pendents"><span class="ic">📅</span><span><b>Reunions</b>${np ? `<span class="tag o" style="display:block;width:max-content;margin-top:4px">${np} per revisar</span>` : ''}</span></button>
+  <button class="tile" data-s="gestioAct"><span class="ic">🗂️</span><b>Activitats</b></button>
   <button class="tile" data-s="socis"><span class="ic">👥</span><b>Últims socis</b></button>
   <button class="tile" data-s="despesa"><span class="ic">📷</span><b>Apuntar despesa o ingrés</b></button>
-  <button class="tile" data-a="nova"><span class="ic">➕</span><b>Nova activitat</b></button>
   <button class="tile" data-s="informes"><span class="ic">📄</span><b>Informes</b></button></div>`;
 }
 function vGestioAct(){
-  return `<h2>Gestió d’activitats</h2><p class="muted" style="margin-top:4px">Totes les activitats programades, també els esborranys. Toca’n una per editar-la, veure’n els inscrits o apuntar-ne despeses.</p><div style="margin-top:12px">${blocActs(acts(), 'detj')}</div>
+  return `<h2>Activitats de la junta</h2><p class="muted" style="margin-top:4px">Totes les activitats programades, també els esborranys. Toca’n una per editar-la, veure’n els inscrits o apuntar-ne despeses.</p>
+  <div class="tiles" style="margin-top:14px"><button class="tile" data-a="nova"><span class="ic">➕</span><b>Nova activitat</b></button><button class="tile" data-s="inscrits"><span class="ic">📋</span><b>Gestionar arribades</b></button></div>
+  <div class="sec">Activitats programades</div><div>${blocActs(acts(), 'detj')}</div>
   <button class="btn ghost full" style="margin-top:4px" data-a="refrescaAct">Tornar a llegir les activitats ara</button><p class="muted" style="font-size:13px;margin-top:6px">L’app llegeix el full d’activitats cada 5 minuts. Si acabes de canviar-hi alguna cosa i encara no surt, prem aquest botó.</p>`;
 }
 function vInscrits(){
@@ -1577,7 +1577,7 @@ function obreAssistent(){
   S.wz = wzNou(); S.wzEsborrany = null;
   try { const e = JSON.parse(localStorage.getItem('avv-wz') || 'null'); if (e && e.d && (e.d.nom || e.d.data)) S.wzEsborrany = e; } catch(e){}
   carregaCats();
-  sub({v:'nova', up:null});
+  sub({v:'nova', up: S.sub && S.sub.v === 'gestioAct' ? {v:'gestioAct'} : null});
 }
 function carregaCats(){
   motor('juntaCategories', {token:token()}).then(r => { if (r.ok){ S.cats = r.categories; if (S.sub && S.sub.v === 'nova' && S.wz && S.wz.pas === 1){ wzLlegeix(); render(); } } });
@@ -1640,7 +1640,7 @@ document.addEventListener('click', e => {
   if (d.det){ S.q = 1; sub({v:'detall', id:d.det}); return; }
   if (d.detj){ S.q = 1; sub({v:'detall', id:d.detj, up:{v:'gestioAct'}}); return; }
   if (d.ins){ const [c, s2] = d.ins.split('.'); S.insV = {}; S.insErr = ''; S.anullaQ = null; sub({v:'ins', c, s:s2, up:S.sub}); return; }
-  if (d.arr){ obreArribades(d.arr, {v:'inscrits'}); return; }
+  if (d.arr){ obreArribades(d.arr, {v:'inscrits', up:S.sub && S.sub.up}); return; }
   if (d.sa === 'arribades'){ obreArribades(S.sub.id, S.sub); return; }
   if (S.wz && S.sub && S.sub.v === 'nova') wzLlegeix();
   if (d.f){ S.filtre = d.f; render(); return; }
@@ -1650,7 +1650,7 @@ document.addEventListener('click', e => {
     if (d.s === 'avisosJ'){ S.avJ = null; S.avJErr = null; S.avEsb = null; }
     if (d.s === 'pendents'){ S.pend = null; S.pendErr = null; }
     if (d.s === 'socis'){ S.soJ = null; S.soJErr = null; }
-    sub({v:d.s}); return; }
+    sub({v:d.s, up: S.sub && S.sub.v === 'gestioAct' ? {v:'gestioAct'} : null}); return; }
   if (d.un){ S.avU = d.un; document.querySelectorAll('#vu button').forEach(x => x.classList.toggle('on', x.dataset.un === d.un)); actCad(); return; }
   if (d.sa){ const id = S.sub.id; if (d.sa === 'despAct' && !esSoci()){ S.after = {v:'despAct', id, up:{v:'detall', id}}; S.idPas = false; S.idDni = ''; sub({v:'ident', up:{v:'detall', id}}); return; } sub({v:d.sa, id, up:{v:'detall', id}}); return; }
   if (d.pag){ S.alta.pag = d.pag; keepAlta(); render(); restoreAlta(); return; }
