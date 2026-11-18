@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ca">
-<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-17d (menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
+<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-17e (informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -1027,8 +1027,55 @@ function vSocis(){
   return h + `<div class="card" style="margin-top:14px">${S.soJ.map(x => { const [y, m, d] = String(x.data).split('-').map(Number);
     return `<div class="row" style="gap:12px"><div style="min-width:0"><b>${esc(x.nom)}</b><p class="muted" style="font-size:13px">Soci núm. ${esc(x.num)}</p></div><span style="white-space:nowrap;text-align:right">${y ? `${d}/${String(m).padStart(2,'0')}/${y}` : ''}</span></div>`; }).join('')}</div>`;
 }
+// ===== Informes en PDF (Junta › Informes). El motor els genera i l'app els baixa al mòbil =====
+function carregaInfOp(){
+  if (S.infCarr) return;
+  S.infCarr = true;
+  motor('juntaInformesOpcions', {token:token()}).then(r => {
+    S.infCarr = false;
+    if (r.ok) S.infOp = r; else S.infErr = r.codi || 'SERVEI';
+    if (S.sub && S.sub.v === 'informes') render();
+  });
+}
+function selInf(id, opcions, buit){
+  const v = (S.infSel || {})[id] || '';
+  return `<select id="${id}" style="margin-top:10px"><option value="">${esc(buit)}</option>${opcions.map(([k, t]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
+}
+function blocInf(titol, desc, cos, tipus){
+  return `<div class="card" style="margin-bottom:10px"><b>${titol}</b><p class="muted" style="font-size:14px;margin-top:2px">${desc}</p>${cos}<button class="btn ghost full sm" style="margin-top:10px" data-a="informe" data-t="${tipus}">Descarregar el PDF</button></div>`;
+}
 function vInformes(){
-  return `<h2>Informes</h2><div class="card" style="margin-top:12px">${['Comptes d’una activitat','Comptes de tot l’any','Llistat de socis','Inscrits d’una activitat'].map(t => `<div class="row"><span>${t}</span><button class="chip" data-a="pdf">PDF</button></div>`).join('')}</div>`;
+  let h = `<h2>Informes</h2><p class="muted" style="margin-top:4px">Es baixen en PDF al mòbil. No es desen enlloc més.</p>`;
+  if (S.infPdf) h += `<div class="card" style="margin-top:14px;background:var(--pri-soft);border-color:var(--pri);color:var(--pri-soft-ink)"><b>Informe preparat</b><p style="font-size:14px;margin-top:2px;overflow-wrap:anywhere">${esc(S.infPdf.nom)}</p><button class="btn full sm" style="margin-top:10px" data-a="desaPdf">Desar o obrir el PDF</button></div>`;
+  if (S.infErr) return h + `<div class="card" style="margin-top:14px"><p class="muted">${esc(msgJ({codi:S.infErr}))}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaJ">Tornar-ho a provar</button></div>`;
+  if (!S.infOp){ carregaInfOp(); return h + '<div class="card" style="margin-top:14px"><p class="muted">Carregant…</p></div>'; }
+  const O = S.infOp, C = O.comptes;
+  const senseComptes = '<p class="muted" style="font-size:14px;margin-top:8px">Ara mateix no es pot connectar amb el full de Comptes. Torna-ho a provar d’aquí a una estona.</p>';
+  h += '<div style="margin-top:14px">';
+  h += C ? blocInf('Comptes d’una activitat', 'Ingressos, despeses i resultat, amb el detall de cada moviment.',
+      selInf('inf-ca', C.acts.map(a => [a.codi, a.nom + (a.any ? ' (' + a.any + ')' : '')]), 'Tria l’activitat'), 'compAct')
+    : `<div class="card" style="margin-bottom:10px"><b>Comptes d’una activitat</b>${senseComptes}</div>`;
+  h += C ? blocInf('Comptes de tot l’any', 'Resultat de cada activitat i totals per categoria.',
+      selInf('inf-cy', C.anys.map(a => [a, a]), 'Tria l’any'), 'compAny')
+    : `<div class="card" style="margin-bottom:10px"><b>Comptes de tot l’any</b>${senseComptes}</div>`;
+  h += blocInf('Llistat de socis', `Número, nom i estat de la quota dels socis de ${O.any}. Conté dades personals: no el reenviïs.`, '', 'socis');
+  h += blocInf('Inscrits d’una activitat', 'Confirmades, pendents de pagament i llista d’espera, amb una casella per passar llista.',
+    O.ins.length ? selInf('inf-ia', O.ins.map(a => [a.codi, a.nom + (a.quan ? ' · ' + a.quan : '')]), 'Tria l’activitat') : '<p class="muted" style="font-size:14px;margin-top:8px">Cap activitat amb inscripcions.</p>', 'inscrits');
+  return h + '</div>';
+}
+// Desa el PDF: al mòbil amb el menú de compartir (iPhone) o com a descàrrega (Android i ordinador)
+function desaPdf(){
+  const P = S.infPdf; if (!P) return;
+  const bin = atob(P.b64), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  const blob = new Blob([u8], {type:'application/pdf'});
+  try {
+    const f = new File([blob], P.nom, {type:'application/pdf'});
+    if (esIOS() && navigator.canShare && navigator.canShare({files:[f]})){ navigator.share({files:[f], title:P.nom}).catch(() => {}); return; }
+  } catch(e){}
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = P.nom;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 /* ===== Activitats: inscripcions, QR, arribades i creador (passos 2, 3 i 4) ===== */
@@ -1650,6 +1697,7 @@ document.addEventListener('click', e => {
     if (d.s === 'avisosJ'){ S.avJ = null; S.avJErr = null; S.avEsb = null; }
     if (d.s === 'pendents'){ S.pend = null; S.pendErr = null; }
     if (d.s === 'socis'){ S.soJ = null; S.soJErr = null; }
+    if (d.s === 'informes'){ S.infOp = null; S.infErr = null; S.infPdf = null; }
     sub({v:d.s, up: S.sub && S.sub.v === 'gestioAct' ? {v:'gestioAct'} : null}); return; }
   if (d.un){ S.avU = d.un; document.querySelectorAll('#vu button').forEach(x => x.classList.toggle('on', x.dataset.un === d.un)); actCad(); return; }
   if (d.sa){ const id = S.sub.id; if (d.sa === 'despAct' && !esSoci()){ S.after = {v:'despAct', id, up:{v:'detall', id}}; S.idPas = false; S.idDni = ''; sub({v:'ident', up:{v:'detall', id}}); return; } sub({v:d.sa, id, up:{v:'detall', id}}); return; }
@@ -1772,7 +1820,20 @@ document.addEventListener('click', e => {
     case 'privOk': marcaPriv(); if (token()) motor('privacitatVista', {token:token()}); window.scrollTo(0,0); render(); break;
     case 'privAlta': keepAlta(); S.privAlta = !S.privAlta; render(); restoreAlta(); break;
     case 'remesa': toast('Remesa de 12 rebuts preparada'); break;
-    case 'pdf': toast('Informe preparat'); break;
+    case 'informe': {
+      const t = d.t, p = {token:token(), tipus:t};
+      const tria = {compAct:['inf-ca','codi','Tria primer l’activitat'], compAny:['inf-cy','any','Tria primer l’any'], inscrits:['inf-ia','codi','Tria primer l’activitat']}[t];
+      if (tria){ p[tria[1]] = val(tria[0]); if (!p[tria[1]]){ toast(tria[2]); break; } }
+      const txt = b.textContent; b.disabled = true; b.textContent = 'Preparant el PDF…';
+      motor('juntaInforme', p).then(r => {
+        b.disabled = false; b.textContent = txt;
+        if (!r.ok){ toast(r.msg || msgJ(r)); return; }
+        S.infPdf = {nom:r.nom, b64:r.b64};
+        if (!esIOS()) desaPdf();
+        if (S.sub && S.sub.v === 'informes'){ render(); window.scrollTo(0, 0); }
+      });
+      break; }
+    case 'desaPdf': desaPdf(); break;
     case 'nova': obreAssistent(); break;
     // Inscripcions
     case 'fq': { const a = act(S.sub.id), F = S.fi; if (!a || !F) break; const tot = F.q.reduce((x, y) => x + y, 0); if (+d.d > 0 && tot >= a.max) break; F.q[+d.i] = Math.max(0, F.q[+d.i] + +d.d); render(); break; }
@@ -1905,7 +1966,7 @@ document.addEventListener('click', e => {
     case 'refrescaCal': S.pend = null; S.pendErr = null; S.pendRef = true; render(); break;
     case 'reintentaIns': S.insErr = ''; render(); break;
     case 'reintentaArr': S.arrErr = ''; render(); break;
-    case 'reintentaJ': S.avJErr = null; S.pendErr = null; S.soJErr = null; render(); break;
+    case 'reintentaJ': S.avJErr = null; S.pendErr = null; S.soJErr = null; S.infErr = null; render(); break;
     case 'nouAvis': S.avEd = null; S.avU = 'setmanes'; sub({v:'avisForm', up:{v:'avisosJ'}}); break;
     case 'editaAvis': { const a = (S.avJ || []).find(x => x.id === d.id); if (!a) break; S.avEd = Object.assign({}, a); S.avU = a.u; sub({v:'avisForm', up:{v:'avisosJ'}}); break; }
     case 'desaAvis': {
@@ -1949,7 +2010,7 @@ recupera();
 // Avisos i agenda: es mostra al moment l'última còpia d'aquest mòbil i s'actualitza en segon pla
 function oblidaAgenda(){ S.ag = null; try { localStorage.removeItem('avv-agenda'); } catch(e){} S.agCarr = false; carregaAgenda(); }
 try { const c = JSON.parse(localStorage.getItem('avv-agenda') || 'null'); if (c && c.ok && (token() || c.nivell === 'convidat')) S.ag = c; } catch(e){}
-document.addEventListener('change', e => { if (e.target.id === 'vn') actCad(); });
+document.addEventListener('change', e => { if (e.target.id === 'vn') actCad(); if (/^inf-/.test(e.target.id)){ S.infSel = S.infSel || {}; S.infSel[e.target.id] = e.target.value; } });
 document.addEventListener('change', e => {
   const t = e.target, ds = t.dataset || {};
   if (t.id === 'wfoto' && t.files && t.files[0]){ pujaFoto(t.files[0]); return; }
