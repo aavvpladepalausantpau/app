@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ca">
-<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-17e (informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
+<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-18 (pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -103,7 +103,16 @@ textarea.fi{width:100%;margin-top:6px;padding:12px;border-radius:10px;border:1px
 .opc{font-weight:400;color:var(--mut)}
 .spin{width:40px;height:40px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--pri);margin:30px auto 16px;animation:gira 1s linear infinite}
 @keyframes gira{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.toast{transition:none}.spin{animation-duration:3s}}
+.splash{position:fixed;inset:0;z-index:50;background:#0B4639 center/cover no-repeat;display:flex;flex-direction:column;justify-content:flex-end;color:#fff;cursor:pointer;transition:opacity .45s}
+.splash::before{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.05) 40%,rgba(0,0,0,.72))}
+.splash.fora{opacity:0;pointer-events:none}
+.sp-in{position:relative;max-width:440px;width:100%;margin:0 auto;padding:24px 24px calc(28px + env(safe-area-inset-bottom,0px))}
+.sp-in img{width:52px;height:52px;border-radius:14px;background:#fff;padding:4px}
+.sp-t{font-family:"Bricolage Grotesque",Figtree,sans-serif;font-weight:700;font-size:34px;line-height:1.05;margin-top:14px;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.sp-m{font-size:17px;margin-top:8px;opacity:.95;min-height:26px}
+.sp-b{height:4px;border-radius:99px;background:rgba(255,255,255,.3);margin-top:16px;overflow:hidden}.sp-b i{display:block;height:100%;width:0;background:#fff;border-radius:99px;transition:width 3s linear}
+.sp-c{position:absolute;right:14px;top:calc(12px + env(safe-area-inset-top,0px));font-size:12px;opacity:.85;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+@media (prefers-reduced-motion:reduce){.splash,.sp-b i{transition:none}.toast{transition:none}.spin{animation-duration:3s}}
 input[type=date],input[type=time],textarea{width:100%;margin-top:6px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--ink);font:16px Figtree,sans-serif}textarea{resize:vertical}input[readonly],select:disabled{opacity:.65}
 .g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
 .qty{display:flex;align-items:center;gap:12px;flex:none}.qty button{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--pri);background:var(--surf);color:var(--pri);font:600 20px Figtree,sans-serif;cursor:pointer}.qty button:disabled{opacity:.35;cursor:default}.qty b{min-width:20px;text-align:center;font-size:18px}
@@ -129,6 +138,7 @@ input[type=date],input[type=time],textarea{width:100%;margin-top:6px;padding:12p
 </div>
 <nav><div class="in" id="nav"></div></nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="splash" id="splash" hidden aria-hidden="true"></div>
 <script>
 const QUOTA = 12;
 // ===== Textos de l'app que es poden canviar sense tocar la resta del codi =====
@@ -2059,6 +2069,43 @@ try { S.pins = JSON.parse(localStorage.getItem('avv-pins') || '{}') || {}; } cat
 try { const mv = JSON.parse(localStorage.getItem('avv-meves') || 'null'); if (Array.isArray(mv)) S.meves = mv; } catch(e){}
 rutaHash();
 carregaMeves();
+/* ===== Pantalla de benvinguda: una foto del barri un cop al dia, mentre es carreguen avisos i activitats ===== */
+// Per afegir fotos: posa-les a la carpeta fotos/ (vertical, uns 900 px d'amplada) i afegeix-ne el nom aquí.
+const FOTOS = ['xemeneia-escales.jpg', 'xemeneia-arbres.jpg', 'xemeneia-nit.jpg'];
+const FOTO_AUTOR = 'Toni Xifra';
+// Enquadrament de cada foto en pantalles estretes (on cal que quedi el motiu principal). Per defecte, al centre.
+const FOTO_POS = {'xemeneia-nit.jpg':'12% center'};
+const SPLASH_MIN = 1500, SPLASH_MAX = 3000;
+const SPLASH_MSG = ['Despertant els veïns…', 'Regant els testos dels balcons…', 'Comptant les rajoles del Pla de Palau…',
+  'Pujant les escales de la xemeneia…', 'Avisant la veïna del tercer…', 'Escalfant la plaça…', 'Fent petar la xerrada al replà…'];
+(function splash(){
+  const avui = new Date().toLocaleDateString('sv');   // AAAA-MM-DD
+  let d = {}; try { d = JSON.parse(localStorage.getItem('avv-splash') || '{}'); } catch(e){ return; }
+  // No surt si ja s'ha vist avui, ni si s'entra per un enllaç que porta directament a una pantalla (QR, pagament, arribades)
+  if (d.dia === avui || /^#(ins|v|act|arr|pagat|pagar)\./.test(location.hash) || /[?&]alta=/.test(location.search) || S.sub) return;
+  const foto = FOTOS.includes(d.seg) ? d.seg : FOTOS[Math.floor(Math.random() * FOTOS.length)];
+  const altres = FOTOS.filter(f => f !== foto), seg = altres.length ? altres[Math.floor(Math.random() * altres.length)] : foto;
+  try { localStorage.setItem('avv-splash', JSON.stringify({dia:avui, seg})); } catch(e){}
+  const el = $('#splash'), t0 = Date.now();
+  el.innerHTML = `<div class="sp-c">Foto: ${esc(FOTO_AUTOR)}</div><div class="sp-in"><img src="logo-simbol.png" alt=""><div class="sp-t">Benvinguts al barri!</div><div class="sp-m">${SPLASH_MSG[Math.floor(Math.random() * SPLASH_MSG.length)]}</div><div class="sp-b"><i></i></div></div>`;
+  const img = new Image();
+  img.onload = () => { el.style.backgroundPosition = FOTO_POS[foto] || 'center'; el.style.backgroundImage = `url(fotos/${foto})`; };
+  img.src = 'fotos/' + foto;
+  el.hidden = false;
+  requestAnimationFrame(() => requestAnimationFrame(() => { const b = el.querySelector('.sp-b i'); if (b) b.style.width = '100%'; }));
+  let fet = false;
+  const tanca = () => {
+    if (fet) return; fet = true; clearInterval(iv);
+    el.classList.add('fora'); setTimeout(() => { el.hidden = true; el.innerHTML = ''; }, 500);
+    fetch('fotos/' + seg).catch(() => {});   // la foto de demà ja queda guardada al mòbil
+  };
+  const iv = setInterval(() => {
+    const t = Date.now() - t0;
+    const carregat = (S.ag || S.agErr) && (S.acts || S.actErr);
+    if ((t >= SPLASH_MIN && carregat) || t >= SPLASH_MAX) tanca();
+  }, 100);
+  el.addEventListener('click', tanca);
+})();
 render();
 </script>
 </body>

@@ -1,5 +1,5 @@
 // Service worker mínim: permet instal·lar l'app i guarda només la carcassa (no les dades).
-const CACHE = "avsantpau-v3";
+const CACHE = "avsantpau-v4";
 const FITXERS = ["/", "/index.html", "/manifest.webmanifest", "/icona-192.png", "/icona-512.png", "/apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
@@ -11,6 +11,11 @@ self.addEventListener("activate", e => {
 // Primer xarxa; si no n'hi ha, la còpia guardada. Només per a fitxers del mateix domini.
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET" || new URL(e.request.url).origin !== location.origin) return;
+  // Fotos de la pantalla de benvinguda: primer la còpia del mòbil (surten a l'instant); si no hi és, de la xarxa
+  if (new URL(e.request.url).pathname.indexOf("/fotos/") === 0) {
+    e.respondWith(caches.match(e.request).then(m => m || fetch(e.request).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put(e.request, c)); return r; })));
+    return;
+  }
   e.respondWith(
     fetch(e.request).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put(e.request, c)); return r; })
       .catch(() => caches.match(e.request, { ignoreSearch: true }))
