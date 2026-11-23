@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ca">
-<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-23 (cursos, fase 1: casella Cursos al menú de la junta amb l’alta i l’edició de cursos i professors; factures dels professors des d’Apuntar despesa o ingrés; abans, 2026-11-18b: correcció: la capa de benvinguda amagada tapava l'app; pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
+<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-23b (cursos importats del full de cursos: «Professor/a pendent» i botó per omplir-lo; abans, 2026-11-23: cursos, fase 1: casella Cursos al menú de la junta amb l’alta i l’edició de cursos i professors; factures dels professors des d’Apuntar despesa o ingrés; abans, 2026-11-18b: correcció: la capa de benvinguda amagada tapava l'app; pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -1072,9 +1072,9 @@ function vCursosJ(){
   return h + anys.map(a => `<div class="sec">Curs ${esc(a)}</div><div class="card">${l.filter(c => c.curs === a).map(c => {
     const tel = String(c.telefon || '').replace(/[^\d+]/g, '');
     return `<div class="row" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><b>${esc(c.tipus)}</b>${c.estat === 'Tancada' ? '<span class="tag g" style="flex:none">Tancat</span>' : ''}</div>
-    <p style="margin-top:2px">${esc(c.professor)}</p>
+    <p style="margin-top:2px">${c.professor ? esc(c.professor) : '<span style="color:var(--warn,#9a6700)">Professor/a pendent</span>'}</p>
     <p class="muted" style="font-size:14px;margin-top:2px">${tel ? `<a href="tel:${esc(tel)}" style="color:inherit">${esc(c.telefon)}</a>` : ''}${c.correu ? ' · ' + esc(c.correu) : ''}</p>
-    <div class="mini"><button class="link" data-a="editaCurs" data-id="${esc(c.codi)}">Edita</button></div></div>`; }).join('')}</div>`).join('');
+    <div class="mini"><button class="link" data-a="editaCurs" data-id="${esc(c.codi)}">${c.professor ? 'Edita' : 'Omple el professor/a'}</button></div></div>`; }).join('')}</div>`).join('');
 }
 function vCursForm(){
   const c = S.crEd || {}, nou = !c.codi, C = S.crJ || {};
