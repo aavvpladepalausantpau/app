@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ca">
-<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-23b (cursos importats del full de cursos: «Professor/a pendent» i botó per omplir-lo; abans, 2026-11-23: cursos, fase 1: casella Cursos al menú de la junta amb l’alta i l’edició de cursos i professors; factures dels professors des d’Apuntar despesa o ingrés; abans, 2026-11-18b: correcció: la capa de benvinguda amagada tapava l'app; pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
+<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-23c (Junta › Cursos › Pagaments i reserves, només lectura; 2026-11-23b: «Professor/a pendent» i botó per omplir-lo; abans, 2026-11-23: cursos, fase 1: casella Cursos al menú de la junta amb l’alta i l’edició de cursos i professors; factures dels professors des d’Apuntar despesa o ingrés; abans, 2026-11-18b: correcció: la capa de benvinguda amagada tapava l'app; pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -1063,7 +1063,8 @@ function carregaCursosJ(){
 }
 function vCursosJ(){
   let h = `<h2>Cursos</h2><p class="muted" style="margin-top:4px">Un curs per cada tipus i professor/a (per exemple, Ioga amb la mateixa professora encara que tingui tres grups). Les seves factures s’apunten a «Apuntar despesa o ingrés».</p>
-  <button class="btn full" style="margin-top:14px" data-a="nouCurs">Afegir un curs i el seu professor/a</button>`;
+  <button class="btn full" style="margin-top:14px" data-a="pagCursos">Pagaments i reserves</button>
+  <button class="btn ghost full" style="margin-top:10px" data-a="nouCurs">Afegir un curs i el seu professor/a</button>`;
   if (S.crJErr) return h + `<div class="card" style="margin-top:14px"><p class="muted">${esc(S.crJErr)}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaJ">Tornar-ho a provar</button></div>`;
   if (!S.crJ){ carregaCursosJ(); return h + '<div class="card" style="margin-top:14px"><p class="muted">Carregant…</p></div>'; }
   const l = S.crJ.cursos;
@@ -1072,7 +1073,7 @@ function vCursosJ(){
   return h + anys.map(a => `<div class="sec">Curs ${esc(a)}</div><div class="card">${l.filter(c => c.curs === a).map(c => {
     const tel = String(c.telefon || '').replace(/[^\d+]/g, '');
     return `<div class="row" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><b>${esc(c.tipus)}</b>${c.estat === 'Tancada' ? '<span class="tag g" style="flex:none">Tancat</span>' : ''}</div>
-    <p style="margin-top:2px">${c.professor ? esc(c.professor) : '<span style="color:var(--warn,#9a6700)">Professor/a pendent</span>'}</p>
+    <p style="margin-top:2px">${c.professor ? esc(c.professor) : '<span style="color:var(--ocre-ink)">Professor/a pendent</span>'}</p>
     <p class="muted" style="font-size:14px;margin-top:2px">${tel ? `<a href="tel:${esc(tel)}" style="color:inherit">${esc(c.telefon)}</a>` : ''}${c.correu ? ' · ' + esc(c.correu) : ''}</p>
     <div class="mini"><button class="link" data-a="editaCurs" data-id="${esc(c.codi)}">${c.professor ? 'Edita' : 'Omple el professor/a'}</button></div></div>`; }).join('')}</div>`).join('');
 }
@@ -1089,6 +1090,42 @@ function vCursForm(){
   ${nou ? `<div class="sec" style="margin:16px 0 0;color:var(--ink)">Curs escolar *</div><div class="seg" style="margin-top:6px">${cursos.map(a => `<button class="${a === cur ? 'on' : ''}" data-crc="${esc(a)}">${esc(a)}</button>`).join('')}</div>`
     : `<div class="card" style="margin-top:16px"><div class="row"><span>Curs escolar</span><b>${esc(c.curs)}</b></div></div><p class="muted" style="font-size:13px;margin-top:4px">El curs escolar no es pot canviar: decideix la carpeta de les factures. Si el nom o el professor/a canvien, la carpeta es reanomena sola.</p>`}
   <button class="btn full" style="margin-top:20px" data-a="desaCurs">${nou ? 'Afegir el curs' : 'Desar els canvis'}</button>`;
+}
+/* ===== Junta › Cursos › Pagaments i reserves (només lectura) =====
+   Llegeix del full de cursos la pestanya Grups i les columnes «Situació» i «Pagat (€)» de cada grup. */
+function carregaPagC(){
+  if (S.pgCarr) return;
+  S.pgCarr = true;
+  motor('juntaPagamentsCursos', {token:token()}).then(r => {
+    S.pgCarr = false;
+    if (r.ok) S.pgC = r; else S.pgCErr = r.msg || MSG_MV[r.codi] || msgJ(r);
+    if (S.sub && S.sub.v === 'cursPag') render();
+  });
+}
+function telLinks(t){
+  if (!t) return '';
+  return ` · <a href="tel:${esc(t)}" style="color:inherit">${esc(t)}</a>${/^[67]/.test(t) ? ` · <a href="https://wa.me/34${esc(t)}" target="_blank" rel="noopener" style="color:var(--pri)">WhatsApp</a>` : ''}`;
+}
+function vCursPag(){
+  let h = `<h2>Pagaments i reserves</h2><p class="muted" style="margin-top:4px">Dades del full de cursos. Per canviar-les, edita les columnes «Situació» i «Pagat (€)» de cada pestanya del full.</p>`;
+  if (S.pgCErr) return h + `<div class="card" style="margin-top:14px"><p class="muted">${esc(S.pgCErr)}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaJ">Tornar-ho a provar</button></div>`;
+  if (!S.pgC){ carregaPagC(); return h + '<div class="card" style="margin-top:14px"><p class="muted">Llegint el full de cursos… pot trigar uns segons</p></div>'; }
+  if (!S.pgC.preparat) return h + '<div class="card" style="margin-top:14px"><p class="muted">Encara no s’ha preparat el full de cursos: hi falten la pestanya «Grups» i les columnes «Situació» i «Pagat (€)».</p></div>';
+  let tPend = 0, tLliu = 0;
+  const cos = S.pgC.cursos.map(c => `<div class="sec">${esc(c.curs)}</div>` + c.grups.map(g => {
+    if (g.error) return `<div class="card" style="margin-top:8px"><b>${esc(g.grup)}</b><p class="muted" style="margin-top:4px">${esc(g.error)}</p></div>`;
+    const np = g.placa.filter(x => !x.pagat), pag = g.placa.length - np.length, lliu = Math.max(0, g.places - g.placa.length);
+    tPend += np.length; tLliu += lliu;
+    const ok = !np.length && !lliu;
+    const res = lliu ? g.reserves.slice(0, lliu) : [];
+    return `<details class="card" style="margin-top:8px"${ok ? '' : ' open'}><summary style="cursor:pointer;list-style:none">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><b>${esc(g.grup)}</b>${ok ? '<span class="tag" style="flex:none">Tot en ordre</span>' : `<span class="tag o" style="flex:none">${np.length ? np.length + ' sense pagar' : ''}${np.length && lliu ? ' · ' : ''}${lliu ? lliu + ' lliure' + (lliu > 1 ? 's' : '') : ''}</span>`}</div>
+      <p class="muted" style="font-size:14px;margin-top:4px">${g.places} places · ${g.placa.length} amb plaça · ${pag} pagats · ${g.reserves.length} reserves</p></summary>
+      ${np.length ? `<p style="margin-top:10px;font-weight:600">Amb plaça i sense pagar</p>${np.map(x => `<p style="font-size:14px;margin-top:4px">${esc(x.nom)}${x.apagar ? ' · ' + eur(x.apagar) : ''}${telLinks(x.tel)}</p>`).join('')}` : ''}
+      ${lliu ? `<p style="margin-top:10px;font-weight:600">Reserves per avisar (${lliu} plac${lliu > 1 ? 'es lliures' : 'a lliure'})</p>${res.length ? res.map((x, i) => `<p style="font-size:14px;margin-top:4px">${i + 1}. ${esc(x.nom)}${telLinks(x.tel)}</p>`).join('') : '<p class="muted" style="font-size:14px;margin-top:4px">No queda cap reserva.</p>'}` : ''}
+      ${g.reserves.length > res.length ? `<p class="muted" style="font-size:13px;margin-top:8px">${g.reserves.length - res.length} reserves més en espera.</p>` : ''}</details>`;
+  }).join('')).join('');
+  return h + `<div class="card" style="margin-top:14px"><div class="row"><span>Places sense pagar</span><b>${tPend}</b></div><div class="row"><span>Places lliures</span><b>${tLliu}</b></div></div>` + cos;
 }
 const SOCIS_ULTIMS = 5;
 function carregaSocisJ(){
@@ -1734,7 +1771,7 @@ function render(){
   $('#nav').innerHTML = navHTML();
   const m = $('#main'), s = S.sub;
   if (S.esperaAct) m.innerHTML = `<p class="muted" style="margin-top:24px">${S.actErr ? 'Ara mateix no s’han pogut carregar les activitats. Torna-ho a provar d’aquí a una estona.' : 'Carregant l’activitat…'}</p>`;
-  else if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vMov(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, fesSoci:vFesSoci, altaEstat:vAltaEstat, ident:vIdent, despesa:()=>vMov(''), inscrits:vInscrits, socis:vSocis, cursosJ:vCursosJ, cursForm:vCursForm, gestioAct:vGestioAct, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), escaner:()=>vEscaner(s.id), nova:vNova})[s.v]();
+  else if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vMov(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, fesSoci:vFesSoci, altaEstat:vAltaEstat, ident:vIdent, despesa:()=>vMov(''), inscrits:vInscrits, socis:vSocis, cursosJ:vCursosJ, cursForm:vCursForm, cursPag:vCursPag, gestioAct:vGestioAct, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), escaner:()=>vEscaner(s.id), nova:vNova})[s.v]();
   else m.innerHTML = ({inici:vInici, activitats:vActivitats, cursos:vCursos, soci:vSoci, junta:vJunta})[t]();
   if (s && (s.v === 'ins' || s.v === 'qr')) setTimeout(pintaQR, 0);
   if (s && s.v === 'escaner') setTimeout(() => iniciaCamera(s.id), 0);
@@ -2049,7 +2086,8 @@ document.addEventListener('click', e => {
     case 'refrescaCal': S.pend = null; S.pendErr = null; S.pendRef = true; render(); break;
     case 'reintentaIns': S.insErr = ''; render(); break;
     case 'reintentaArr': S.arrErr = ''; render(); break;
-    case 'reintentaJ': S.avJErr = null; S.pendErr = null; S.soJErr = null; S.infErr = null; S.crJErr = null; render(); break;
+    case 'reintentaJ': S.avJErr = null; S.pendErr = null; S.soJErr = null; S.infErr = null; S.crJErr = null; S.pgCErr = null; render(); break;
+    case 'pagCursos': S.pgC = null; S.pgCErr = null; sub({v:'cursPag', up:{v:'cursosJ'}}); break;
     case 'nouCurs': S.crEd = {curs: S.crJ && S.crJ.cursActual}; sub({v:'cursForm', up:{v:'cursosJ'}}); break;
     case 'editaCurs': { const c = ((S.crJ && S.crJ.cursos) || []).find(x => x.codi === d.id); if (!c) break; S.crEd = Object.assign({}, c); sub({v:'cursForm', up:{v:'cursosJ'}}); break; }
     case 'desaCurs': {
