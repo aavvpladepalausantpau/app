@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ca">
-<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-18b (correcció: la capa de benvinguda amagada tapava l'app; pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
+<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-23 (cursos, fase 1: casella Cursos al menú de la junta amb l’alta i l’edició de cursos i professors; factures dels professors des d’Apuntar despesa o ingrés; abans, 2026-11-18b: correcció: la capa de benvinguda amagada tapava l'app; pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -677,6 +677,29 @@ function mvNou(clau){
 function mvTipus(t){
   const c = S.mvCfg, v = S.mv.v;
   S.mv.tipus = t; v.categoria = ''; v.doc = ''; v.pagat = t === 'Despesa' && c ? c.pagatDes[0] : '';
+  mvActCanvi();
+}
+const mvEsCurs = () => !!(S.mv && /^curs-/.test(S.mv.v.act || ''));
+function mvCatDes(){
+  const c = S.mvCfg;
+  return mvEsCurs() && c.catCurs ? [c.catCurs].concat(c.catDes.filter(x => x !== c.catCurs)) : c.catDes;
+}
+// En triar un curs: categoria «Professors de cursos», document «Factura», pagat amb el compte de l'associació i el
+// nom del professor/a com a proveïdor (només si encara estan buits o tenien el valor per defecte). En tornar a una activitat, es treu la categoria de curs.
+function mvActCanvi(){
+  const c = S.mvCfg, M = S.mv; if (!c || !M) return;
+  const v = M.v, cur = (c.cursos || []).find(x => x.codi === v.act);
+  if (!cur){
+    if (v.categoria && v.categoria === c.catCurs) v.categoria = '';
+    if (M.profAuto && v.proveidor === M.profAuto) v.proveidor = '';   // el nom del professor que hi havia posat l'app
+    M.profAuto = ''; return;
+  }
+  if (M.tipus !== 'Despesa') return;
+  if (!v.categoria && c.catCurs) v.categoria = c.catCurs;
+  if (!v.doc && c.docs.includes('Factura')) v.doc = 'Factura';
+  if (v.pagat === c.pagatDes[0] && c.pagatDes[1]) v.pagat = c.pagatDes[1];
+  const prof = cur.nom.split(' · ').slice(1).join(' · ');
+  if ((!v.proveidor.trim() || v.proveidor === M.profAuto) && prof){ v.proveidor = prof; M.profAuto = prof; }
 }
 function mvCalJust(){ return S.mv.tipus === 'Despesa' && S.mv.v.doc !== 'Sense justificant'; }
 function vMov(id){
@@ -701,9 +724,14 @@ function vMov(id){
   if (!llista.length) return `<h2>Apuntar una despesa o un ingrés</h2><p style="margin-top:14px">Ara mateix no hi ha cap activitat on puguis apuntar despeses.</p>`;
   const radios = (k, l) => l.map(x => `<label class="chk" style="margin-top:10px"><input type="radio" name="mv-${k}" data-mv="${k}" value="${esc(x)}"${v[k] === x ? ' checked' : ''}><span>${esc(x)}</span></label>`).join('');
   const opcions = (l, sel) => '<option value=""></option>' + l.map(x => `<option${x === sel ? ' selected' : ''}>${esc(x)}</option>`).join('');
+  // Cursos (només la junta): un bloc per curs escolar, després de les activitats
+  const cursos = (!fixa && c.cursos) || [], anysC = [...new Set(cursos.map(x => x.curs))];
+  const esCurs = mvEsCurs();
+  const optCursos = anysC.map(a => `<optgroup label="Cursos ${esc(a)}">${cursos.filter(x => x.curs === a).map(x => `<option value="${esc(x.codi)}"${v.act === x.codi ? ' selected' : ''}>${esc(x.nom)}</option>`).join('')}</optgroup>`).join('');
   const actHTML = fixa
     ? `<p class="muted" style="margin-top:4px">${esc(fixa.nom)}${fixa.quan ? ' · ' + esc(fixa.quan) : ''}</p>`
-    : `<label class="f">Activitat *<select id="mv-act" data-mv="act"><option value=""></option>${llista.map(a => `<option value="${esc(a.codi)}"${v.act === a.codi ? ' selected' : ''}>${esc(a.nom)}${a.quan ? ' · ' + esc(a.quan) : ''}</option>`).join('')}</select></label><div class="err" id="e-mv-act"></div>
+    : `<label class="f">${cursos.length ? 'Activitat o curs' : 'Activitat'} *<select id="mv-act" data-mv="act"><option value=""></option>${optCursos ? '<optgroup label="Activitats">' : ''}${llista.map(a => `<option value="${esc(a.codi)}"${v.act === a.codi ? ' selected' : ''}>${esc(a.nom)}${a.quan ? ' · ' + esc(a.quan) : ''}</option>`).join('')}${optCursos ? '</optgroup>' + optCursos : ''}</select></label><div class="err" id="e-mv-act"></div>
+       ${esCurs ? '<p class="muted" style="font-size:13px;margin-top:4px">Factura del professor/a: es desarà a la carpeta del curs.</p>' : ''}
        ${c.junta ? '' : `<p class="muted" style="font-size:13px;margin-top:4px">Surten les activitats que encara no han acabat o que fa menys de ${c.dies} dies que van acabar.</p>`}`;
   const fitxers = M.fitxers.map((x, i) => `<div class="row" style="gap:10px">${x.vista ? `<img src="${x.vista}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px">` : '<span aria-hidden="true" style="font-size:24px">📄</span>'}<span style="flex:1;min-width:0;overflow-wrap:anywhere;font-size:14px">${esc(x.nom)}${x.carregant ? ' · preparant…' : ''}</span><button class="chip" data-a="mvTreu" data-i="${i}">Treure</button></div>`).join('');
   const pagatMembre = des && v.pagat === c.pagatDes[0];
@@ -712,9 +740,9 @@ function vMov(id){
   <div class="seg" style="margin-top:14px"><button class="${des ? 'on' : ''}" data-mt="Despesa">Despesa</button><button class="${!des ? 'on' : ''}" data-mt="Ingrés">Ingrés</button></div>
   <label class="f">Import (€) *<input type="text" id="mv-import" data-mv="import" inputmode="decimal" autocomplete="off" placeholder="0,00" value="${esc(v.import)}"></label><div class="err" id="e-mv-import"></div>
   <label class="f">Data ${des ? 'del tiquet o la factura' : 'del cobrament'} *<input type="date" id="mv-data" data-mv="data" value="${esc(v.data)}" max="${avuiISO()}"></label><div class="err" id="e-mv-data"></div>
-  <label class="f">Concepte *<input type="text" id="mv-concepte" data-mv="concepte" maxlength="150" placeholder="${des ? 'Bosses i cinta per a les parades' : 'Venda de tiquets de la barra'}" value="${esc(v.concepte)}"></label><div class="err" id="e-mv-concepte"></div>
-  <label class="f">${des ? 'Botiga o proveïdor' : 'Qui ho paga'}<input type="text" id="mv-proveidor" data-mv="proveidor" maxlength="100" placeholder="${des ? 'Bonpreu, Ferreteria Pla…' : 'Ajuntament, venda a la barra…'}" value="${esc(v.proveidor)}"></label>
-  <label class="f">Categoria *<select id="mv-categoria" data-mv="categoria">${opcions(des ? c.catDes : c.catIng, v.categoria)}</select></label><div class="err" id="e-mv-categoria"></div>
+  <label class="f">Concepte *<input type="text" id="mv-concepte" data-mv="concepte" maxlength="150" placeholder="${esCurs ? (des ? 'Factura del mes de novembre' : 'Pagaments dels alumnes') : (des ? 'Bosses i cinta per a les parades' : 'Venda de tiquets de la barra')}" value="${esc(v.concepte)}"></label><div class="err" id="e-mv-concepte"></div>
+  <label class="f">${des ? (esCurs ? 'Professor/a o empresa que factura' : 'Botiga o proveïdor') : 'Qui ho paga'}<input type="text" id="mv-proveidor" data-mv="proveidor" maxlength="100" placeholder="${des ? 'Bonpreu, Ferreteria Pla…' : 'Ajuntament, venda a la barra…'}" value="${esc(v.proveidor)}"></label>
+  <label class="f">Categoria *<select id="mv-categoria" data-mv="categoria">${opcions(des ? mvCatDes() : c.catIng, v.categoria)}</select></label><div class="err" id="e-mv-categoria"></div>
   ${des ? `<div class="sec" style="margin-top:18px">Tipus de document *</div>${radios('doc', c.docs)}<div class="err" id="e-mv-doc"></div>` : ''}
   <div class="sec" style="margin-top:18px">${des ? 'Qui ho ha pagat? *' : 'On s’ha cobrat? *'}</div>${radios('pagat', des ? c.pagatDes : c.pagatIng)}<div class="err" id="e-mv-pagat"></div>
   ${pagatMembre ? `<p class="muted" style="font-size:13px;margin-top:6px">Quan et reemborsem t’arribarà un correu a ${esc(c.jo.email)}.</p>` : ''}
@@ -1006,7 +1034,8 @@ function vJunta(){
   <button class="tile" data-s="gestioAct"><span class="ic">🗂️</span><b>Activitats</b></button>
   <button class="tile" data-s="socis"><span class="ic">👥</span><b>Últims socis</b></button>
   <button class="tile" data-s="despesa"><span class="ic">📷</span><b>Apuntar despesa o ingrés</b></button>
-  <button class="tile" data-s="informes"><span class="ic">📄</span><b>Informes</b></button></div>`;
+  <button class="tile" data-s="informes"><span class="ic">📄</span><b>Informes</b></button>
+  <button class="tile" data-s="cursosJ"><span class="ic">🎓</span><b>Cursos</b></button></div>`;
 }
 function vGestioAct(){
   return `<h2>Activitats de la junta</h2><p class="muted" style="margin-top:4px">Totes les activitats programades, també els esborranys. Toca’n una per editar-la, veure’n els inscrits o apuntar-ne despeses.</p>
@@ -1019,6 +1048,47 @@ function vInscrits(){
   const fila = a => { const p = a.afor ? Math.min(100, Math.round(a.ocup / a.afor * 100)) : 0;
     return `<button class="card" data-arr="${esc(a.codi)}" style="display:block;width:100%;text-align:left;margin-bottom:10px;cursor:pointer;font:inherit;color:inherit"><div style="display:flex;justify-content:space-between;gap:12px"><b>${esc(a.nom)}</b><span class="muted" style="white-space:nowrap">${a.ocup}${a.afor ? ' de ' + a.afor : ''}</span></div><div class="muted" style="font-size:13px">${esc(quanTxt(a))}${a.amagada ? ' · esborrany' : ''}</div>${a.afor ? `<div class="bar"><i style="width:${p}%"></i></div>` : ''}</button>`; };
   return `<h2>Gestionar arribades</h2><p class="muted" style="margin-top:4px">Places ocupades: confirmades i pendents de pagament. Toca una activitat per veure la llista i registrar arribades.</p><div style="margin-top:12px">${l.length ? l.map(fila).join('') : '<div class="card"><p class="muted">No hi ha cap activitat amb inscripció.</p></div>'}</div>`;
+}
+/* ===== Junta › Cursos (fase 1): cursos i professors, per apuntar-hi les factures =====
+   Cada curs és tipus + professor/a + curs escolar (p. ex. «Ioga · Maria · 2026-27», encara que tingui tres grups).
+   Es desa al full de Comptes; les factures van a Carpeta de cursos / 2026-27 / Ioga · Maria. */
+function carregaCursosJ(){
+  if (S.crJCarr) return;
+  S.crJCarr = true;
+  motor('juntaCursos', {token:token()}).then(r => {
+    S.crJCarr = false;
+    if (r.ok) S.crJ = r; else S.crJErr = r.msg || MSG_MV[r.codi] || msgJ(r);
+    if (S.sub && ['cursosJ','cursForm'].includes(S.sub.v)) render();
+  });
+}
+function vCursosJ(){
+  let h = `<h2>Cursos</h2><p class="muted" style="margin-top:4px">Un curs per cada tipus i professor/a (per exemple, Ioga amb la mateixa professora encara que tingui tres grups). Les seves factures s’apunten a «Apuntar despesa o ingrés».</p>
+  <button class="btn full" style="margin-top:14px" data-a="nouCurs">Afegir un curs i el seu professor/a</button>`;
+  if (S.crJErr) return h + `<div class="card" style="margin-top:14px"><p class="muted">${esc(S.crJErr)}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaJ">Tornar-ho a provar</button></div>`;
+  if (!S.crJ){ carregaCursosJ(); return h + '<div class="card" style="margin-top:14px"><p class="muted">Carregant…</p></div>'; }
+  const l = S.crJ.cursos;
+  if (!l.length) return h + '<div class="card" style="margin-top:14px"><p class="muted">Encara no hi ha cap curs. Afegeix-ne un per poder-hi apuntar les factures del professor/a.</p></div>';
+  const anys = [...new Set(l.map(c => c.curs))];
+  return h + anys.map(a => `<div class="sec">Curs ${esc(a)}</div><div class="card">${l.filter(c => c.curs === a).map(c => {
+    const tel = String(c.telefon || '').replace(/[^\d+]/g, '');
+    return `<div class="row" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><b>${esc(c.tipus)}</b>${c.estat === 'Tancada' ? '<span class="tag g" style="flex:none">Tancat</span>' : ''}</div>
+    <p style="margin-top:2px">${esc(c.professor)}</p>
+    <p class="muted" style="font-size:14px;margin-top:2px">${tel ? `<a href="tel:${esc(tel)}" style="color:inherit">${esc(c.telefon)}</a>` : ''}${c.correu ? ' · ' + esc(c.correu) : ''}</p>
+    <div class="mini"><button class="link" data-a="editaCurs" data-id="${esc(c.codi)}">Edita</button></div></div>`; }).join('')}</div>`).join('');
+}
+function vCursForm(){
+  const c = S.crEd || {}, nou = !c.codi, C = S.crJ || {};
+  const cursos = [C.cursActual, C.cursSeguent].filter(Boolean), cur = c.curs || C.cursActual;
+  return `<h2>${nou ? 'Curs nou' : 'Editar el curs'}</h2>
+  <label class="f">Tipus de curs *<input type="text" id="cr-tipus" maxlength="60" value="${esc(c.tipus || '')}" placeholder="Ioga, Tai-txi, Anglès…"></label><div class="err" id="e-cr-tipus"></div>
+  <p class="muted" style="font-size:13px;margin-top:4px">Si un tipus té diversos grups amb el mateix professor/a, n’hi ha prou amb un sol curs.</p>
+  <label class="f">Professor/a *<input type="text" id="cr-professor" maxlength="80" autocomplete="off" value="${esc(c.professor || '')}" placeholder="Nom i cognoms"></label><div class="err" id="e-cr-professor"></div>
+  <label class="f">Telèfon *<input type="tel" id="cr-telefon" maxlength="30" autocomplete="off" inputmode="tel" value="${esc(c.telefon || '')}" placeholder="600 000 000"></label><div class="err" id="e-cr-telefon"></div>
+  <label class="f">Correu <span style="font-weight:400;color:var(--mut)">(opcional)</span><input type="email" id="cr-correu" maxlength="120" autocomplete="off" value="${esc(c.correu || '')}"></label><div class="err" id="e-cr-correu"></div>
+  <p class="muted" style="font-size:13px;margin-top:4px">Més endavant servirà perquè el professor/a entri a l’app i escrigui als seus alumnes.</p>
+  ${nou ? `<div class="sec" style="margin:16px 0 0;color:var(--ink)">Curs escolar *</div><div class="seg" style="margin-top:6px">${cursos.map(a => `<button class="${a === cur ? 'on' : ''}" data-crc="${esc(a)}">${esc(a)}</button>`).join('')}</div>`
+    : `<div class="card" style="margin-top:16px"><div class="row"><span>Curs escolar</span><b>${esc(c.curs)}</b></div></div><p class="muted" style="font-size:13px;margin-top:4px">El curs escolar no es pot canviar: decideix la carpeta de les factures. Si el nom o el professor/a canvien, la carpeta es reanomena sola.</p>`}
+  <button class="btn full" style="margin-top:20px" data-a="desaCurs">${nou ? 'Afegir el curs' : 'Desar els canvis'}</button>`;
 }
 const SOCIS_ULTIMS = 5;
 function carregaSocisJ(){
@@ -1664,7 +1734,7 @@ function render(){
   $('#nav').innerHTML = navHTML();
   const m = $('#main'), s = S.sub;
   if (S.esperaAct) m.innerHTML = `<p class="muted" style="margin-top:24px">${S.actErr ? 'Ara mateix no s’han pogut carregar les activitats. Torna-ho a provar d’aquí a una estona.' : 'Carregant l’activitat…'}</p>`;
-  else if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vMov(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, fesSoci:vFesSoci, altaEstat:vAltaEstat, ident:vIdent, despesa:()=>vMov(''), inscrits:vInscrits, socis:vSocis, gestioAct:vGestioAct, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), escaner:()=>vEscaner(s.id), nova:vNova})[s.v]();
+  else if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vMov(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, fesSoci:vFesSoci, altaEstat:vAltaEstat, ident:vIdent, despesa:()=>vMov(''), inscrits:vInscrits, socis:vSocis, cursosJ:vCursosJ, cursForm:vCursForm, gestioAct:vGestioAct, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), escaner:()=>vEscaner(s.id), nova:vNova})[s.v]();
   else m.innerHTML = ({inici:vInici, activitats:vActivitats, cursos:vCursos, soci:vSoci, junta:vJunta})[t]();
   if (s && (s.v === 'ins' || s.v === 'qr')) setTimeout(pintaQR, 0);
   if (s && s.v === 'escaner') setTimeout(() => iniciaCamera(s.id), 0);
@@ -1704,10 +1774,12 @@ document.addEventListener('click', e => {
   if (d.f){ S.filtre = d.f; render(); return; }
   if (d.fc){ S.fc = d.fc; render(); return; }
   if (d.curs){ sub({v:'curs', id:d.curs}); return; }
+  if (d.crc){ if (S.crEd){ ['tipus','professor','telefon','correu'].forEach(k => S.crEd[k] = val('cr-' + k)); S.crEd.curs = d.crc; } render(); return; }
   if (d.s){
     if (d.s === 'avisosJ'){ S.avJ = null; S.avJErr = null; S.avEsb = null; }
     if (d.s === 'pendents'){ S.pend = null; S.pendErr = null; }
     if (d.s === 'socis'){ S.soJ = null; S.soJErr = null; }
+    if (d.s === 'cursosJ'){ S.crJ = null; S.crJErr = null; }
     if (d.s === 'informes'){ S.infOp = null; S.infErr = null; S.infPdf = null; }
     sub({v:d.s, up: S.sub && S.sub.v === 'gestioAct' ? {v:'gestioAct'} : null}); return; }
   if (d.un){ S.avU = d.un; document.querySelectorAll('#vu button').forEach(x => x.classList.toggle('on', x.dataset.un === d.un)); actCad(); return; }
@@ -1977,7 +2049,23 @@ document.addEventListener('click', e => {
     case 'refrescaCal': S.pend = null; S.pendErr = null; S.pendRef = true; render(); break;
     case 'reintentaIns': S.insErr = ''; render(); break;
     case 'reintentaArr': S.arrErr = ''; render(); break;
-    case 'reintentaJ': S.avJErr = null; S.pendErr = null; S.soJErr = null; S.infErr = null; render(); break;
+    case 'reintentaJ': S.avJErr = null; S.pendErr = null; S.soJErr = null; S.infErr = null; S.crJErr = null; render(); break;
+    case 'nouCurs': S.crEd = {curs: S.crJ && S.crJ.cursActual}; sub({v:'cursForm', up:{v:'cursosJ'}}); break;
+    case 'editaCurs': { const c = ((S.crJ && S.crJ.cursos) || []).find(x => x.codi === d.id); if (!c) break; S.crEd = Object.assign({}, c); sub({v:'cursForm', up:{v:'cursosJ'}}); break; }
+    case 'desaCurs': {
+      const E = S.crEd || {};
+      if (!req([['cr-tipus','Escriu el tipus de curs'], ['cr-professor','Escriu el nom del professor/a'], ['cr-telefon','Escriu el telèfon (9 xifres)', v => v.replace(/\D/g, '').length >= 9]])) return;
+      if (val('cr-correu') && !err('cr-correu', isMail(val('cr-correu')) ? '' : 'Aquest correu no és correcte')) return;
+      if (!E.codi && !E.curs){ toast('Tria el curs escolar'); return; }
+      const dades = {codi:E.codi || '', tipus:val('cr-tipus'), professor:val('cr-professor'), telefon:val('cr-telefon'), correu:val('cr-correu'), curs:E.curs || ''};
+      const txt = b.textContent; b.disabled = true; b.textContent = 'Desant… pot trigar uns segons';
+      motor('juntaDesaCurs', {token:token(), d:dades}).then(r => {
+        b.disabled = false; b.textContent = txt;
+        if (!r.ok){ toast(r.msg || MSG_MV[r.codi] || msgJ(r)); return; }
+        toast(E.codi ? 'Canvis desats' : 'Curs afegit. Ja s’hi poden apuntar factures');
+        S.crJ = null; S.crEd = null; S.mvCfg = null; sub({v:'cursosJ'});
+      });
+      break; }
     case 'nouAvis': S.avEd = null; S.avU = 'setmanes'; sub({v:'avisForm', up:{v:'avisosJ'}}); break;
     case 'editaAvis': { const a = (S.avJ || []).find(x => x.id === d.id); if (!a) break; S.avEd = Object.assign({}, a); S.avU = a.u; sub({v:'avisForm', up:{v:'avisosJ'}}); break; }
     case 'desaAvis': {
@@ -2026,7 +2114,7 @@ document.addEventListener('change', e => {
   const t = e.target, ds = t.dataset || {};
   if (t.id === 'wfoto' && t.files && t.files[0]){ pujaFoto(t.files[0]); return; }
   if (t.id === 'mvfx'){ const l = [].slice.call(t.files || []); t.value = ''; mvAfegeix(l); return; }
-  if (ds.mv && S.mv){ S.mv.v[ds.mv] = t.value; if (t.type === 'radio' || ds.mv === 'act') render(); return; }
+  if (ds.mv && S.mv){ S.mv.v[ds.mv] = t.value; if (ds.mv === 'act') mvActCanvi(); if (t.type === 'radio' || ds.mv === 'act') render(); return; }
   if (ds.fi !== undefined && S.fi) S.fi.v[ds.fi] = t.type === 'checkbox' ? t.checked : t.value;
   if (ds.wr !== undefined && S.wz){ wzLlegeix(); render(); }
 });
