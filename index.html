@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ca">
-<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-24 (pestanya Cursos real: llista de cursos i grups de la temporada, del fitxer únic de cursos; abans, 2026-11-23c: Junta › Cursos › Pagaments i reserves, només lectura; 2026-11-23b: «Professor/a pendent» i botó per omplir-lo; abans, 2026-11-23: cursos, fase 1: casella Cursos al menú de la junta amb l’alta i l’edició de cursos i professors; factures dels professors des d’Apuntar despesa o ingrés; abans, 2026-11-18b: correcció: la capa de benvinguda amagada tapava l'app; pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
+<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-24b (pestanya Cursos: període de cada grup i marca «Places lliures» amb enllaç al correu de cursos; Junta › Cursos › Pagaments i reserves: cobrat i previst per grup, per curs i total; abans, 2026-11-24: pestanya Cursos real: llista de cursos i grups de la temporada, del fitxer únic de cursos; abans, 2026-11-23c: Junta › Cursos › Pagaments i reserves, només lectura; 2026-11-23b: «Professor/a pendent» i botó per omplir-lo; abans, 2026-11-23: cursos, fase 1: casella Cursos al menú de la junta amb l’alta i l’edició de cursos i professors; factures dels professors des d’Apuntar despesa o ingrés; abans, 2026-11-18b: correcció: la capa de benvinguda amagada tapava l'app; pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -870,6 +870,18 @@ function carregaCursosP(forca){
 }
 // Els noms en majúscules (els de les pestanyes antigues) es passen a «Majúscula inicial»; els escrits a «Nom a l'app» es deixen tal qual.
 const nomGrup = s => { s = String(s).replace(/\s+/g, ' ').trim(); if (s !== s.toUpperCase()) return s; const t = s.toLowerCase(); return t.charAt(0).toUpperCase() + t.slice(1); };
+// Període d'un grup a partir de 'aaaa-mm-dd': «Del 5 d’octubre de 2026 al 7 de juny de 2027» (si l'any és el mateix, només surt al final)
+const MESOS_DE = ['de gener','de febrer','de març','d’abril','de maig','de juny','de juliol','d’agost','de setembre','d’octubre','de novembre','de desembre'];
+function periodeCurs(ini, fi){
+  const p = x => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(x || ''); return m ? {a:+m[1], m:+m[2] - 1, d:+m[3]} : null; };
+  const a = p(ini), b = p(fi), dd = (x, ap) => ([1, 11].includes(x.d) ? ap + ' l’' : (ap === 'De' ? 'Del ' : 'al ')) + x.d + ' ' + MESOS_DE[x.m];
+  if (a && b) return dd(a, 'De') + (a.a === b.a ? '' : ' de ' + a.a) + ' ' + dd(b, 'a') + ' de ' + b.a;
+  if (a) return 'Comença el ' + a.d + ' ' + MESOS_DE[a.m] + ' de ' + a.a;
+  if (b) return 'Fins ' + dd(b, 'a') + ' de ' + b.a;
+  return '';
+}
+const CORREU_CURSOS = 'cursos.avsantpau@gmail.com';
+const mailCurs = (curs, grup) => `mailto:${CORREU_CURSOS}?subject=${encodeURIComponent('Places lliures · ' + curs + ' · ' + grup)}`;
 function vCursos(){
   if (!S.cuP){ try { const c = JSON.parse(localStorage.getItem('avv-cursos') || 'null'); if (c && c.ok) S.cuP = c; } catch(e){} }
   carregaCursosP();
@@ -878,9 +890,12 @@ function vCursos(){
   if (!C) return h + (S.cuPErr ? `<div class="card" style="margin-top:16px"><p class="muted">Ara mateix no es poden carregar els cursos.</p><button class="btn ghost full" style="margin-top:12px" data-a="cursosRetry">Tornar-ho a provar</button></div>`
     : '<div class="card" style="margin-top:16px"><p class="muted">Carregant els cursos…</p></div>');
   if (!C.cursos.length) h += '<div class="card" style="margin-top:16px"><p class="muted">Encara no hi ha cursos per a aquesta temporada.</p></div>';
-  h += C.cursos.map(c => `<div class="card" style="margin-top:12px"><div class="n" style="font-size:19px;font-weight:700">${esc(c.curs)}</div>${c.grups.map(g =>
-    `<div class="row" style="display:block"><span>${esc(nomGrup(g.grup))}</span>${g.horari ? `<p class="muted" style="font-size:14px;margin-top:2px">${esc(g.horari)}</p>` : ''}</div>`).join('')}</div>`).join('');
-  return h + `<div class="card" style="margin-top:16px"><b>Com m’hi inscric?</b><p class="muted" style="margin-top:4px">Les inscripcions i el sorteig de places els fa l’Ajuntament de Girona. Si ja tens plaça i tens algun dubte sobre el pagament, escriu-nos a <a href="mailto:cursos.avsantpau@gmail.com">cursos.avsantpau@gmail.com</a>.</p></div>`;
+  const ambLliures = C.cursos.some(c => c.grups.some(g => g.lliures));
+  if (ambLliures) h += `<div class="card" style="margin-top:16px;background:var(--pri-soft)"><b>Encara hi ha places lliures</b><p style="margin-top:4px;font-size:15px">Els grups marcats amb <span class="tag">Places lliures</span> encara admeten gent. Si t’hi vols apuntar, toca l’etiqueta o escriu-nos a <a href="mailto:${CORREU_CURSOS}">${CORREU_CURSOS}</a>.</p></div>`;
+  h += C.cursos.map(c => `<div class="card" style="margin-top:12px"><div class="n" style="font-size:19px;font-weight:700">${esc(c.curs)}</div>${c.grups.map(g => {
+    const per = periodeCurs(g.inici, g.fi), nom = nomGrup(g.grup);
+    return `<div class="row" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><span>${esc(nom)}</span>${g.lliures ? `<a class="tag" style="flex:none;text-decoration:none" href="${esc(mailCurs(c.curs, nom))}">Places lliures</a>` : ''}</div>${g.horari ? `<p class="muted" style="font-size:14px;margin-top:2px">${esc(g.horari)}</p>` : ''}${per ? `<p class="muted" style="font-size:13px;margin-top:2px">${esc(per)}</p>` : ''}</div>`; }).join('')}</div>`).join('');
+  return h + `<div class="card" style="margin-top:16px"><b>Com m’hi inscric?</b><p class="muted" style="margin-top:4px">Les inscripcions i el sorteig de places els fa l’Ajuntament de Girona. Si un grup té places lliures i t’hi vols apuntar, o si ja tens plaça i tens algun dubte sobre el pagament, escriu-nos a <a href="mailto:${CORREU_CURSOS}">${CORREU_CURSOS}</a>.</p></div>`;
 }
 function vCurs(id){
   const c = curs(id), r = rolCurs(id), ple = c.ocup >= c.places, av = AVISOS.filter(a => a.c === id), on = (S.avs||[]).includes(id);
@@ -1129,8 +1144,13 @@ function vCursPag(){
   if (S.pgCErr) return h + `<div class="card" style="margin-top:14px"><p class="muted">${esc(S.pgCErr)}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaJ">Tornar-ho a provar</button></div>`;
   if (!S.pgC){ carregaPagC(); return h + '<div class="card" style="margin-top:14px"><p class="muted">Llegint el full de cursos… pot trigar uns segons</p></div>'; }
   if (!S.pgC.preparat) return h + '<div class="card" style="margin-top:14px"><p class="muted">Encara no s’ha preparat el full de cursos: hi falten la pestanya «Grups» i les columnes «Situació» i «Pagat (€)».</p></div>';
-  let tPend = 0, tLliu = 0;
-  const cos = S.pgC.cursos.map(c => `<div class="sec">${esc(c.curs)}</div>` + c.grups.map(g => {
+  let tPend = 0, tLliu = 0, tCob = 0, tFalta = 0;
+  const diners = S.pgC.cursos.some(c => c.grups.some(g => g.cobrat != null));   // el motor 2.1 o anterior no envia el cobrat
+  // Pendent de cobrar d'un grup: el que falta de pagar de cada persona amb plaça («A pagar» − «Pagat», si és positiu)
+  const falta = g => g.placa.reduce((t, x) => t + Math.max(0, (x.apagar || 0) - (x.pagat || 0)), 0);
+  const cos = S.pgC.cursos.map(c => { const cc = c.grups.reduce((t, g) => t + (g.cobrat || 0), 0);
+    tCob += cc; tFalta += c.grups.reduce((t, g) => t + falta(g), 0);
+    return `<div class="sec">${esc(c.curs)}${diners ? ` <span style="font-weight:500;text-transform:none;letter-spacing:0">· cobrat ${eur(cc)}</span>` : ''}</div>` + c.grups.map(g => {
     if (g.error) return `<div class="card" style="margin-top:8px"><b>${esc(g.grup)}</b><p class="muted" style="margin-top:4px">${esc(g.error)}</p></div>`;
     const np = g.placa.filter(x => !x.pagat), pag = g.placa.length - np.length, lliu = Math.max(0, g.places - g.placa.length);
     tPend += np.length; tLliu += lliu;
@@ -1138,12 +1158,13 @@ function vCursPag(){
     const res = lliu ? g.reserves.slice(0, lliu) : [];
     return `<details class="card" style="margin-top:8px"${ok ? '' : ' open'}><summary style="cursor:pointer;list-style:none">
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><b>${esc(g.grup)}</b>${ok ? '<span class="tag" style="flex:none">Tot en ordre</span>' : `<span class="tag o" style="flex:none">${np.length ? np.length + ' sense pagar' : ''}${np.length && lliu ? ' · ' : ''}${lliu ? lliu + ' lliure' + (lliu > 1 ? 's' : '') : ''}</span>`}</div>
-      <p class="muted" style="font-size:14px;margin-top:4px">${g.places} places · ${g.placa.length} amb plaça · ${pag} pagats · ${g.reserves.length} reserves</p></summary>
+      <p class="muted" style="font-size:14px;margin-top:4px">${g.places} places · ${g.placa.length} amb plaça · ${pag} pagats · ${g.reserves.length} reserves</p>${diners ? `<p class="muted" style="font-size:14px;margin-top:2px">Cobrat ${eur(g.cobrat || 0)} · pendent ${eur(falta(g))}${g.cobratFora ? ` · inclou ${eur(g.cobratFora)} de baixes o reserves` : ''}</p>` : ''}</summary>
       ${np.length ? `<p style="margin-top:10px;font-weight:600">Amb plaça i sense pagar</p>${np.map(x => `<p style="font-size:14px;margin-top:4px">${esc(x.nom)}${x.apagar ? ' · ' + eur(x.apagar) : ''}${telLinks(x.tel)}</p>`).join('')}` : ''}
       ${lliu ? `<p style="margin-top:10px;font-weight:600">Reserves per avisar (${lliu} plac${lliu > 1 ? 'es lliures' : 'a lliure'})</p>${res.length ? res.map((x, i) => `<p style="font-size:14px;margin-top:4px">${i + 1}. ${esc(x.nom)}${telLinks(x.tel)}</p>`).join('') : '<p class="muted" style="font-size:14px;margin-top:4px">No queda cap reserva.</p>'}` : ''}
       ${g.reserves.length > res.length ? `<p class="muted" style="font-size:13px;margin-top:8px">${g.reserves.length - res.length} reserves més en espera.</p>` : ''}</details>`;
-  }).join('')).join('');
-  return h + `<div class="card" style="margin-top:14px"><div class="row"><span>Places sense pagar</span><b>${tPend}</b></div><div class="row"><span>Places lliures</span><b>${tLliu}</b></div></div>` + cos;
+  }).join(''); }).join('');
+  return h + `<div class="card" style="margin-top:14px">${diners ? `<div class="row"><span>Cobrat</span><b>${eur(tCob)}</b></div><div class="row"><span>Pendent de cobrar</span><b>${eur(tFalta)}</b></div>` : ''}<div class="row"><span>Places sense pagar</span><b>${tPend}</b></div><div class="row"><span>Places lliures</span><b>${tLliu}</b></div></div>`
+    + (diners ? '<p class="muted" style="font-size:13px;margin-top:8px">Cobrat = tot el que consta a «Pagat (€)», també de qui després ha estat baixa o és en reserva (pot caldre retornar-ho). Pendent = el que falta de pagar de qui té plaça. Només és tan exacte com la conciliació dels pagaments.</p>' : '') + cos;
 }
 const SOCIS_ULTIMS = 5;
 function carregaSocisJ(){
