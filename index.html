@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ca">
-<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-23c (Junta › Cursos › Pagaments i reserves, només lectura; 2026-11-23b: «Professor/a pendent» i botó per omplir-lo; abans, 2026-11-23: cursos, fase 1: casella Cursos al menú de la junta amb l’alta i l’edició de cursos i professors; factures dels professors des d’Apuntar despesa o ingrés; abans, 2026-11-18b: correcció: la capa de benvinguda amagada tapava l'app; pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
+<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-24 (pestanya Cursos real: llista de cursos i grups de la temporada, del fitxer únic de cursos; abans, 2026-11-23c: Junta › Cursos › Pagaments i reserves, només lectura; 2026-11-23b: «Professor/a pendent» i botó per omplir-lo; abans, 2026-11-23: cursos, fase 1: casella Cursos al menú de la junta amb l’alta i l’edició de cursos i professors; factures dels professors des d’Apuntar despesa o ingrés; abans, 2026-11-18b: correcció: la capa de benvinguda amagada tapava l'app; pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -186,7 +186,7 @@ const AVISOS = [
 const curs = id => CURSOS.find(c => c.id === id);
 // ===== Connexió amb el motor d'accés (Apps Script del full de socis) =====
 const MOTOR = 'https://script.google.com/macros/s/AKfycbxNeEcaHhN8SjH7W2cjmJyPAxlmYY7vP-Ic8kJQ28GtfK09pbjvBpb2hJFMF_JVuxu2/exec';
-const PROVES = true; // versió de proves: els cursos encara són d'exemple. L'entrada, els avisos, les activitats, les inscripcions, les despeses i l'alta de soci ja són reals.
+const PROVES = true; // versió de proves: «Els meus cursos» i els missatges dels cursos encara no són reals. L'entrada, els avisos, les activitats, les inscripcions, les despeses i l'alta de soci ja són reals.
 function motor(accio, dades){
   return fetch(MOTOR, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(Object.assign({accio}, dades || {}))})
     .then(r => r.json()).catch(() => ({ok:false, codi:'XARXA'}));
@@ -566,7 +566,7 @@ function vBenvinguda(){
   </div></div>`;
 }
 function vInici(){
-  let h = PROVES ? '<div class="card" style="margin-top:8px;background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink);font-size:14px"><b>Versió de proves.</b> L’entrada amb el DNI, els avisos, les activitats, les inscripcions, les despeses i l’alta de soci ja són reals. Els cursos encara són d’exemple.</div>' : '';
+  let h = PROVES ? '<div class="card" style="margin-top:8px;background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink);font-size:14px"><b>Versió de proves.</b> L’entrada amb el DNI, els avisos, les activitats, les inscripcions, les despeses, l’alta de soci i la llista de cursos ja són reals. «Els meus cursos» encara no.</div>' : '';
   h += botoInstal('margin-top:12px');
   h += agendaAvisos();
   let soci = '';
@@ -855,14 +855,32 @@ function cursCard(c){
   const est = r ? `<span class="tag">${r}</span>` : ple ? '<span class="tag o">Complet</span>' : `<span class="tag">${c.places - c.ocup} places</span>`;
   return `<button class="card act" data-curs="${c.id}"><div style="min-width:0"><div class="n">${c.nom}</div><div class="s">${c.dia}, ${c.h}</div><div style="margin-top:6px">${est}</div></div><div class="price">${eur(esSoci()?c.ps:c.pn)}<small>per trimestre</small></div></button>`;
 }
+// Pestanya Cursos (per a tothom): cursos i grups reals de la temporada, del fitxer únic de cursos (motor: cursosPublics).
+// Sense dades de les inscripcions. Es desa al mòbil i es refà cada 30 minuts. «Els meus cursos» i els missatges, més endavant.
+function carregaCursosP(forca){
+  if (S.cuPCarr) return;
+  if (!forca && S.cuP && Date.now() - (S.cuP.desat || 0) < 30 * 60000) return;
+  S.cuPCarr = true;
+  motor('cursosPublics', {}).then(r => {
+    S.cuPCarr = false;
+    if (r.ok){ r.desat = Date.now(); S.cuP = r; S.cuPErr = false; try { localStorage.setItem('avv-cursos', JSON.stringify(r)); } catch(e){} }
+    else if (!S.cuP) S.cuPErr = true;
+    if (tab() === 'cursos' && !S.sub) render();
+  });
+}
+// Els noms en majúscules (els de les pestanyes antigues) es passen a «Majúscula inicial»; els escrits a «Nom a l'app» es deixen tal qual.
+const nomGrup = s => { s = String(s).replace(/\s+/g, ' ').trim(); if (s !== s.toUpperCase()) return s; const t = s.toLowerCase(); return t.charAt(0).toUpperCase() + t.slice(1); };
 function vCursos(){
-  const cats = ['Tots','Moviment','Aprendre','Creativitat'], f = S.fc || 'Tots';
-  const l = CURSOS.filter(c => f === 'Tots' || c.cat === f), meus = CURSOS.filter(c => rolCurs(c.id));
-  let h = `<h1 style="margin:6px 0 2px">Cursos 2026-27</h1><p class="muted">Centre cívic Pla de Palau</p>`;
-  if (meus.length) h += `<div class="sec">Els meus cursos</div>${meus.map(c => { const a = AVISOS.find(x => x.c === c.id); return `<button class="card act" data-curs="${c.id}" style="display:block"><div style="display:flex;justify-content:space-between;gap:8px"><span class="n">${c.nom}</span><span class="tag">${rolCurs(c.id)}</span></div><p class="s" style="margin-top:6px">${a ? a.d + ': ' + a.t : 'Encara no hi ha missatges.'}</p></button>`; }).join('')}`;
-  else if (!S.user) h += `<div class="card" style="margin-top:16px"><p>Si estàs inscrit a un curs, entra amb el teu DNI per veure’n els missatges.</p><button class="btn ghost full" style="margin-top:12px" data-a="identC">Identificar-me</button></div>`;
-  h += `<div class="sec">Tots els cursos</div><div class="chips">${cats.map(c => `<button class="chip ${f===c?'on':''}" data-fc="${c}">${c}</button>`).join('')}</div><div style="margin-top:14px">${l.map(cursCard).join('')}</div>`;
-  return h;
+  if (!S.cuP){ try { const c = JSON.parse(localStorage.getItem('avv-cursos') || 'null'); if (c && c.ok) S.cuP = c; } catch(e){} }
+  carregaCursosP();
+  const C = S.cuP;
+  let h = `<h1 style="margin:6px 0 2px">Cursos ${esc((C && C.temporada) || '')}</h1><p class="muted">Centre cívic Pla de Palau</p>`;
+  if (!C) return h + (S.cuPErr ? `<div class="card" style="margin-top:16px"><p class="muted">Ara mateix no es poden carregar els cursos.</p><button class="btn ghost full" style="margin-top:12px" data-a="cursosRetry">Tornar-ho a provar</button></div>`
+    : '<div class="card" style="margin-top:16px"><p class="muted">Carregant els cursos…</p></div>');
+  if (!C.cursos.length) h += '<div class="card" style="margin-top:16px"><p class="muted">Encara no hi ha cursos per a aquesta temporada.</p></div>';
+  h += C.cursos.map(c => `<div class="card" style="margin-top:12px"><div class="n" style="font-size:19px;font-weight:700">${esc(c.curs)}</div>${c.grups.map(g =>
+    `<div class="row" style="display:block"><span>${esc(nomGrup(g.grup))}</span>${g.horari ? `<p class="muted" style="font-size:14px;margin-top:2px">${esc(g.horari)}</p>` : ''}</div>`).join('')}</div>`).join('');
+  return h + `<div class="card" style="margin-top:16px"><b>Com m’hi inscric?</b><p class="muted" style="margin-top:4px">Les inscripcions i el sorteig de places els fa l’Ajuntament de Girona. Si ja tens plaça i tens algun dubte sobre el pagament, escriu-nos a <a href="mailto:cursos.avsantpau@gmail.com">cursos.avsantpau@gmail.com</a>.</p></div>`;
 }
 function vCurs(id){
   const c = curs(id), r = rolCurs(id), ple = c.ocup >= c.places, av = AVISOS.filter(a => a.c === id), on = (S.avs||[]).includes(id);
@@ -2086,6 +2104,7 @@ document.addEventListener('click', e => {
     case 'refrescaCal': S.pend = null; S.pendErr = null; S.pendRef = true; render(); break;
     case 'reintentaIns': S.insErr = ''; render(); break;
     case 'reintentaArr': S.arrErr = ''; render(); break;
+    case 'cursosRetry': S.cuPErr = false; carregaCursosP(true); render(); break;
     case 'reintentaJ': S.avJErr = null; S.pendErr = null; S.soJErr = null; S.infErr = null; S.crJErr = null; S.pgCErr = null; render(); break;
     case 'pagCursos': S.pgC = null; S.pgCErr = null; sub({v:'cursPag', up:{v:'cursosJ'}}); break;
     case 'nouCurs': S.crEd = {curs: S.crJ && S.crJ.cursActual}; sub({v:'cursForm', up:{v:'cursosJ'}}); break;
