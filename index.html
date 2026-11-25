@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ca">
-<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-24b (pestanya Cursos: període de cada grup i marca «Places lliures» amb enllaç al correu de cursos; Junta › Cursos › Pagaments i reserves: cobrat i previst per grup, per curs i total; abans, 2026-11-24: pestanya Cursos real: llista de cursos i grups de la temporada, del fitxer únic de cursos; abans, 2026-11-23c: Junta › Cursos › Pagaments i reserves, només lectura; 2026-11-23b: «Professor/a pendent» i botó per omplir-lo; abans, 2026-11-23: cursos, fase 1: casella Cursos al menú de la junta amb l’alta i l’edició de cursos i professors; factures dels professors des d’Apuntar despesa o ingrés; abans, 2026-11-18b: correcció: la capa de benvinguda amagada tapava l'app; pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
+<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-25 («Els meus cursos» reals: els inscrits que no són socis entren amb el telèfon de la inscripció i reben el codi als correus de les seves inscripcions; els socis hi veuen els cursos on surt el seu telèfon o el seu correu) -->
+<!-- Versió anterior: App AVV Pla de Palau – Sant Pau · versió 2026-11-24b (pestanya Cursos: període de cada grup i marca «Places lliures» amb enllaç al correu de cursos; Junta › Cursos › Pagaments i reserves: cobrat i previst per grup, per curs i total; abans, 2026-11-24: pestanya Cursos real: llista de cursos i grups de la temporada, del fitxer únic de cursos; abans, 2026-11-23c: Junta › Cursos › Pagaments i reserves, només lectura; 2026-11-23b: «Professor/a pendent» i botó per omplir-lo; abans, 2026-11-23: cursos, fase 1: casella Cursos al menú de la junta amb l’alta i l’edició de cursos i professors; factures dels professors des d’Apuntar despesa o ingrés; abans, 2026-11-18b: correcció: la capa de benvinguda amagada tapava l'app; pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -186,14 +187,14 @@ const AVISOS = [
 const curs = id => CURSOS.find(c => c.id === id);
 // ===== Connexió amb el motor d'accés (Apps Script del full de socis) =====
 const MOTOR = 'https://script.google.com/macros/s/AKfycbxNeEcaHhN8SjH7W2cjmJyPAxlmYY7vP-Ic8kJQ28GtfK09pbjvBpb2hJFMF_JVuxu2/exec';
-const PROVES = true; // versió de proves: «Els meus cursos» i els missatges dels cursos encara no són reals. L'entrada, els avisos, les activitats, les inscripcions, les despeses i l'alta de soci ja són reals.
+const PROVES = true; // versió de proves: els missatges dels cursos encara no són reals. L'entrada, els avisos, les activitats, les inscripcions, les despeses i l'alta de soci ja són reals.
 function motor(accio, dades){
   return fetch(MOTOR, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(Object.assign({accio}, dades || {}))})
     .then(r => r.json()).catch(() => ({ok:false, codi:'XARXA'}));
 }
 function token(){ try { return localStorage.getItem('avv-token') || ''; } catch(e){ return S._tk || ''; } }
 function desaToken(t){ try { if (t) localStorage.setItem('avv-token', t); else localStorage.removeItem('avv-token'); } catch(e){ S._tk = t; } }
-const MSG = {XARXA:'No hi ha connexió. Torna-ho a provar.', SERVEI:'Ara mateix el servei no respon. Torna-ho a provar d’aquí a una estona.', BLOQUEJAT:'Has fet massa intents. Torna-ho a provar d’aquí a 15 minuts.', DNI_FORMAT:'Aquest DNI o NIE no és correcte. Revisa els números i la lletra.', CADUCAT:'Aquest codi ha caducat. Demana’n un de nou.', ESGOTAT:'Has esgotat els intents d’aquest codi. Demana’n un de nou.', FORMAT:'El codi té 6 xifres. Copia’l tal com surt al correu.'};
+const MSG = {XARXA:'No hi ha connexió. Torna-ho a provar.', SERVEI:'Ara mateix el servei no respon. Torna-ho a provar d’aquí a una estona.', BLOQUEJAT:'Has fet massa intents. Torna-ho a provar d’aquí a 15 minuts.', DNI_FORMAT:'Aquest DNI o NIE no és correcte. Revisa els números i la lletra.', TEL_FORMAT:'Aquest telèfon no és correcte. Escriu les 9 xifres.', CADUCAT:'Aquest codi ha caducat. Demana’n un de nou.', ESGOTAT:'Has esgotat els intents d’aquest codi. Demana’n un de nou.', FORMAT:'El codi té 6 xifres. Copia’l tal com surt al correu.'};
 function aplicaPerfil(p, dni){
   if (!p){ S.soci = null; S.rol = 'visitant'; S.user = null; return; }
   const nom = [p.nom, p.cognoms].filter(Boolean).join(' ');
@@ -202,6 +203,17 @@ function aplicaPerfil(p, dni){
   S.user = {nom, cursos:[], escriu:{}, junta: /junta|tresor|presid|secret/i.test(p.rol || '')};
   if (p.privacitat) marcaPriv();
 }
+// Inscrit als cursos que no és soci: entra amb el telèfon de la inscripció (el motor no dona perfil de soci)
+function aplicaInscrit(i, tel){
+  S.soci = null; S.rol = 'visitant';
+  S.user = {nom: (i && i.nom) || '', tel: tel || (S.user && S.user.tel) || '', inscrit:true, cursos:(S.user && S.user.inscrit && S.user.cursos) || [], escriu:{}, junta:false};
+  if (i && i.privacitat) marcaPriv();
+}
+// Entrada amb DNI (socis) o amb el telèfon de la inscripció als cursos (no socis)
+const netTel = v => { let d = String(v || '').replace(/\D/g, ''); if (d.length === 13 && d.indexOf('0034') === 0) d = d.slice(4); if (d.length === 11 && d.indexOf('34') === 0) d = d.slice(2); return d; };
+const isTel = v => /^[6-9]\d{8}$/.test(netTel(v));
+const esTelId = v => !isDni(String(v || '')) && isTel(v);
+const idPeticio = v => esTelId(v) ? {tel:netTel(v)} : {dni:v};
 // Entrada a mig fer: si l'usuari surt a mirar el correu i el navegador recarrega la pàgina, hi tornem
 const PEND_MIN = 10;
 function desaPendent(){ try { localStorage.setItem('avv-pendent', JSON.stringify({dni:S.idDni, t:Date.now(), after:S.after || null, afterTab:S.afterTab || null})); } catch(e){} }
@@ -566,7 +578,7 @@ function vBenvinguda(){
   </div></div>`;
 }
 function vInici(){
-  let h = PROVES ? '<div class="card" style="margin-top:8px;background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink);font-size:14px"><b>Versió de proves.</b> L’entrada amb el DNI, els avisos, les activitats, les inscripcions, les despeses, l’alta de soci i la llista de cursos ja són reals. «Els meus cursos» encara no.</div>' : '';
+  let h = PROVES ? '<div class="card" style="margin-top:8px;background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink);font-size:14px"><b>Versió de proves.</b> L’entrada, els avisos, les activitats, les inscripcions, les despeses, l’alta de soci i els cursos ja són reals.</div>' : '';
   h += botoInstal('margin-top:12px');
   h += agendaAvisos();
   let soci = '';
@@ -882,16 +894,46 @@ function periodeCurs(ini, fi){
 }
 const CORREU_CURSOS = 'cursos.avsantpau@gmail.com';
 const mailCurs = (curs, grup) => `mailto:${CORREU_CURSOS}?subject=${encodeURIComponent('Places lliures · ' + curs + ' · ' + grup)}`;
+// «Els meus cursos»: inscripcions de la persona que ha entrat (motor: elsMeusCursos). Soci → pel seu telèfon o correu;
+// inscrit que ha entrat amb el telèfon → per aquest telèfon. Es desa al mòbil i es refà cada 30 minuts.
+function carregaMeusCursos(forca){
+  if (!token() || !S.user || S.mcCarr) return;
+  if (!S.mc){ try { const c = JSON.parse(localStorage.getItem('avv-meus-cursos') || 'null'); if (c && c.ok) S.mc = c; } catch(e){} }
+  if (!forca && S.mc && Date.now() - (S.mc.desat || 0) < 30 * 60000){ marcaInscrit(); return; }
+  S.mcCarr = true;
+  motor('elsMeusCursos', {token:token()}).then(r => {
+    S.mcCarr = false;
+    if (r.ok){ r.desat = Date.now(); S.mc = r; S.mcErr = false; try { localStorage.setItem('avv-meus-cursos', JSON.stringify(r)); } catch(e){} marcaInscrit(); }
+    else if (!S.mc) S.mcErr = true;
+    if (!S.sub && ['cursos','soci'].includes(tab())) render(); else { $('#top').innerHTML = header(); }
+  });
+}
+function marcaInscrit(){ if (S.user && S.mc) S.user.cursos = S.mc.cursos.map(c => c.grup); }
+function filaMeuCurs(c, ambNom){
+  const per = periodeCurs(c.inici, c.fi), res = /^Reserva/.test(c.situacio);
+  return `<div class="row" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><b>${esc(c.curs)}</b><span class="tag${res ? ' o' : ''}" style="flex:none">${res ? 'En reserva' + (c.situacio.split(' ')[1] ? ' · núm. ' + esc(c.situacio.split(' ')[1]) : '') : 'Tens plaça'}</span></div>`
+    + `${nomGrup(c.grup) !== c.curs ? `<p style="font-size:15px;margin-top:2px">${esc(nomGrup(c.grup))}</p>` : ''}${c.horari ? `<p class="muted" style="font-size:14px;margin-top:2px">${esc(c.horari)}</p>` : ''}${per ? `<p class="muted" style="font-size:13px;margin-top:2px">${esc(per)}</p>` : ''}${ambNom && c.participant ? `<p class="muted" style="font-size:13px;margin-top:2px">${esc(c.participant)}</p>` : ''}</div>`;
+}
+function meusCursosHTML(){
+  if (!S.user || !token()) return `<div class="card" style="margin-top:16px"><b>Ja estàs inscrit a un curs?</b><p class="muted" style="margin-top:4px">Entra amb el telèfon que vas donar a la inscripció (o amb el DNI, si ets soci) per veure els teus cursos.</p><button class="btn ghost full" style="margin-top:12px" data-a="identC">Entrar</button></div>`;
+  carregaMeusCursos();
+  const M = S.mc;
+  if (!M) return `<div class="sec">Els meus cursos</div><div class="card"><p class="muted">${S.mcErr ? 'Ara mateix no es poden carregar els teus cursos.' : 'Carregant els teus cursos…'}</p>${S.mcErr ? '<button class="btn ghost full" style="margin-top:12px" data-a="meusRetry">Tornar-ho a provar</button>' : ''}</div>`;
+  if (!M.cursos.length) return S.user.inscrit ? `<div class="sec">Els meus cursos</div><div class="card"><p class="muted">Ara mateix no tens cap curs. Si creus que és un error, escriu a <a href="mailto:${CORREU_CURSOS}">${CORREU_CURSOS}</a>.</p></div>` : '';
+  const diversos = new Set(M.cursos.map(c => (c.participant || '').toLowerCase())).size > 1;
+  return `<div class="sec">Els meus cursos</div><div class="card">${M.cursos.map(c => filaMeuCurs(c, diversos)).join('')}</div>`;
+}
 function vCursos(){
   if (!S.cuP){ try { const c = JSON.parse(localStorage.getItem('avv-cursos') || 'null'); if (c && c.ok) S.cuP = c; } catch(e){} }
   carregaCursosP();
   const C = S.cuP;
-  let h = `<h1 style="margin:6px 0 2px">Cursos ${esc((C && C.temporada) || '')}</h1><p class="muted">Centre cívic Pla de Palau</p>`;
+  let h = `<h1 style="margin:6px 0 2px">Cursos ${esc((C && C.temporada) || '')}</h1><p class="muted">Centre cívic Pla de Palau</p>` + meusCursosHTML();
   if (!C) return h + (S.cuPErr ? `<div class="card" style="margin-top:16px"><p class="muted">Ara mateix no es poden carregar els cursos.</p><button class="btn ghost full" style="margin-top:12px" data-a="cursosRetry">Tornar-ho a provar</button></div>`
     : '<div class="card" style="margin-top:16px"><p class="muted">Carregant els cursos…</p></div>');
   if (!C.cursos.length) h += '<div class="card" style="margin-top:16px"><p class="muted">Encara no hi ha cursos per a aquesta temporada.</p></div>';
   const ambLliures = C.cursos.some(c => c.grups.some(g => g.lliures));
   if (ambLliures) h += `<div class="card" style="margin-top:16px;background:var(--pri-soft)"><b>Encara hi ha places lliures</b><p style="margin-top:4px;font-size:15px">Els grups marcats amb <span class="tag">Places lliures</span> encara admeten gent. Si t’hi vols apuntar, toca l’etiqueta o escriu-nos a <a href="mailto:${CORREU_CURSOS}">${CORREU_CURSOS}</a>.</p></div>`;
+  if (S.mc && S.mc.cursos.length) h += '<div class="sec">Tots els cursos</div>';
   h += C.cursos.map(c => `<div class="card" style="margin-top:12px"><div class="n" style="font-size:19px;font-weight:700">${esc(c.curs)}</div>${c.grups.map(g => {
     const per = periodeCurs(g.inici, g.fi), nom = nomGrup(g.grup);
     return `<div class="row" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><span>${esc(nom)}</span>${g.lliures ? `<a class="tag" style="flex:none;text-decoration:none" href="${esc(mailCurs(c.curs, nom))}">Places lliures</a>` : ''}</div>${g.horari ? `<p class="muted" style="font-size:14px;margin-top:2px">${esc(g.horari)}</p>` : ''}${per ? `<p class="muted" style="font-size:13px;margin-top:2px">${esc(per)}</p>` : ''}</div>`; }).join('')}</div>`).join('');
@@ -908,9 +950,9 @@ function vCurs(id){
   return h;
 }
 function vPerfil(){
-  const u = S.user, cs = CURSOS.filter(c => rolCurs(c.id));
-  return `<h1 style="margin:6px 0 4px">${u.nom}</h1><p class="muted">El meu perfil</p>
-  <div class="sec">Els meus cursos</div><div class="card">${cs.length ? cs.map(c => `<div class="row"><span>${c.nom}</span><span class="tag">${rolCurs(c.id)}</span></div>`).join('') : '<p class="muted">No tens cap curs assignat.</p>'}</div>
+  const u = S.user;
+  return `<h1 style="margin:6px 0 4px">${esc(u.nom || 'El meu perfil')}</h1><p class="muted">${u.tel ? 'Has entrat amb el telèfon ' + esc(u.tel) : 'El meu perfil'}</p>
+  ${meusCursosHTML() || '<div class="sec">Els meus cursos</div><div class="card"><p class="muted">No tens cap curs.</p></div>'}
   <div class="hero" style="margin-top:22px"><h2>${esc(tx(TEXTOS.perfilTitol))}</h2><p style="margin:8px 0 14px">${esc(tx(TEXTOS.iniciText))}</p><button class="btn ocre" data-s="fesSoci">${esc(tx(TEXTOS.sociBoto))}</button></div>
   <button class="card act" data-s="priv" style="margin-top:12px"><div class="n">Privacitat</div><span style="margin-left:auto;color:var(--mut);font-size:22px">›</span></button>
   ${sortirHTML()}`;
@@ -993,7 +1035,7 @@ function vAjuda(){
 }
 const PRIV_V = 1;
 function privMap(){ try { return JSON.parse(localStorage.getItem('avv-priv') || '{}'); } catch(e){ return S._pm || (S._pm = {}); } }
-function privKey(){ return S.soci ? S.soci.dni : S.user ? S.user.nom : ''; }
+function privKey(){ return S.soci ? S.soci.dni : S.user ? (S.user.tel ? 'TEL:' + S.user.tel : S.user.nom) : ''; }
 function privVist(){ const r = privMap()[privKey()]; return !!(r && r.v >= PRIV_V); }
 function marcaPriv(){ const m = privMap(); m[privKey()] = {v:PRIV_V, d:new Date().toLocaleDateString('ca-ES')}; try { localStorage.setItem('avv-priv', JSON.stringify(m)); } catch(e){ S._pm = m; } }
 function privText(){
@@ -1014,17 +1056,20 @@ function vPriv(){
 function vIdent(){
   const hint = '';
   const peu = `<p style="text-align:center;margin-top:18px;font-size:15px"><button class="link" data-a="alta">No ets soci? Fes-te’n</button> · <button class="link" data-a="ajuda">Necessites ajuda?</button></p>`;
-  let h = `<h2>Entra amb el teu DNI</h2>${S.after ? '<p style="margin-top:8px">Per apuntar despeses d’una activitat cal entrar amb el teu DNI de soci.</p>' : ''}<p class="muted" style="margin-top:4px">Només cal fer-ho una vegada en aquest mòbil.</p>${hint}`;
+  let h = `<h2>Entra a l’app</h2>${S.after ? '<p style="margin-top:8px">Per apuntar despeses d’una activitat cal entrar amb el teu DNI de soci.</p>' : '<p style="margin-top:8px">Si ets soci, amb el teu DNI. Si no ho ets però estàs inscrit a un curs, amb el telèfon que vas donar a la inscripció.</p>'}<p class="muted" style="margin-top:4px">Només cal fer-ho una vegada en aquest mòbil.</p>${hint}`;
   if (S.bloq && Date.now() < S.bloq) return h + `<div class="card" style="margin-top:16px;border-color:var(--red)"><p>Has fet massa intents. Torna-ho a provar d’aquí a 15 minuts.</p></div>${peu}`;
   if (S.idPas){
     const rs = `<p class="muted" id="rs" style="margin-top:14px;text-align:center">${resendTxt()}</p>`;
-    return `<h2>Revisa el teu correu</h2><p style="margin-top:8px">Si el DNI <b>${S.idDni.toUpperCase()}</b> és d’una persona registrada, li hem enviat un codi de 6 xifres al correu que té l’associació.</p>
+    const pas1 = esTelId(S.idDni)
+      ? `Si el telèfon <b>${esc(netTel(S.idDni))}</b> consta en alguna inscripció als cursos, hem enviat un codi de 6 xifres al correu de la inscripció. Si hi ha inscripcions amb correus diferents, l’hem enviat a tots.`
+      : `Si el DNI <b>${esc(S.idDni.toUpperCase())}</b> és d’una persona registrada, li hem enviat un codi de 6 xifres al correu que té l’associació.`;
+    return `<h2>Revisa el teu correu</h2><p style="margin-top:8px">${pas1}</p>
     <div class="card" style="margin-top:14px;background:var(--pri-soft);border-color:var(--pri);color:var(--pri-soft-ink);font-size:14px">Pots sortir a mirar el correu tranquil·lament: quan tornis, seguiràs en aquesta pantalla. El codi caduca en ${PEND_MIN} minuts.</div>
     <label class="f">Codi de 6 xifres<input type="text" id="ic" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="······" style="font-size:28px;letter-spacing:10px;text-align:center;font-weight:700"></label><div class="err" id="e-ic"></div>
     <button class="btn full" style="margin-top:16px" data-a="idOk">Entrar</button>${rs}
-    <p style="text-align:center;margin-top:6px"><button class="link" data-a="canviaDni">Canviar el DNI</button> · <button class="link" data-a="ajuda">Necessites ajuda?</button></p>`;
+    <p style="text-align:center;margin-top:6px"><button class="link" data-a="canviaDni">${esTelId(S.idDni) ? 'Canviar el telèfon' : 'Canviar el DNI'}</button> · <button class="link" data-a="ajuda">Necessites ajuda?</button></p>`;
   }
-  h += `<label class="f">DNI o NIE<input type="text" id="id" value="${S.idDni||''}" autocapitalize="characters"></label><div class="err" id="e-id"></div>`;
+  h += `<label class="f">DNI, NIE o telèfon<input type="text" id="id" value="${esc(S.idDni||'')}" autocapitalize="characters" autocomplete="off"></label><div class="err" id="e-id"></div>`;
   if (!S.idPas) return h + `<button class="btn full" style="margin-top:18px" data-a="idCodi">Enviar-me el codi al mail</button>${peu}`;
   const rs = S.envios >= 3 && false ? `<p style="margin-top:12px">Si el codi no t’arriba, potser tenim el teu correu malament. Contacta amb l’administrador: <a href="https://wa.me/34699304442" target="_blank" rel="noopener">699 304 442</a>.</p>` : `<p class="muted" id="rs" style="margin-top:12px">${resendTxt()}</p>`;
   return h + `<p style="margin-top:14px">Si aquest DNI és d’una persona registrada, rebràs un codi de 6 xifres al correu que té l’associació. Pot trigar un minut.</p><label class="f">Codi de 6 xifres<input type="text" id="ic" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></label><div class="err" id="e-ic"></div><button class="btn full" style="margin-top:18px" data-a="idOk">Entrar</button>${rs}${peu}`;
@@ -1919,9 +1964,9 @@ document.addEventListener('click', e => {
     case 'altaComprova': if (S.altaEstat){ S.altaEstat.estat = 'comprovant'; S.altaEstat.intents = ALTA_ESPERA - 4; render(); comprovaAlta(); } break;
     case 'ident': S.after = null; S.idPas = false; S.idDni = ''; go('soci', {v:'ident'}); break;
     case 'idCodi': case 'reenvia': {
-      if (d.a === 'idCodi'){ if (!req([['id','Aquest DNI o NIE no és correcte. Revisa els números i la lletra.',isDni]])) break; S.idDni = val('id'); }
+      if (d.a === 'idCodi'){ if (!req([['id', /[A-Za-z]/.test(val('id')) ? 'Aquest DNI o NIE no és correcte. Revisa els números i la lletra.' : (S.after ? 'Escriu el teu DNI o NIE de soci.' : 'Revisa el número: el telèfon té 9 xifres, i el DNI, 8 xifres i una lletra.'), v => isDni(v) || (!S.after && isTel(v))]])) break; S.idDni = val('id'); }
       const txt = b.textContent; b.disabled = true; b.textContent = 'Enviant…';
-      motor('solicitarCodi', {dni:S.idDni}).then(r => {
+      motor('solicitarCodi', idPeticio(S.idDni)).then(r => {
         b.disabled = false; b.textContent = txt;
         if (r.ok){ S.rsT = Date.now() + 60000; S.idPas = true; desaPendent(); render(); setTimeout(() => { const c = document.getElementById('ic'); if (c) c.focus(); }, 50); if (d.a === 'reenvia') toast('Codi reenviat'); return; }
         if (r.codi === 'BLOQUEJAT'){ S.bloq = Date.now() + 900000; render(); return; }
@@ -1941,7 +1986,8 @@ document.addEventListener('click', e => {
       if (!req([['ic','El codi té 6 xifres. Copia’l tal com surt al correu.', v => /^\d{6}$/.test(v)]])) break;
       b.disabled = true; b.textContent = 'Comprovant…';
       const disp = (navigator.userAgent.match(/iPhone|iPad|Android[^;)]*|Windows|Mac OS X/) || ['Mòbil'])[0];
-      motor('verificarCodi', {dni:S.idDni, codi:val('ic'), dispositiu:disp}).then(r => {
+      const ambTel = esTelId(S.idDni);
+      motor('verificarCodi', Object.assign(idPeticio(S.idDni), {codi:val('ic'), dispositiu:disp})).then(r => {
         b.disabled = false; b.textContent = 'Entrar';
         if (!r.ok){
           if (r.codi === 'INCORRECTE'){ err('ic', `Aquest codi no és correcte. Et queden ${r.intents} ${r.intents === 1 ? 'intent' : 'intents'}.`); return; }
@@ -1950,14 +1996,15 @@ document.addEventListener('click', e => {
           err('ic', MSG[r.codi] || MSG.SERVEI); return;
         }
         desaToken(r.token); esborraPendent(); S.bloq = 0; S.idPas = false;
-        aplicaPerfil(r.perfil, S.idDni.toUpperCase().replace(/[\s.-]/g,''));
+        if (ambTel) aplicaInscrit(r.inscrit, netTel(S.idDni)); else aplicaPerfil(r.perfil, S.idDni.toUpperCase().replace(/[\s.-]/g,''));
+        S.mc = null; S.mcErr = false; S.mcCarr = false; carregaMeusCursos(true);
         S.agCarr = false; carregaAgenda(); S.actCarr = false; carregaActivitats(); S.fi = null; S.insV = {}; S.insErr = ''; S.mevesCarr = false; carregaMeves();
-        toast(`Hola, ${r.perfil.nom}! Ja has entrat.`);
+        { const n = ambTel ? (r.inscrit && r.inscrit.nom) : r.perfil.nom; toast(n ? `Hola, ${n}! Ja has entrat.` : 'Ja has entrat.'); }
         if (S.after){ const t = S.after; S.after = null; sub(t); }
         else { S.sub = null; const t = S.afterTab || 'inici'; S.afterTab = null; go(t); }
       });
       break; }
-    case 'sortir': motor('tancarSessio', {token:token()}); desaToken(''); S.mv = null; S.mvCfg = null; S.confS = false; S.entrat = false; S.junta = false; S.rol = 'visitant'; S.soci = null; S.user = null; S.ins = []; S.meves = []; S.wz = null; S.fi = null; S.insV = {}; S.insErr = ''; S.anullaQ = null; try { localStorage.removeItem('avv-meves'); localStorage.removeItem('avv-ins'); localStorage.removeItem('avv-activitats'); } catch(e){} S.acts = null; S.actCarr = false; carregaActivitats(); S.mevesCarr = false; carregaMeves(); oblidaAgenda(); toast('Sessió tancada'); go('inici'); break;
+    case 'sortir': motor('tancarSessio', {token:token()}); desaToken(''); S.mv = null; S.mvCfg = null; S.confS = false; S.entrat = false; S.junta = false; S.rol = 'visitant'; S.soci = null; S.user = null; S.ins = []; S.meves = []; S.wz = null; S.fi = null; S.insV = {}; S.insErr = ''; S.anullaQ = null; S.mc = null; try { localStorage.removeItem('avv-meves'); localStorage.removeItem('avv-ins'); localStorage.removeItem('avv-activitats'); localStorage.removeItem('avv-meus-cursos'); } catch(e){} S.acts = null; S.actCarr = false; carregaActivitats(); S.mevesCarr = false; carregaMeves(); oblidaAgenda(); toast('Sessió tancada'); go('inici'); break;
     case 'mvEnvia': mvEnvia(); break;
     case 'mvTreu': if (S.mv){ S.mv.fitxers.splice(+d.i, 1); render(); } break;
     case 'mvAltre': { const k = S.mv ? S.mv.clau : ''; mvNou(k); render(); window.scrollTo(0, 0); break; }
@@ -2126,6 +2173,7 @@ document.addEventListener('click', e => {
     case 'reintentaIns': S.insErr = ''; render(); break;
     case 'reintentaArr': S.arrErr = ''; render(); break;
     case 'cursosRetry': S.cuPErr = false; carregaCursosP(true); render(); break;
+    case 'meusRetry': S.mcErr = false; carregaMeusCursos(true); render(); break;
     case 'reintentaJ': S.avJErr = null; S.pendErr = null; S.soJErr = null; S.infErr = null; S.crJErr = null; S.pgCErr = null; render(); break;
     case 'pagCursos': S.pgC = null; S.pgCErr = null; sub({v:'cursPag', up:{v:'cursosJ'}}); break;
     case 'nouCurs': S.crEd = {curs: S.crJ && S.crJ.cursActual}; sub({v:'cursForm', up:{v:'cursosJ'}}); break;
@@ -2227,8 +2275,11 @@ if (!token() && (S.soci || S.user)){ S.soci = null; S.user = null; S.rol = 'visi
   comprovaAlta();
 })();
 if (token()) motor('sessio', {token:token()}).then(r => {
-  if (r.ok){ aplicaPerfil(r.perfil); if (!r.perfil) toast('No consta com a soci aquest any. Escriu-nos si és un error.'); render(); }
-  else if (r.codi === 'SESSIO_CADUCADA'){ desaToken(''); S.soci = null; S.user = null; S.rol = 'visitant'; S.entrat = false; S.sub = null; oblidaAgenda(); render(); toast('La sessió ha caducat. Torna a entrar amb el teu DNI.'); }
+  if (r.ok){
+    if (r.inscrit){ aplicaInscrit(r.inscrit); carregaMeusCursos(); }
+    else { aplicaPerfil(r.perfil); if (!r.perfil) toast('No consta com a soci aquest any. Escriu-nos si és un error.'); else carregaMeusCursos(); }
+    render(); }
+  else if (r.codi === 'SESSIO_CADUCADA'){ desaToken(''); S.soci = null; S.user = null; S.rol = 'visitant'; S.entrat = false; S.sub = null; oblidaAgenda(); render(); S.mc = null; try { localStorage.removeItem('avv-meus-cursos'); } catch(e){} toast('La sessió ha caducat. Torna a entrar.'); }
 });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 window.addEventListener('hashchange', () => { if (rutaHash()){ render(); return; } if (!S.keep) S.sub = null; S.keep = false; render(); window.scrollTo(0,0); });
