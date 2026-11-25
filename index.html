@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ca">
-<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-25b (pantalla de benvinguda de 3 segons fixos; missatges divertits a l’atzar mentre es carrega; fora l’avís de versió de proves i, al peu de cada pantalla, «Has trobat un error? Avisa’ns» amb un WhatsApp ja escrit amb la pantalla) -->
+<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-25c (venda de cartrons de la quina: rajola «Venda de cartrons» a la fitxa de l’activitat (junta) i enllaç amb PIN per als voluntaris; quina amb especial (soci i establiment amb un especial gratis, controlat pel DNI) o quina familiar; cobrament en efectiu o amb SumUp; resum de caixa i anul·lar vendes) -->
+<!-- Versió anterior: App AVV Pla de Palau – Sant Pau · versió 2026-11-25b (pantalla de benvinguda de 3 segons fixos; missatges divertits a l’atzar mentre es carrega; fora l’avís de versió de proves i, al peu de cada pantalla, «Has trobat un error? Avisa’ns» amb un WhatsApp ja escrit amb la pantalla) -->
 <!-- Versió anterior: App AVV Pla de Palau – Sant Pau · versió 2026-11-25 («Els meus cursos» reals: els inscrits que no són socis entren amb el telèfon de la inscripció i reben el codi als correus de les seves inscripcions; els socis hi veuen els cursos on surt el seu telèfon o el seu correu) -->
 <!-- Abans: versió 2026-11-24b (pestanya Cursos: període de cada grup i marca «Places lliures» amb enllaç al correu de cursos; Junta › Cursos › Pagaments i reserves: cobrat i previst per grup, per curs i total; abans, 2026-11-24: pestanya Cursos real: llista de cursos i grups de la temporada, del fitxer únic de cursos; abans, 2026-11-23c: Junta › Cursos › Pagaments i reserves, només lectura; 2026-11-23b: «Professor/a pendent» i botó per omplir-lo; abans, 2026-11-23: cursos, fase 1: casella Cursos al menú de la junta amb l’alta i l’edició de cursos i professors; factures dels professors des d’Apuntar despesa o ingrés; abans, 2026-11-18b: correcció: la capa de benvinguda amagada tapava l'app; pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
 <head>
@@ -188,7 +189,7 @@ const AVISOS = [
 const curs = id => CURSOS.find(c => c.id === id);
 // ===== Connexió amb el motor d'accés (Apps Script del full de socis) =====
 const MOTOR = 'https://script.google.com/macros/s/AKfycbxNeEcaHhN8SjH7W2cjmJyPAxlmYY7vP-Ic8kJQ28GtfK09pbjvBpb2hJFMF_JVuxu2/exec';
-const VERSIO = '2026-11-25b';
+const VERSIO = '2026-11-25c';
 // Missatges mentre es carrega alguna cosa: un a l'atzar. Es manté el mateix mentre dura la càrrega
 // (la pantalla es torna a pintar sovint) i en canvia a la càrrega següent.
 const MSG_CARREGA = ['Anem a buscar-ho al racó del barri…', 'Un moment, que el veí ho està mirant…', 'Escalfant motors…',
@@ -281,7 +282,7 @@ const IC = {
   junta:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>'
 };
 
-function tab(){ const h = location.hash.slice(1); if (/^(ins|v|act)\./.test(h)) return 'activitats'; if (/^arr\./.test(h)) return S.arrTab || 'activitats'; return ['inici','activitats','cursos','soci','junta'].includes(h) ? h : 'inici'; }
+function tab(){ const h = location.hash.slice(1); if (/^(ins|v|act)\./.test(h)) return 'activitats'; if (/^(arr|cart)\./.test(h)) return S.arrTab || 'activitats'; return ['inici','activitats','cursos','soci','junta'].includes(h) ? h : 'inici'; }
 function go(t, sub){
   S.sub = sub || null;
   if (location.hash.slice(1) !== t){
@@ -306,7 +307,7 @@ function enrere(){
   const s = S.sub;
   if (s && s.v === 'nova') wzDesa();
   if (/^#(ins|v|act)\./.test(location.hash)) history.replaceState(history.state, '', location.pathname + '#activitats');
-  if (/^#arr\./.test(location.hash) && !(s && s.v === 'escaner')) history.replaceState(history.state, '', location.pathname + '#' + (S.arrTab || 'activitats'));
+  if (/^#(arr|cart)\./.test(location.hash) && !(s && s.v === 'escaner')) history.replaceState(history.state, '', location.pathname + '#' + (S.arrTab || 'activitats'));
   if (s && s.up) sub(s.up);
   else if (s && s.v === 'pagament' && S.pag && S.pag.back) sub(S.pag.back);
   else { S.sub = null; render(); window.scrollTo(0,0); }
@@ -616,6 +617,7 @@ function vActivitats(){
   return `<h1 style="margin:6px 0 14px">Activitats</h1>${meves()}${chips ? `<div style="margin-top:${mevesVigents().length ? 18 : 0}px">${chips}</div>` : ''}<div style="margin-top:14px">${blocActs(l)}</div>`;
 }
 const MI = {
+  cart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 000 4v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2a2 2 0 000-4z"/><path d="M14 5v12" stroke-dasharray="2 2"/></svg>',
   edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
   qr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 14h2M14 18h2M18 18h2v2"/></svg>',
   ins:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>',
@@ -647,9 +649,11 @@ function vDetall(id){
   if (esJ()){
     tiles += t('', MI.edit, 'Editar l’activitat', a.amagada ? 'Esborrany: no es veu a l’app' : 'Dades, preus i visibilitat', 'data-a="editaAct"');
     if (a.ins) tiles += t('arribades', MI.qr, 'Inscrits i arribades', a.ocup ? `${a.ocup} ${a.ocup === 1 ? 'plaça ocupada' : 'places ocupades'}` : 'Encara cap inscripció');
+    const qc = a.cartrons;
+    if (qc || /quina|loto|bingo/i.test(a.nom)) tiles += t('cartrons', MI.cart, 'Venda de cartrons', !qc ? 'Cal triar el tipus de quina i els preus' : qc.tipus === 'familiar' ? `Quina familiar · ${eur(qc.preu)} el cartró` : `Quina ${eur(qc.preu)} · especial ${eur(qc.preuEsp)}`);
   }
   const comparteix = a.amagada ? '<p class="muted" style="margin-top:14px;font-size:13px">És un esborrany: publica-la abans de compartir-la.</p>' : '<button class="btn ghost full" style="margin-top:14px" data-a="compartAct">Compartir l’activitat</button>';
-  return `${a.amagada ? '<p style="margin-bottom:10px"><span class="tag g">Esborrany: només el veu la junta</span></p>' : ''}${cartell(a)}<div class="tiles" style="margin-top:14px">${tiles}</div>${comparteix}${a.ins && !esJ() ? '<button class="link" style="margin-top:14px" data-sa="arribades">Ets voluntari/ària? Control d’arribades</button>' : ''}`;
+  return `${a.amagada ? '<p style="margin-bottom:10px"><span class="tag g">Esborrany: només el veu la junta</span></p>' : ''}${cartell(a)}<div class="tiles" style="margin-top:14px">${tiles}</div>${comparteix}${a.ins && !esJ() ? '<button class="link" style="margin-top:14px" data-sa="arribades">Ets voluntari/ària? Control d’arribades</button>' : ''}${a.cartrons && !esJ() ? '<button class="link" style="margin-top:14px;display:block" data-sa="cartrons">Ets voluntari/ària? Venda de cartrons</button>' : ''}`;
 }
 const filaIA = (k, v) => k
   ? `<div class="row" style="gap:16px"><span class="muted">${esc(k)}</span><b style="text-align:right">${esc(v)}</b></div>`
@@ -1350,6 +1354,13 @@ function meves(){
 function rutaHash(){
   const mc = location.href.match(/#act\.([a-z0-9-]+)/);
   if (mc){ S.sub = {v:'detall', id:mc[1], enllac:true}; return true; }
+  const mq = location.href.match(/#cart\.([a-z0-9-]+)(?:\.(\d{4}))?/);
+  if (mq){
+    if (mq[2]){ S.pins = S.pins || {}; S.pins[mq[1]] = mq[2]; desaPins(); }
+    history.replaceState(history.state, '', location.pathname + '#cart.' + mq[1]);   // el PIN no es queda a la barra d'adreces
+    S.qd = {}; S.qf = null; S.qConf = null; S.sub = {v:'cartrons', id:mq[1]};
+    return true;
+  }
   const ma = location.href.match(/#arr\.([a-z0-9-]+)(?:\.(\d{4}))?/);
   if (ma){
     if (ma[2]){ S.pins = S.pins || {}; S.pins[ma[1]] = ma[2]; desaPins(); }
@@ -1587,6 +1598,188 @@ function vArribades(id){
   <label class="f" style="margin-top:18px">Cerca per nom o codi<input type="text" id="cerca" autocomplete="off" placeholder="Nom o codi de la inscripció"></label>
   <div class="card" style="margin-top:10px">${files.length ? files.map(fila).join('') : '<p class="muted">Encara no hi ha cap inscripció confirmada.</p>'}</div>
   <button class="link" style="margin-top:10px" data-a="arrRefresca">Actualitzar la llista</button>`;
+}
+/* --- Venda de cartrons de la quina (junta o voluntaris amb el PIN de l'activitat; motor: Quina.gs) --- */
+// Quina: cartró de la quina i cartrons de la quina especial. Cada soci amb la quota al dia i cada establiment
+// col·laborador té UN especial gratis (el dels socis es controla pel DNI al servidor, entre tots els mòbils).
+// Quina familiar: un sol tipus de cartró, igual per a tothom. Cobrament: efectiu o SumUp (es cobra a l'app de SumUp).
+const MSG_Q = {SENSE_CONF:'La junta encara no ha configurat la venda de cartrons d’aquesta activitat.', JA_GRATIS:'Aquest soci ja ha tingut el cartró especial gratis.',
+  NO_SOCI:'No té la quota al dia: paga com a no soci.', SENSE_QUINA:'Per tenir cartrons de la quina especial cal un cartró de la quina.', REF:'Torna a cercar el soci: la cerca ha caducat.'};
+const msgQ = r => r.msg || MSG_Q[r.codi] || msgJ(r);
+const pinQ = id => (S.pins || {})[id] || '';
+const nouFormQ = id => ({act:id, qui:'no', n:1, e:0, jaTe:false, soci:null, res:null, mes:false, q:'', est:'', pas:'', err:'', cercant:false});
+const nCart = (n, s, p) => n + ' ' + (n === 1 ? s : p);
+function carregaQ(id){
+  if (S.qCarr === id) return;
+  S.qCarr = id; S.qErr = '';
+  motor('cartronsEstat', {act:id, token:token(), pin:pinQ(id)}).then(r => {
+    S.qCarr = null;
+    if (!r.ok){
+      if (r.codi === 'PIN' || r.codi === 'BLOQUEJAT'){ delete S.pins[id]; desaPins(); S.pinErr = r.codi === 'PIN' ? 'Aquest PIN no és correcte.' : MSG.BLOQUEJAT; }
+      else { S.qErr = msgQ(r); S.qErrId = id; }
+      render(); return;
+    }
+    S.qd = S.qd || {}; S.qd[id] = r;
+    if (!S.qf || S.qf.act !== id) S.qf = nouFormQ(id);
+    if (r.junta && !r.conf && !S.qConf) S.qConf = {tipus:'quina', preu:10, preuEsp:2};
+    render();
+  });
+}
+function obreCartrons(id, up){
+  S.arrTab = tab(); S.qd = {}; S.qf = null; S.qConf = null; S.qAnul = null; S.pinErr = ''; S.qErr = '';
+  sub({v:'cartrons', id, up});
+  history.replaceState(history.state, '', location.pathname + '#cart.' + id);
+}
+const enllacCartrons = (id, pin) => location.origin + location.pathname + '#cart.' + id + '.' + pin;
+// El total que es cobra (el motor el torna a calcular i no desa la venda si no coincideix)
+function totalQ(C, f){
+  if (!C) return 0;
+  return Math.round(((f.n || 0) * C.preu + (C.tipus === 'quina' ? (f.e || 0) * C.preuEsp : 0)) * 100) / 100;
+}
+// 'soci' o 'est' si aquesta venda porta el cartró especial gratis
+function gratisQ(C, f){
+  if (!C || C.tipus !== 'quina') return '';
+  if (f.qui === 'est') return 'est';
+  if (f.qui === 'soci' && f.soci && f.soci.actiu && !f.soci.gratis) return 'soci';
+  return '';
+}
+function validaQ(C, f){
+  const quina = C.tipus === 'quina', g = gratisQ(C, f);
+  if (quina && f.qui === 'soci' && !f.soci) return 'Cerca i tria el soci, o tria «No soci».';
+  if (quina && f.qui === 'est' && !f.est.trim()) return 'Escriu el nom de l’establiment.';
+  if (f.n + (quina ? f.e : 0) < 1 && !g) return 'Posa almenys un cartró.';
+  if (quina && (f.e > 0 || g) && f.n < 1 && !f.jaTe && !(f.soci && f.soci.quina)) return 'Per tenir cartrons de la quina especial cal un cartró de la quina. Si ja en té un d’abans, marca «Ja té un cartró de la quina».';
+  return '';
+}
+function liniaQ(v, C){
+  const p = [];
+  if (v.n) p.push(C && C.tipus === 'familiar' ? nCart(v.n, 'cartró', 'cartrons') : nCart(v.n, 'quina', 'quina'));
+  if (v.esp) p.push(nCart(v.esp, 'especial', 'especials'));
+  if (v.gratis) p.push('1 especial gratis');
+  return p.join(' + ') + (v.qui ? ' · ' + v.qui : '');
+}
+function vCartrons(id){
+  const a = act(id), nomAct = a ? a.nom : '';
+  if (!esJ() && !pinQ(id)) return `<h2>Venda de cartrons</h2>${nomAct ? `<p class="muted" style="margin-top:4px">${esc(nomAct)}</p>` : ''}
+    <p style="margin-top:14px">Escriu el PIN de voluntaris d’aquesta activitat. Te’l dona la junta.</p>
+    <label class="f">PIN<input type="tel" id="pa" inputmode="numeric" maxlength="4" autocomplete="off"></label><div class="err" id="e-pa">${esc(S.pinErr || '')}</div>
+    <button class="btn full" style="margin-top:16px" data-a="pinAct">Entrar</button>`;
+  const D = (S.qd || {})[id];
+  if (!D){
+    const ko = S.qErr && S.qErrId === id;
+    if (!ko) carregaQ(id);
+    return `<h2>Venda de cartrons</h2>` + (ko ? `<div class="card" style="margin-top:20px"><p>${esc(S.qErr)}</p><button class="btn ghost full" style="margin-top:12px" data-a="qRefresca">Tornar-ho a provar</button></div>` : `<p class="muted" style="margin-top:20px">${carregant()}</p>`);
+  }
+  if (D.junta && S.qConf) return vConfQ(D);
+  const cap = `<h2>Venda de cartrons</h2><p class="muted" style="margin-top:4px">${esc(D.act.nom)} · ${esc(D.act.quan)}</p>`;
+  if (!D.conf) return cap + `<div class="card" style="margin-top:16px"><p>${MSG_Q.SENSE_CONF}</p></div>`;
+  const C = D.conf, T = D.tot, quina = C.tipus === 'quina';
+  const f = S.qf && S.qf.act === id ? S.qf : (S.qf = nouFormQ(id));
+  const g = gratisQ(C, f), total = totalQ(C, f);
+
+  // Resum de la caixa
+  const resum = `<div class="card" style="margin-top:12px">
+    <div class="row"><span>${quina ? 'Cartrons de la quina' : 'Cartrons venuts'}</span><b>${T.cartrons}</b></div>
+    ${quina ? `<div class="row"><span>Cartrons de l’especial</span><b>${T.esp} pagats · ${T.gratisSoci + T.gratisEst} gratis</b></div>` : ''}
+    <div class="row"><span>Efectiu</span><b>${eur(T.efectiu)}</b></div>
+    <div class="row"><span>SumUp</span><b>${eur(T.sumup)}</b></div>
+    <div class="row"><span>Total cobrat</span><b style="font-size:18px">${eur(T.total)}</b></div></div>`;
+
+  // Qui compra (només a la quina amb especial)
+  let qui = '';
+  if (quina){
+    const bQ = (v, t, s) => `<button class="${f.qui === v ? 'on' : ''}" data-a="qQui" data-v="${v}">${t}<small>${s}</small></button>`;
+    qui = `<div class="sec" style="margin:16px 0 0;color:var(--ink)">Qui compra?</div>
+      <div class="seg" style="grid-template-columns:1fr 1fr 1fr">${bQ('no', 'No soci', 'Preu normal')}${bQ('soci', 'Soci', 'Especial gratis')}${bQ('est', 'Establiment', 'Especial gratis')}</div>`;
+    if (f.qui === 'soci'){
+      if (f.soci){
+        const s = f.soci;
+        const estat = !s.actiu ? `<span class="tag r">Quota pendent: paga com a no soci</span>`
+          : s.gratis ? `<span class="tag o">Ja ha tingut l’especial gratis (${esc(s.gratis)})</span>`
+          : `<span class="tag">Especial gratis disponible</span>`;
+        qui += `<div class="card" style="margin-top:10px"><div class="row" style="align-items:flex-start;gap:10px"><div style="min-width:0"><b>${esc(s.nom)}</b><div class="muted" style="font-size:13px">Soci núm. ${esc(s.num)}${s.quina ? ' · ja té cartró de la quina' : ''}</div><div style="margin-top:6px">${estat}</div></div>
+          <button class="chip" data-a="qCanvia">Canviar</button></div></div>`;
+      } else {
+        const res = f.res ? (f.res.length ? `<div class="card" style="margin-top:10px">${f.res.map((s, i) => `<button class="row" data-a="qTria" data-i="${i}" style="width:100%;background:none;border-left:0;border-right:0;border-top:0;font:inherit;color:inherit;text-align:left;cursor:pointer;gap:10px"><span style="min-width:0"><b>${esc(s.nom)}</b><span class="muted" style="display:block;font-size:13px">Soci núm. ${esc(s.num)}</span></span>${!s.actiu ? '<span class="tag r">Quota pendent</span>' : s.gratis ? '<span class="tag o">Especial ja fet servir</span>' : '<span class="tag">Al dia</span>'}</button>`).join('')}</div>${f.mes ? '<p class="muted" style="font-size:13px;margin-top:6px">N’hi ha més: escriu més lletres del nom o el DNI.</p>' : ''}`
+          : `<div class="card avis-o" style="margin-top:10px"><p>No surt a la llista de socis: paga com a no soci.</p><button class="btn ghost full" style="margin-top:10px" data-a="qQui" data-v="no">Vendre com a no soci</button></div>`) : '';
+        qui += `<label class="f" style="margin-top:10px">DNI o nom del soci<input type="text" id="qcerca" data-qv="q" value="${esc(f.q)}" autocomplete="off" autocapitalize="characters" placeholder="12345678A o Maria Puig"></label><div class="err" id="e-qcerca"></div>
+          <button class="btn ghost full" style="margin-top:8px" data-a="qCerca"${f.cercant ? ' disabled' : ''}>${f.cercant ? 'Cercant…' : 'Cercar'}</button>${res}`;
+      }
+    }
+    if (f.qui === 'est') qui += `<label class="f" style="margin-top:10px">Nom de l’establiment col·laborador<input type="text" id="qest" data-qv="est" value="${esc(f.est)}" autocomplete="off" maxlength="80"></label>`;
+  }
+
+  // Quantitats
+  const qty = (k, t, sub) => `<div class="row"><div style="min-width:0"><b>${t}</b><div class="muted" style="font-size:13px">${sub}</div></div><div class="qty"><button data-a="qMes" data-v="${k}" data-d="-1" aria-label="Treure un"${f[k] ? '' : ' disabled'}>−</button><b aria-live="polite">${f[k]}</b><button data-a="qMes" data-v="${k}" data-d="1" aria-label="Afegir un">+</button></div></div>`;
+  let quant = qty('n', quina ? 'Cartrons de la quina' : 'Cartrons', eur(C.preu) + ' cada un');
+  if (quina){
+    quant += qty('e', 'Cartrons de la quina especial', eur(C.preuEsp) + ' cada un');
+    if (g) quant += `<div class="row"><span>+ 1 cartró de l’especial gratis</span><span class="tag">${g === 'soci' ? 'Soci' : 'Establiment'}</span></div>`;
+    if (f.n < 1 && (f.e > 0 || g)){
+      quant += f.soci && f.soci.quina ? `<p class="muted" style="font-size:13px;margin-top:8px">Ja té cartró de la quina d’una compra anterior.</p>`
+        : `<button class="chip${f.jaTe ? ' on' : ''}" style="margin-top:10px" data-a="qJaTe">${f.jaTe ? '✓ ' : ''}Ja té un cartró de la quina, comprat abans</button>`;
+    }
+  }
+
+  // Cobrament
+  let cobra;
+  if (f.pas === 'sumup') cobra = `<div class="card avis-o" style="margin-top:14px"><p>Cobra <b style="font-size:22px">${eur(total)}</b> amb l’app de SumUp (Tap to Pay).</p><p class="muted" style="font-size:13px;margin-top:6px">Quan el pagament surti com a fet a SumUp, prem «Ja està cobrat».</p>
+      <div style="display:flex;gap:10px;margin-top:12px"><button class="btn ghost" style="flex:1" data-a="qPas" data-v="">Enrere</button><button class="btn" style="flex:1" data-a="qVen" data-v="sumup">Ja està cobrat</button></div></div>`;
+  else if (total === 0) cobra = `<button class="btn full" style="margin-top:14px" data-a="qVen" data-v="efectiu">Desar (no es cobra res)</button>`;
+  else cobra = `<div style="display:flex;gap:10px;margin-top:14px"><button class="btn" style="flex:1" data-a="qVen" data-v="efectiu">Cobrat en efectiu</button><button class="btn ghost" style="flex:1" data-a="qPas" data-v="sumup">Cobrar amb SumUp</button></div>`;
+
+  const form = `<div class="sec" style="margin-top:18px">Nova venda</div>${qui}
+    <div class="card" style="margin-top:12px">${quant}<div class="row"><span>Total</span><b style="font-size:24px">${eur(total)}</b></div></div>
+    ${f.err ? `<div class="card avis-ko" style="margin-top:10px"><p>${esc(f.err)}</p></div>` : ''}${cobra}`;
+
+  // Últimes vendes
+  const vendes = D.vendes.length ? D.vendes.map(v => `<div class="row" style="align-items:flex-start;gap:10px${v.anul ? ';opacity:.55' : ''}"><div style="min-width:0"><b>${esc(v.hora)} · ${eur(v.imp)}</b> <span class="muted" style="font-size:13px">${esc(v.pag)}</span><div class="muted" style="font-size:13px">${esc(liniaQ(v, C))}</div></div>
+      ${v.anul ? '<span class="tag g">Anul·lada</span>' : S.qAnul === v.c ? `<span style="display:flex;gap:6px;flex:none"><button class="chip" data-a="qAnulNo">No</button><button class="chip on" style="background:var(--red);border-color:var(--red)" data-a="qAnul" data-c="${esc(v.c)}">Anul·lar</button></span>` : `<button class="chip" data-a="qAnulQ" data-c="${esc(v.c)}">Anul·lar</button>`}</div>`).join('')
+    : '<p class="muted">Encara no hi ha cap venda.</p>';
+
+  const junta = D.junta ? `<div class="card" style="margin-top:12px"><div class="row"><span>PIN per als voluntaris</span><b style="font-size:20px;letter-spacing:3px">${esc(D.pin)}</b></div>
+    <button class="btn full" style="margin-top:10px" data-a="compartQ">Compartir l’enllaç amb voluntaris</button>
+    <p class="muted" style="margin-top:8px;font-size:13px">És el mateix PIN del control d’arribades. Amb l’enllaç poden vendre cartrons sense entrar amb el DNI.</p>
+    <button class="link" data-a="qConfEdita">Canviar el tipus de quina o els preus</button></div>` : '';
+
+  return cap + junta + resum + form + `<div class="sec" style="margin-top:18px">Últimes vendes</div><div class="card">${vendes}</div>
+    <button class="link" style="margin-top:10px" data-a="qRefresca">Actualitzar</button>`;
+}
+function vConfQ(D){
+  const c = S.qConf, quina = c.tipus === 'quina';
+  return `<h2>Venda de cartrons</h2><p class="muted" style="margin-top:4px">${esc(D.act.nom)}</p>
+    <div class="sec" style="margin:16px 0 0;color:var(--ink)">Tipus de quina</div>
+    <div class="seg"><button class="${quina ? 'on' : ''}" data-a="qcTipus" data-v="quina">Quina<small>Amb quina especial</small></button><button class="${!quina ? 'on' : ''}" data-a="qcTipus" data-v="familiar">Quina familiar<small>Un sol cartró</small></button></div>
+    <label class="f" style="margin-top:14px">Preu del cartró (€)<input type="number" id="qcp" inputmode="decimal" min="0" step="0.5" value="${esc(c.preu)}"></label><div class="err" id="e-qcp"></div>
+    ${quina ? `<label class="f">Preu del cartró de la quina especial (€)<input type="number" id="qce" inputmode="decimal" min="0" step="0.5" value="${esc(c.preuEsp)}"></label><div class="err" id="e-qce"></div>
+    <p class="muted" style="font-size:13px;margin-top:8px">Cada soci amb la quota al dia i cada establiment col·laborador té un cartró de l’especial gratis. Per comprar cartrons de l’especial cal tenir un cartró de la quina.</p>`
+    : '<p class="muted" style="font-size:13px;margin-top:8px">Tothom paga el mateix i el cartró serveix per a totes les partides.</p>'}
+    <button class="btn full" style="margin-top:16px" data-a="qcDesa">Desar</button>
+    ${D.conf ? '<button class="btn ghost full" style="margin-top:8px" data-a="qcNo">Cancel·lar</button>' : ''}`;
+}
+function llegeixConfQ(){ if (!S.qConf) return; const p = val('qcp'), e = val('qce'); if (p !== '') S.qConf.preu = p; if (e !== '') S.qConf.preuEsp = e; }
+function venQ(pag, b){
+  const id = S.sub.id, D = S.qd[id], f = S.qf, C = D.conf, g = gratisQ(C, f), msg = validaQ(C, f);
+  if (msg){ f.err = msg; f.pas = ''; render(); return; }
+  b.disabled = true; f.err = '';
+  const imp = totalQ(C, f), quina = C.tipus === 'quina';
+  const dades = {act:id, token:token(), pin:pinQ(id), n:f.n, esp:quina ? f.e : 0, gratis:g, ref:quina && f.qui === 'soci' && f.soci ? f.soci.ref : '',
+    est:quina && f.qui === 'est' ? f.est.trim() : '', jaTe:!!f.jaTe, pag, imp};
+  motor('cartronsVenda', dades).then(r => {
+    if (!r.ok){
+      b.disabled = false; f.err = msgQ(r); f.pas = '';
+      if (r.codi === 'PREUS' || r.codi === 'SENSE_CONF'){ delete S.qd[id]; }
+      if (r.codi === 'REF' && f.soci){ f.soci = null; }
+      render(); return;
+    }
+    const ara = new Date();
+    D.tot = r.tot;
+    D.vendes.unshift({c:r.c, hora:String(ara.getHours()).padStart(2, '0') + ':' + String(ara.getMinutes()).padStart(2, '0'), n:dades.n, esp:dades.esp,
+      gratis:g === 'soci' ? 'Soci' : g === 'est' ? 'Establiment' : '', qui:f.qui === 'soci' && f.soci ? f.soci.nom : dades.est, imp:r.imp, pag:pag === 'sumup' ? 'SumUp' : 'Efectiu', anul:false});
+    D.vendes = D.vendes.slice(0, 15);
+    toast('Venda desada · ' + eur(r.imp));
+    S.qf = nouFormQ(id); render();
+  });
 }
 function vEscaner(id){
   const a = act(id);
@@ -1870,7 +2063,7 @@ function render(){
   $('#nav').innerHTML = navHTML();
   const m = $('#main'), s = S.sub;
   if (S.esperaAct) m.innerHTML = `<p class="muted" style="margin-top:24px">${S.actErr ? 'Ara mateix no s’han pogut carregar les activitats. Torna-ho a provar d’aquí a una estona.' : carregant()}</p>`;
-  else if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vMov(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, fesSoci:vFesSoci, altaEstat:vAltaEstat, ident:vIdent, despesa:()=>vMov(''), inscrits:vInscrits, socis:vSocis, cursosJ:vCursosJ, cursForm:vCursForm, cursPag:vCursPag, gestioAct:vGestioAct, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), escaner:()=>vEscaner(s.id), nova:vNova})[s.v]();
+  else if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vMov(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, fesSoci:vFesSoci, altaEstat:vAltaEstat, ident:vIdent, despesa:()=>vMov(''), inscrits:vInscrits, socis:vSocis, cursosJ:vCursosJ, cursForm:vCursForm, cursPag:vCursPag, gestioAct:vGestioAct, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), cartrons:()=>vCartrons(s.id), escaner:()=>vEscaner(s.id), nova:vNova})[s.v]();
   else m.innerHTML = ({inici:vInici, activitats:vActivitats, cursos:vCursos, soci:vSoci, junta:vJunta})[t]();
   if (!S.esperaAct) m.insertAdjacentHTML('beforeend', avisaErrorHTML());
   if (s && (s.v === 'ins' || s.v === 'qr')) setTimeout(pintaQR, 0);
@@ -1883,7 +2076,7 @@ const NOM_SUB = {detall:'Fitxa d’una activitat', curs:'Fitxa d’un curs', aju
   ok:'Inscripció feta', alta:'Alta de soci', fesSoci:'Fes-te soci', altaEstat:'Estat de l’alta de soci', ident:'Entra a l’app', despesa:'Apuntar despesa o ingrés',
   inscrits:'Inscrits', socis:'Últims socis', cursosJ:'Junta › Cursos', cursForm:'Junta › Alta o edició d’un curs', cursPag:'Junta › Pagaments i reserves',
   gestioAct:'Activitats de la junta', informes:'Informes', agendaTota:'Reunions', avisosJ:'Junta › Avisos', avisForm:'Junta › Nou avís', pendents:'Junta › Avisos pendents',
-  ins:'La meva inscripció', qr:'QR d’una inscripció', arribades:'Gestionar arribades', escaner:'Escàner de QR', nova:'Nova activitat'};
+  ins:'La meva inscripció', qr:'QR d’una inscripció', arribades:'Gestionar arribades', cartrons:'Venda de cartrons', escaner:'Escàner de QR', nova:'Nova activitat'};
 function nomPantalla(){
   const s = S.sub, t = tab();
   if (!s || !s.v) return NOM_TAB[t] || t;
@@ -1928,6 +2121,7 @@ document.addEventListener('click', e => {
   if (d.ins){ const [c, s2] = d.ins.split('.'); S.insV = {}; S.insErr = ''; S.anullaQ = null; sub({v:'ins', c, s:s2, up:S.sub}); return; }
   if (d.arr){ obreArribades(d.arr, {v:'inscrits', up:S.sub && S.sub.up}); return; }
   if (d.sa === 'arribades'){ obreArribades(S.sub.id, S.sub); return; }
+  if (d.sa === 'cartrons'){ obreCartrons(S.sub.id, S.sub); return; }
   if (S.wz && S.sub && S.sub.v === 'nova') wzLlegeix();
   if (d.f){ S.filtre = d.f; render(); return; }
   if (d.fc){ S.fc = d.fc; render(); return; }
@@ -2096,7 +2290,7 @@ document.addEventListener('click', e => {
         if (r.ins) S.insV[s.c] = r.ins; if (S.arr) delete S.arr[x.act]; render();
       });
       break; }
-    case 'pinAct': { const id = S.sub.id, pa = val('pa'); if (!/^\d{4}$/.test(pa)){ err('pa', 'El PIN té 4 xifres.'); break; } S.pins = S.pins || {}; S.pins[id] = pa; desaPins(); S.pinErr = ''; S.arr = {}; render(); break; }
+    case 'pinAct': { const id = S.sub.id, pa = val('pa'); if (!/^\d{4}$/.test(pa)){ err('pa', 'El PIN té 4 xifres.'); break; } S.pins = S.pins || {}; S.pins[id] = pa; desaPins(); S.pinErr = ''; S.arr = {}; S.qd = {}; S.qErr = ''; render(); break; }
     case 'compartAct': {
       const a = act(S.sub.id); if (!a) break;
       const url = location.origin + location.pathname + '#act.' + a.codi;
@@ -2126,6 +2320,59 @@ document.addEventListener('click', e => {
       });
       break; }
     case 'arrRefresca': if (S.arr) delete S.arr[S.sub.id]; render(); break;
+    // Venda de cartrons de la quina
+    case 'qQui': { const f = S.qf; f.qui = d.v; f.err = ''; f.pas = ''; if (d.v !== 'soci'){ f.soci = null; f.res = null; } render(); break; }
+    case 'qMes': { const f = S.qf; f[d.v] = Math.max(0, Math.min(50, (f[d.v] || 0) + (+d.d))); f.err = ''; f.pas = ''; render(); break; }
+    case 'qJaTe': S.qf.jaTe = !S.qf.jaTe; S.qf.err = ''; render(); break;
+    case 'qCerca': { const f = S.qf, id = S.sub.id; f.q = val('qcerca');
+      if (f.q.replace(/\s/g, '').length < 3){ err('qcerca', 'Escriu el DNI o almenys 3 lletres del nom.'); break; }
+      f.cercant = true; f.res = null; render();
+      motor('cartronsCerca', {act:id, q:f.q, token:token(), pin:pinQ(id)}).then(r => {
+        f.cercant = false;
+        if (!r.ok){ f.err = msgQ(r); render(); return; }
+        f.err = ''; f.mes = !!r.mes;
+        if (r.socis.length === 1){ f.soci = r.socis[0]; f.res = null; } else f.res = r.socis;
+        render();
+      });
+      break; }
+    case 'qTria': { const f = S.qf; f.soci = f.res[+d.i]; f.res = null; f.err = ''; render(); break; }
+    case 'qCanvia': S.qf.soci = null; S.qf.err = ''; render(); break;
+    case 'qPas': { const f = S.qf, D = S.qd[S.sub.id];
+      if (d.v === 'sumup'){ const m = validaQ(D.conf, f); if (m){ f.err = m; render(); break; } }
+      f.err = ''; f.pas = d.v; render(); break; }
+    case 'qVen': venQ(d.v, b); break;
+    case 'qAnulQ': S.qAnul = d.c; render(); break;
+    case 'qAnulNo': S.qAnul = null; render(); break;
+    case 'qAnul': { const id = S.sub.id; b.disabled = true;
+      motor('cartronsAnulla', {act:id, c:d.c, token:token(), pin:pinQ(id)}).then(r => {
+        S.qAnul = null;
+        if (!r.ok){ b.disabled = false; toast(msgQ(r)); render(); return; }
+        toast('Venda anul·lada'); delete S.qd[id]; render();
+      });
+      break; }
+    case 'qRefresca': S.qErr = ''; if (S.qd) delete S.qd[S.sub.id]; render(); break;
+    case 'compartQ': {
+      const D = S.qd[S.sub.id], url = enllacCartrons(D.act.codi, D.pin);
+      const text = `Venda de cartrons de «${D.act.nom}». Obre aquest enllaç al mòbil:`;
+      if (navigator.share) navigator.share({title:'Venda de cartrons', text, url}).catch(() => {});
+      else window.open('https://wa.me/?text=' + encodeURIComponent(text + ' ' + url), '_blank');
+      break; }
+    case 'qConfEdita': { const C = S.qd[S.sub.id].conf; S.qConf = {tipus:C.tipus, preu:C.preu, preuEsp:C.preuEsp || 2}; render(); break; }
+    case 'qcTipus': { llegeixConfQ(); const c = S.qConf;
+      if (d.v === 'familiar' && +c.preu === 10) c.preu = 5;
+      if (d.v === 'quina' && +c.preu === 5) c.preu = 10;
+      c.tipus = d.v; render(); break; }
+    case 'qcNo': S.qConf = null; render(); break;
+    case 'qcDesa': { llegeixConfQ(); const c = S.qConf, id = S.sub.id, p = Number(String(c.preu).replace(',', '.')), pe = Number(String(c.preuEsp).replace(',', '.'));
+      let ok = err('qcp', p > 0 ? '' : 'Escriu el preu del cartró.');
+      if (c.tipus === 'quina') ok = err('qce', pe > 0 ? '' : 'Escriu el preu del cartró de l’especial.') && ok;
+      if (!ok) break;
+      b.disabled = true;
+      motor('juntaCartronsConf', {token:token(), act:id, tipus:c.tipus, preu:p, preuEsp:pe}).then(r => {
+        if (!r.ok){ b.disabled = false; toast(msgQ(r)); return; }
+        toast('Venda de cartrons configurada'); S.qConf = null; S.qf = null; delete S.qd[id]; carregaActivitats(); render();
+      });
+      break; }
     case 'arrMan': { const id = S.sub.id; b.disabled = true;
       motor(d.d === '1' ? 'registraArribada' : 'desferArribada', {c:d.c, act:id, token:token(), pin:(S.pins || {})[id] || ''}).then(r => {
         if (!r.ok){ b.disabled = false; toast(r.msg || msgJ(r)); return; }
@@ -2272,6 +2519,7 @@ recupera();
 // Avisos i agenda: es mostra al moment l'última còpia d'aquest mòbil i s'actualitza en segon pla
 function oblidaAgenda(){ S.ag = null; try { localStorage.removeItem('avv-agenda'); } catch(e){} S.agCarr = false; carregaAgenda(); }
 try { const c = JSON.parse(localStorage.getItem('avv-agenda') || 'null'); if (c && c.ok && (token() || c.nivell === 'convidat')) S.ag = c; } catch(e){}
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'qcerca'){ e.preventDefault(); const b = document.querySelector('[data-a=qCerca]'); if (b && !b.disabled) b.click(); } });
 document.addEventListener('change', e => { if (e.target.id === 'vn') actCad(); if (/^inf-/.test(e.target.id)){ S.infSel = S.infSel || {}; S.infSel[e.target.id] = e.target.value; } });
 document.addEventListener('change', e => {
   const t = e.target, ds = t.dataset || {};
@@ -2285,6 +2533,7 @@ document.addEventListener('input', e => {
   const t = e.target, ds = t.dataset || {};
   if (ds.mv && S.mv && t.type !== 'radio') S.mv.v[ds.mv] = t.value;
   if (ds.fi !== undefined && S.fi) S.fi.v[ds.fi] = t.type === 'checkbox' ? t.checked : t.value;
+  if (ds.qv && S.qf) S.qf[ds.qv] = t.value;
   if (t.id === 'cerca'){ const q = t.value.trim().toLowerCase(); document.querySelectorAll('.arr[data-q]').forEach(r => { r.style.display = !q || r.dataset.q.includes(q) ? '' : 'none'; }); }
 });
 carregaAgenda();
@@ -2337,7 +2586,7 @@ const SPLASH_MSG = ['Despertant els veïns…', 'Regant els testos dels balcons�
   const avui = new Date().toLocaleDateString('sv');   // AAAA-MM-DD
   let d = {}; try { d = JSON.parse(localStorage.getItem('avv-splash') || '{}'); } catch(e){ return; }
   // No surt si ja s'ha vist avui, ni si s'entra per un enllaç que porta directament a una pantalla (QR, pagament, arribades)
-  if (d.dia === avui || /^#(ins|v|act|arr|pagat|pagar)\./.test(location.hash) || /[?&]alta=/.test(location.search) || S.sub) return;
+  if (d.dia === avui || /^#(ins|v|act|arr|cart|pagat|pagar)\./.test(location.hash) || /[?&]alta=/.test(location.search) || S.sub) return;
   const foto = FOTOS.includes(d.seg) ? d.seg : FOTOS[Math.floor(Math.random() * FOTOS.length)];
   const altres = FOTOS.filter(f => f !== foto), seg = altres.length ? altres[Math.floor(Math.random() * altres.length)] : foto;
   try { localStorage.setItem('avv-splash', JSON.stringify({dia:avui, seg})); } catch(e){}
