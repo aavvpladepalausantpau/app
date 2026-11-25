@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="ca">
-<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-25 («Els meus cursos» reals: els inscrits que no són socis entren amb el telèfon de la inscripció i reben el codi als correus de les seves inscripcions; els socis hi veuen els cursos on surt el seu telèfon o el seu correu) -->
-<!-- Versió anterior: App AVV Pla de Palau – Sant Pau · versió 2026-11-24b (pestanya Cursos: període de cada grup i marca «Places lliures» amb enllaç al correu de cursos; Junta › Cursos › Pagaments i reserves: cobrat i previst per grup, per curs i total; abans, 2026-11-24: pestanya Cursos real: llista de cursos i grups de la temporada, del fitxer únic de cursos; abans, 2026-11-23c: Junta › Cursos › Pagaments i reserves, només lectura; 2026-11-23b: «Professor/a pendent» i botó per omplir-lo; abans, 2026-11-23: cursos, fase 1: casella Cursos al menú de la junta amb l’alta i l’edició de cursos i professors; factures dels professors des d’Apuntar despesa o ingrés; abans, 2026-11-18b: correcció: la capa de benvinguda amagada tapava l'app; pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
+<!-- App AVV Pla de Palau – Sant Pau · versió 2026-11-25b (pantalla de benvinguda de 3 segons fixos; missatges divertits a l’atzar mentre es carrega; fora l’avís de versió de proves i, al peu de cada pantalla, «Has trobat un error? Avisa’ns» amb un WhatsApp ja escrit amb la pantalla) -->
+<!-- Versió anterior: App AVV Pla de Palau – Sant Pau · versió 2026-11-25 («Els meus cursos» reals: els inscrits que no són socis entren amb el telèfon de la inscripció i reben el codi als correus de les seves inscripcions; els socis hi veuen els cursos on surt el seu telèfon o el seu correu) -->
+<!-- Abans: versió 2026-11-24b (pestanya Cursos: període de cada grup i marca «Places lliures» amb enllaç al correu de cursos; Junta › Cursos › Pagaments i reserves: cobrat i previst per grup, per curs i total; abans, 2026-11-24: pestanya Cursos real: llista de cursos i grups de la temporada, del fitxer únic de cursos; abans, 2026-11-23c: Junta › Cursos › Pagaments i reserves, només lectura; 2026-11-23b: «Professor/a pendent» i botó per omplir-lo; abans, 2026-11-23: cursos, fase 1: casella Cursos al menú de la junta amb l’alta i l’edició de cursos i professors; factures dels professors des d’Apuntar despesa o ingrés; abans, 2026-11-18b: correcció: la capa de benvinguda amagada tapava l'app; pantalla de benvinguda amb fotos del barri, un cop al dia; informes en PDF des de Junta › Informes; menú de la junta en 6 caselles: Avisos, Reunions, Activitats, Últims socis, Apuntar despesa o ingrés, Informes; Nova activitat i Gestionar arribades dins de Gestió d’activitats; últims socis reals; parteix de la 2026-11-17) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -187,7 +188,22 @@ const AVISOS = [
 const curs = id => CURSOS.find(c => c.id === id);
 // ===== Connexió amb el motor d'accés (Apps Script del full de socis) =====
 const MOTOR = 'https://script.google.com/macros/s/AKfycbxNeEcaHhN8SjH7W2cjmJyPAxlmYY7vP-Ic8kJQ28GtfK09pbjvBpb2hJFMF_JVuxu2/exec';
-const PROVES = true; // versió de proves: els missatges dels cursos encara no són reals. L'entrada, els avisos, les activitats, les inscripcions, les despeses i l'alta de soci ja són reals.
+const VERSIO = '2026-11-25b';
+// Missatges mentre es carrega alguna cosa: un a l'atzar. Es manté el mateix mentre dura la càrrega
+// (la pantalla es torna a pintar sovint) i en canvia a la càrrega següent.
+const MSG_CARREGA = ['Anem a buscar-ho al racó del barri…', 'Un moment, que el veí ho està mirant…', 'Escalfant motors…',
+  'Preparant-ho amb tot el carinyo…', 'Pujant les escales de la xemeneia…', 'Fent un cafè mentre carrega…',
+  'Gairebé ho tenim, paciència!', 'Remenant els papers de l’associació…', 'Això va més ràpid que la cua del mercat!'];
+let _carrega = {m:'', t:0};
+function carregant(){
+  const ara = Date.now();
+  if (!_carrega.m || ara - _carrega.t > 2000){
+    const altres = MSG_CARREGA.filter(x => x !== _carrega.m);
+    _carrega.m = altres[Math.floor(Math.random() * altres.length)];
+  }
+  _carrega.t = ara;
+  return _carrega.m;
+}
 function motor(accio, dades){
   return fetch(MOTOR, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(Object.assign({accio}, dades || {}))})
     .then(r => r.json()).catch(() => ({ok:false, codi:'XARXA'}));
@@ -356,7 +372,7 @@ function actCard(a, k){
   return `<button class="card act" data-${k || 'det'}="${esc(a.codi)}"><div class="date"><div class="d">${d.getDate()}</div><div class="m">${MESOS[d.getMonth()]}</div></div><div style="min-width:0"><div class="n">${esc(a.nom)}</div>${a.lloc ? `<div class="s">${esc(a.lloc)}</div>` : ''}<span class="tag ${c}" style="margin-top:6px">${esc(t)}</span>${a.amagada ? '<span class="tag g" style="margin:6px 0 0 6px">Esborrany</span>' : ''}</div><span style="margin-left:auto;color:var(--mut);font-size:22px" aria-hidden="true">›</span></button>`;
 }
 function blocActs(l, k){
-  if (!S.acts) return `<div class="card"><p class="muted">${S.actErr ? 'Ara mateix no s’han pogut carregar les activitats. Torna-ho a provar d’aquí a una estona.' : 'Carregant les activitats…'}</p></div>`;
+  if (!S.acts) return `<div class="card"><p class="muted">${S.actErr ? 'Ara mateix no s’han pogut carregar les activitats. Torna-ho a provar d’aquí a una estona.' : carregant()}</p></div>`;
   if (!l.length) return '<div class="card"><p class="muted">Ara mateix no hi ha activitats programades.</p></div>';
   return l.map(a => actCard(a, k)).join('');
 }
@@ -451,7 +467,7 @@ function sumaDies(dia, n){ const [y, m, d] = dia.split('-').map(Number); const x
 function diaCurt(dia){ const [, m, d] = dia.split('-').map(Number); return `${d} ${MESOS[m-1]}`; }
 function agendaAvisos(){
   const sec = '<div class="sec" style="margin-top:8px">Avisos i properes reunions</div>';
-  if (!S.ag) return sec + `<div class="card"><p class="muted">${S.agErr ? 'Ara mateix no s’han pogut carregar els avisos. Torna-ho a provar d’aquí a una estona.' : 'Carregant els avisos…'}</p></div>`;
+  if (!S.ag) return sec + `<div class="card"><p class="muted">${S.agErr ? 'Ara mateix no s’han pogut carregar els avisos. Torna-ho a provar d’aquí a una estona.' : carregant()}</p></div>`;
   const ara = Date.now();
   const av = S.ag.avisos.filter(a => a.cad > ara).sort((a, b) => (b.dst - a.dst) || (b.pub - a.pub));
   const evs = properes();
@@ -504,7 +520,7 @@ function carregaAvisosJ(){
 function vAvisosJ(){
   let h = `<h2>Avisos</h2><p class="muted" style="margin-top:4px">Surten a la pantalla d’inici fins que caduquen. Després queden guardats al full com a històric.</p><button class="btn full" style="margin-top:14px" data-a="nouAvis">Escriure un avís nou</button><div class="sec">Avisos publicats</div>`;
   if (S.avJErr) return h + `<div class="card"><p class="muted">${esc(msgJ({codi:S.avJErr}))}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaJ">Tornar-ho a provar</button></div>`;
-  if (!S.avJ){ carregaAvisosJ(); return h + '<div class="card"><p class="muted">Carregant…</p></div>'; }
+  if (!S.avJ){ carregaAvisosJ(); return h + `<div class="card"><p class="muted">${carregant()}</p></div>`; }
   if (!S.avJ.length) return h + '<div class="card"><p class="muted">Ara mateix no hi ha cap avís publicat.</p></div>';
   return h + `<div class="card">${S.avJ.map(a => {
     const per = {Tots:'Tots els veïns', Socis:'Només socis', Junta:'Només la junta'}[a.dest];
@@ -569,7 +585,7 @@ function vBenvinguda(){
   return `<div style="min-height:calc(100vh - 60px);display:flex;flex-direction:column;justify-content:space-between;gap:32px;padding:20px 0 12px">
   <div><img class="logo-full" src="logo-avv.png" alt="Associació de Veïns Pla de Palau – Sant Pau" width="900" height="508">
   <h1 style="font-size:38px;margin-top:24px">Et donem la benvinguda al barri</h1>
-  <p style="margin-top:12px;color:var(--mut);font-size:17px">Associació de Veïns Pla de Palau – Sant Pau. Avisos, activitats, cursos i tot el que passa al barri, en una sola app.</p>${PROVES ? '<p class="tag o" style="margin-top:14px;display:inline-block">Versió de proves</p>' : ''}</div>
+  <p style="margin-top:12px;color:var(--mut);font-size:17px">Associació de Veïns Pla de Palau – Sant Pau. Avisos, activitats, cursos i tot el que passa al barri, en una sola app.</p></div>
   <div style="display:grid;gap:12px">
   <button class="btn full" data-a="entraLogin" style="flex-direction:column;gap:0;padding:14px"><span>Iniciar sessió</span><span style="font-weight:400;font-size:13px;opacity:.85">Soc del barri i ja estic registrat</span></button>
   <button class="btn ocre full" data-a="entraAlta" style="flex-direction:column;gap:0;padding:14px"><span>Fer-me’n soci</span><span style="font-weight:400;font-size:13px">${esc(tx(TEXTOS.benvingudaBoto))}</span></button>
@@ -578,8 +594,7 @@ function vBenvinguda(){
   </div></div>`;
 }
 function vInici(){
-  let h = PROVES ? '<div class="card" style="margin-top:8px;background:var(--ocre-soft);border-color:var(--ocre);color:var(--ocre-ink);font-size:14px"><b>Versió de proves.</b> L’entrada, els avisos, les activitats, les inscripcions, les despeses, l’alta de soci i els cursos ja són reals.</div>' : '';
-  h += botoInstal('margin-top:12px');
+  let h = botoInstal('margin-top:12px');
   h += agendaAvisos();
   let soci = '';
   if (esSoci()) soci += `<button class="card act" data-go="soci" style="margin-top:22px"><span class="mi">${IC.soci}</span><div><div class="n">El meu carnet</div><div class="s">Soci núm. ${S.soci.num}</div></div><span style="margin-left:auto;color:var(--mut);font-size:22px">›</span></button>`;
@@ -718,7 +733,7 @@ function vMov(id){
   if (!esSoci()) return `<p class="muted" style="margin-top:20px">Per apuntar despeses cal entrar amb el teu DNI de soci.</p>`;
   carregaMvCfg();
   const c = S.mvCfg;
-  if (!c) return `<h2>Apuntar una despesa o un ingrés</h2>${S.mvCfgErr ? `<p style="margin-top:14px">${ambWhatsapp(S.mvCfgErr)}</p><button class="btn ghost full" style="margin-top:14px" data-a="mvRetry">Tornar-ho a provar</button>` : '<p class="muted" style="margin-top:14px">Carregant…</p>'}`;
+  if (!c) return `<h2>Apuntar una despesa o un ingrés</h2>${S.mvCfgErr ? `<p style="margin-top:14px">${ambWhatsapp(S.mvCfgErr)}</p><button class="btn ghost full" style="margin-top:14px" data-a="mvRetry">Tornar-ho a provar</button>` : `<p class="muted" style="margin-top:14px">${carregant()}</p>`}`;
   const clau = id || '';
   if (!S.mv || S.mv.clau !== clau) mvNou(clau);
   const M = S.mv, v = M.v, des = M.tipus === 'Despesa';
@@ -918,7 +933,7 @@ function meusCursosHTML(){
   if (!S.user || !token()) return `<div class="card" style="margin-top:16px"><b>Ja estàs inscrit a un curs?</b><p class="muted" style="margin-top:4px">Entra amb el telèfon que vas donar a la inscripció (o amb el DNI, si ets soci) per veure els teus cursos.</p><button class="btn ghost full" style="margin-top:12px" data-a="identC">Entrar</button></div>`;
   carregaMeusCursos();
   const M = S.mc;
-  if (!M) return `<div class="sec">Els meus cursos</div><div class="card"><p class="muted">${S.mcErr ? 'Ara mateix no es poden carregar els teus cursos.' : 'Carregant els teus cursos…'}</p>${S.mcErr ? '<button class="btn ghost full" style="margin-top:12px" data-a="meusRetry">Tornar-ho a provar</button>' : ''}</div>`;
+  if (!M) return `<div class="sec">Els meus cursos</div><div class="card"><p class="muted">${S.mcErr ? 'Ara mateix no es poden carregar els teus cursos.' : carregant()}</p>${S.mcErr ? '<button class="btn ghost full" style="margin-top:12px" data-a="meusRetry">Tornar-ho a provar</button>' : ''}</div>`;
   if (!M.cursos.length) return S.user.inscrit ? `<div class="sec">Els meus cursos</div><div class="card"><p class="muted">Ara mateix no tens cap curs. Si creus que és un error, escriu a <a href="mailto:${CORREU_CURSOS}">${CORREU_CURSOS}</a>.</p></div>` : '';
   const diversos = new Set(M.cursos.map(c => (c.participant || '').toLowerCase())).size > 1;
   return `<div class="sec">Els meus cursos</div><div class="card">${M.cursos.map(c => filaMeuCurs(c, diversos)).join('')}</div>`;
@@ -929,7 +944,7 @@ function vCursos(){
   const C = S.cuP;
   let h = `<h1 style="margin:6px 0 2px">Cursos ${esc((C && C.temporada) || '')}</h1><p class="muted">Centre cívic Pla de Palau</p>` + meusCursosHTML();
   if (!C) return h + (S.cuPErr ? `<div class="card" style="margin-top:16px"><p class="muted">Ara mateix no es poden carregar els cursos.</p><button class="btn ghost full" style="margin-top:12px" data-a="cursosRetry">Tornar-ho a provar</button></div>`
-    : '<div class="card" style="margin-top:16px"><p class="muted">Carregant els cursos…</p></div>');
+    : `<div class="card" style="margin-top:16px"><p class="muted">${carregant()}</p></div>`);
   if (!C.cursos.length) h += '<div class="card" style="margin-top:16px"><p class="muted">Encara no hi ha cursos per a aquesta temporada.</p></div>';
   const ambLliures = C.cursos.some(c => c.grups.some(g => g.lliures));
   if (ambLliures) h += `<div class="card" style="margin-top:16px;background:var(--pri-soft)"><b>Encara hi ha places lliures</b><p style="margin-top:4px;font-size:15px">Els grups marcats amb <span class="tag">Places lliures</span> encara admeten gent. Si t’hi vols apuntar, toca l’etiqueta o escriu-nos a <a href="mailto:${CORREU_CURSOS}">${CORREU_CURSOS}</a>.</p></div>`;
@@ -1144,7 +1159,7 @@ function vCursosJ(){
   <button class="btn full" style="margin-top:14px" data-a="pagCursos">Pagaments i reserves</button>
   <button class="btn ghost full" style="margin-top:10px" data-a="nouCurs">Afegir un curs i el seu professor/a</button>`;
   if (S.crJErr) return h + `<div class="card" style="margin-top:14px"><p class="muted">${esc(S.crJErr)}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaJ">Tornar-ho a provar</button></div>`;
-  if (!S.crJ){ carregaCursosJ(); return h + '<div class="card" style="margin-top:14px"><p class="muted">Carregant…</p></div>'; }
+  if (!S.crJ){ carregaCursosJ(); return h + `<div class="card" style="margin-top:14px"><p class="muted">${carregant()}</p></div>`; }
   const l = S.crJ.cursos;
   if (!l.length) return h + '<div class="card" style="margin-top:14px"><p class="muted">Encara no hi ha cap curs. Afegeix-ne un per poder-hi apuntar les factures del professor/a.</p></div>';
   const anys = [...new Set(l.map(c => c.curs))];
@@ -1224,7 +1239,7 @@ function carregaSocisJ(){
 function vSocis(){
   let h = `<h2>Últims socis</h2><p class="muted" style="margin-top:4px">Les ${SOCIS_ULTIMS} altes més recents, amb la data d’alta. Qui renova conserva la data d’alta del primer any, per això no surt aquí.</p>`;
   if (S.soJErr) return h + `<div class="card" style="margin-top:14px"><p class="muted">${esc(msgJ({codi:S.soJErr}))}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaJ">Tornar-ho a provar</button></div>`;
-  if (!S.soJ){ carregaSocisJ(); return h + '<div class="card" style="margin-top:14px"><p class="muted">Carregant…</p></div>'; }
+  if (!S.soJ){ carregaSocisJ(); return h + `<div class="card" style="margin-top:14px"><p class="muted">${carregant()}</p></div>`; }
   if (!S.soJ.length) return h + '<div class="card" style="margin-top:14px"><p class="muted">Encara no hi ha cap alta amb data aquest any.</p></div>';
   return h + `<div class="card" style="margin-top:14px">${S.soJ.map(x => { const [y, m, d] = String(x.data).split('-').map(Number);
     return `<div class="row" style="gap:12px"><div style="min-width:0"><b>${esc(x.nom)}</b><p class="muted" style="font-size:13px">Soci núm. ${esc(x.num)}</p></div><span style="white-space:nowrap;text-align:right">${y ? `${d}/${String(m).padStart(2,'0')}/${y}` : ''}</span></div>`; }).join('')}</div>`;
@@ -1250,7 +1265,7 @@ function vInformes(){
   let h = `<h2>Informes</h2><p class="muted" style="margin-top:4px">Es baixen en PDF al mòbil. No es desen enlloc més.</p>`;
   if (S.infPdf) h += `<div class="card" style="margin-top:14px;background:var(--pri-soft);border-color:var(--pri);color:var(--pri-soft-ink)"><b>Informe preparat</b><p style="font-size:14px;margin-top:2px;overflow-wrap:anywhere">${esc(S.infPdf.nom)}</p><button class="btn full sm" style="margin-top:10px" data-a="desaPdf">Desar o obrir el PDF</button></div>`;
   if (S.infErr) return h + `<div class="card" style="margin-top:14px"><p class="muted">${esc(msgJ({codi:S.infErr}))}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaJ">Tornar-ho a provar</button></div>`;
-  if (!S.infOp){ carregaInfOp(); return h + '<div class="card" style="margin-top:14px"><p class="muted">Carregant…</p></div>'; }
+  if (!S.infOp){ carregaInfOp(); return h + `<div class="card" style="margin-top:14px"><p class="muted">${carregant()}</p></div>`; }
   const O = S.infOp, C = O.comptes;
   const senseComptes = '<p class="muted" style="font-size:14px;margin-top:8px">Ara mateix no es pot connectar amb el full de Comptes. Torna-ho a provar d’aquí a una estona.</p>';
   h += '<div style="margin-top:14px">';
@@ -1384,7 +1399,7 @@ function vIns(){
     // Si ha fallat, no es torna a demanar sol (abans es repetia sense parar i semblava que es quedava carregant)
     const ko = S.insErr && S.insErrC === s.c;
     if (!ko) carregaIns();
-    return ko ? `<div class="card" style="margin-top:20px"><p>${esc(S.insErr)}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaIns">Tornar-ho a provar</button></div>` : '<p class="muted" style="margin-top:20px">Carregant la inscripció…</p>';
+    return ko ? `<div class="card" style="margin-top:20px"><p>${esc(S.insErr)}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaIns">Tornar-ho a provar</button></div>` : `<p class="muted" style="margin-top:20px">${carregant()}</p>`;
   }
   // Controls d'organitzador només quan s'ha obert un QR escanejat (#v.…), mai a «la meva inscripció»
   const org = s.v === 'qr' && (esJ() || !!(S.pins || {})[x.act]);
@@ -1548,7 +1563,7 @@ function vArribades(id){
   if (!L){
     const ko = S.arrErr && S.arrErrId === id;
     if (!ko) carregaArr(id);
-    return `<h2>Control d’arribades</h2>` + (ko ? `<div class="card" style="margin-top:20px"><p>${esc(S.arrErr)}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaArr">Tornar-ho a provar</button></div>` : '<p class="muted" style="margin-top:20px">Carregant les inscripcions…</p>');
+    return `<h2>Control d’arribades</h2>` + (ko ? `<div class="card" style="margin-top:20px"><p>${esc(S.arrErr)}</p><button class="btn ghost full" style="margin-top:12px" data-a="reintentaArr">Tornar-ho a provar</button></div>` : `<p class="muted" style="margin-top:20px">${carregant()}</p>`);
   }
   const p = L.tot.conf ? Math.min(100, Math.round(L.tot.arr / L.tot.conf * 100)) : 0;
   const files = L.files.filter(f => f.estat === 'CONFIRMADA').sort((x, y) => (x.arr - y.arr) || x.nom.localeCompare(y.nom, 'ca'));
@@ -1854,11 +1869,33 @@ function render(){
   $('#top').innerHTML = header();
   $('#nav').innerHTML = navHTML();
   const m = $('#main'), s = S.sub;
-  if (S.esperaAct) m.innerHTML = `<p class="muted" style="margin-top:24px">${S.actErr ? 'Ara mateix no s’han pogut carregar les activitats. Torna-ho a provar d’aquí a una estona.' : 'Carregant l’activitat…'}</p>`;
+  if (S.esperaAct) m.innerHTML = `<p class="muted" style="margin-top:24px">${S.actErr ? 'Ara mateix no s’han pogut carregar les activitats. Torna-ho a provar d’aquí a una estona.' : carregant()}</p>`;
   else if (s && s.v) m.innerHTML = ({detall:()=>vDetall(s.id), curs:()=>vCurs(s.id), ajuda:vAjuda, priv:vPriv, inscriure:()=>vInscriure(s.id), info:()=>vInfo(s.id), agenda:()=>vAgenda(s.id), despAct:()=>vMov(s.id), form:()=>vForm(s.id), pagament:vPagament, ok:vOk, alta:vAlta, fesSoci:vFesSoci, altaEstat:vAltaEstat, ident:vIdent, despesa:()=>vMov(''), inscrits:vInscrits, socis:vSocis, cursosJ:vCursosJ, cursForm:vCursForm, cursPag:vCursPag, gestioAct:vGestioAct, informes:vInformes, agendaTota:vAgendaTota, avisosJ:vAvisosJ, avisForm:vAvisForm, pendents:vPendents, ins:vIns, qr:vIns, arribades:()=>vArribades(s.id), escaner:()=>vEscaner(s.id), nova:vNova})[s.v]();
   else m.innerHTML = ({inici:vInici, activitats:vActivitats, cursos:vCursos, soci:vSoci, junta:vJunta})[t]();
+  if (!S.esperaAct) m.insertAdjacentHTML('beforeend', avisaErrorHTML());
   if (s && (s.v === 'ins' || s.v === 'qr')) setTimeout(pintaQR, 0);
   if (s && s.v === 'escaner') setTimeout(() => iniciaCamera(s.id), 0);
+}
+// «Has trobat un error? Avisa'ns»: al peu de cada pantalla, obre el WhatsApp d'en Francesc amb la pantalla ja escrita
+const NOM_TAB = {inici:'Inici', activitats:'Activitats', cursos:'Cursos', soci:'Soci', junta:'Junta'};
+const NOM_SUB = {detall:'Fitxa d’una activitat', curs:'Fitxa d’un curs', ajuda:'Ajuda per entrar', priv:'Privacitat', inscriure:'Inscripció a una activitat',
+  info:'Informació d’una activitat', agenda:'Agenda', despAct:'Apuntar despesa o ingrés', form:'Formulari d’una activitat', pagament:'Pagament',
+  ok:'Inscripció feta', alta:'Alta de soci', fesSoci:'Fes-te soci', altaEstat:'Estat de l’alta de soci', ident:'Entra a l’app', despesa:'Apuntar despesa o ingrés',
+  inscrits:'Inscrits', socis:'Últims socis', cursosJ:'Junta › Cursos', cursForm:'Junta › Alta o edició d’un curs', cursPag:'Junta › Pagaments i reserves',
+  gestioAct:'Activitats de la junta', informes:'Informes', agendaTota:'Reunions', avisosJ:'Junta › Avisos', avisForm:'Junta › Nou avís', pendents:'Junta › Avisos pendents',
+  ins:'La meva inscripció', qr:'QR d’una inscripció', arribades:'Gestionar arribades', escaner:'Escàner de QR', nova:'Nova activitat'};
+function nomPantalla(){
+  const s = S.sub, t = tab();
+  if (!s || !s.v) return NOM_TAB[t] || t;
+  let n = NOM_SUB[s.v] || s.v;
+  const a = s.id && typeof act === 'function' ? act(s.id) : null;
+  if (a && a.nom) n += ' (' + a.nom + ')';
+  return (t !== 'inici' && NOM_TAB[t] ? NOM_TAB[t] + ' › ' : '') + n;
+}
+function avisaErrorHTML(){
+  const ua = navigator.userAgent, mobil = /iPhone|iPad/.test(ua) ? 'iPhone' : /Android/.test(ua) ? 'Android' : 'ordinador';
+  const txt = `Hola! He trobat un error a l’app de l’associació.\nPantalla: ${nomPantalla()}\nVersió: ${VERSIO} · ${mobil}\nQuè ha passat: `;
+  return `<p class="muted" style="text-align:center;font-size:13px;margin:28px 0 8px">Has trobat un error? <a href="https://wa.me/${WHATSAPP_TRESORER}?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener" style="color:var(--pri);font-weight:600">Avisa’ns</a></p>`;
 }
 function err(id, msg){ const e = document.getElementById('e-'+id); if (e) e.textContent = msg || ''; return !msg; }
 function val(id){ const e = document.getElementById(id); return e ? e.value.trim() : ''; }
@@ -2287,13 +2324,13 @@ try { S.pins = JSON.parse(localStorage.getItem('avv-pins') || '{}') || {}; } cat
 try { const mv = JSON.parse(localStorage.getItem('avv-meves') || 'null'); if (Array.isArray(mv)) S.meves = mv; } catch(e){}
 rutaHash();
 carregaMeves();
-/* ===== Pantalla de benvinguda: una foto del barri un cop al dia, mentre es carreguen avisos i activitats ===== */
+/* ===== Pantalla de benvinguda: una foto del barri un cop al dia, durant 3 segons (es pot saltar amb un toc) ===== */
 // Per afegir fotos: posa-les a la carpeta fotos/ (vertical, uns 900 px d'amplada) i afegeix-ne el nom aquí.
 const FOTOS = ['xemeneia-escales.jpg', 'xemeneia-arbres.jpg', 'xemeneia-nit.jpg'];
 const FOTO_AUTOR = 'Toni Xifra';
 // Enquadrament de cada foto en pantalles estretes (on cal que quedi el motiu principal). Per defecte, al centre.
 const FOTO_POS = {'xemeneia-nit.jpg':'12% center'};
-const SPLASH_MIN = 1500, SPLASH_MAX = 3000;
+const SPLASH_DURADA = 3000;   // sempre 3 segons (decisió d'en Francesc, 25/11); la barra de progrés també dura 3 s (CSS .sp-b i)
 const SPLASH_MSG = ['Despertant els veïns…', 'Regant els testos dels balcons…', 'Comptant les rajoles del Pla de Palau…',
   'Pujant les escales de la xemeneia…', 'Avisant la veïna del tercer…', 'Escalfant la plaça…', 'Fent petar la xerrada al replà…'];
 (function splash(){
@@ -2318,9 +2355,7 @@ const SPLASH_MSG = ['Despertant els veïns…', 'Regant els testos dels balcons�
     fetch('fotos/' + seg).catch(() => {});   // la foto de demà ja queda guardada al mòbil
   };
   const iv = setInterval(() => {
-    const t = Date.now() - t0;
-    const carregat = (S.ag || S.agErr) && (S.acts || S.actErr);
-    if ((t >= SPLASH_MIN && carregat) || t >= SPLASH_MAX) tanca();
+    if (Date.now() - t0 >= SPLASH_DURADA) tanca();
   }, 100);
   el.addEventListener('click', tanca);
 })();
